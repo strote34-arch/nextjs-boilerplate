@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <rect width="200" height="60" fill="white"/>
+  <text x="8" y="46" font-family="'Oswald', Arial, sans-serif" font-size="42" font-weight="700" fill="#c8102e" letter-spacing="-2">Афиши</text>
+  <text x="147" y="46" font-family="'Oswald', Arial, sans-serif" font-size="42" font-weight="700" fill="#111" letter-spacing="-2">.ру</text>
+</svg>

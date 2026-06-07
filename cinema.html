@@ -1,0 +1,3838 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
+
+// ── Safe DOM helper ──────────────────────────────────────────
+function _sid(id) { return document.getElementById(id); }
+function _setHtml(id, html) { var e=document.getElementById(id); if(e) e.innerHTML=html; }
+function _setText(id, txt)  { var e=document.getElementById(id); if(e) e.textContent=txt; }
+
+// switchCity global stub — available immediately for onclick handlers
+window.switchCity = function(city, btn) {
+  // Update pills immediately (visual feedback)
+  document.querySelectorAll('.city-pill').forEach(function(p) {
+    p.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+  // Update city label immediately
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = city;
+  var hint = document.getElementById('cityHint');
+  if (hint) {
+    var gen = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Казань':'Казани','Новосибирск':'Новосибирске','Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке'};
+    hint.textContent = gen[city] || city;
+  }
+  // Delegate to GeoCity when ready, or queue
+  if (window.GeoCity && window.GeoCity.setCity) {
+    window.GeoCity.setCity(city, 'manual');
+  } else {
+    window._pendingCity = city;
+  }
+  // Also update currentCity if defined on the page
+  if (typeof currentCity !== 'undefined') window.currentCity = city;
+  if (typeof populateCinemaFilter === 'function') populateCinemaFilter(city);
+  if (typeof applyFilters === 'function') setTimeout(applyFilters, 0);
+  // Save to localStorage immediately
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+};
+
+
+// ── Инициализация города из localStorage ───────────────────────
+(function() {
+  var savedCity = null;
+  try { savedCity = localStorage.getItem('afishi_city'); } catch(e) {}
+  if (savedCity) {
+    // Обновить все cityLabel элементы
+    document.addEventListener('DOMContentLoaded', function() {
+      var lbl = document.getElementById('cityLabel');
+      if (lbl && lbl.textContent.trim() === 'Москва') lbl.textContent = savedCity;
+      var topLbl = document.getElementById('cityTopLabel');
+      if (topLbl && topLbl.textContent.trim() === 'Москва') topLbl.textContent = savedCity;
+    });
+  }
+})();
+</script>
+
+
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="description" content="Расписание кино в Волгограде. Киномакс Тандем, Синема Парк, Формуляр. Онлайн-покупка билетов.">
+<meta property="og:title" content="Кино в Волгограде — расписание фильмов 2026 | Афиши.ру">
+<meta property="og:description" content="Расписание кино в Волгограде. Киномакс Тандем, Синема Парк, Формуляр. Онлайн-покупка билетов.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Афиши.ру">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кино в Волгограде — расписание фильмов 2026 | Афиши.ру</title>
+          <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://afishi.ru/cinema.html">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>/* ── Header ──────────────────────────────── */
+header {
+  background: var(--white);
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 28px; height: 64px;
+}
+.header-inner { gap: 12px; }
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.logo { font-size: 24px; }
+.logo{font-size:18px !important;}
+nav { display: flex; gap: 0; flex: 1; }
+nav a {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 0 13px; height: 64px;
+  display: flex; align-items: center;
+  color: var(--mid);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
+nav a { padding: 0 8px; font-size: 12px; }
+.city-strip-inner{gap:6px !important;}
+.city-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.city-strip-inner::-webkit-scrollbar { display: none; }
+.city-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-pill {
+  padding: 6px 16px; border: 1.5px solid var(--border);
+  border-radius: 20px; font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--white); color: var(--mid); transition: all .15s;
+}
+.city-pill:hover { border-color: var(--red); color: var(--red); }
+.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
+.city-pill{font-size:11px !important;padding:4px 10px !important;}
+
+:root {
+  --red:#c8102e; --red-dark:#9e0c24;
+  --black:#111; --dark:#1a1a1a; --mid:#444; --light:#888;
+  --border:#e0e0e0; --bg:#f4f2ee; --white:#fff; --yellow:#f5c518;
+  --shadow:0 2px 10px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PT Sans',Arial,sans-serif;background:var(--bg);color:var(--black);font-size:14px;line-height:1.5;}
+a{color:inherit;text-decoration:none;}
+
+/* TOPBAR */
+.topbar{background:var(--dark);color:#ccc;font-size:12px;padding:5px 0;}
+
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
+.topbar a{color:#bbb;} .topbar a:hover{color:#fff;}
+.topbar-links{display:flex;gap:18px;}
+
+/* HEADER */
+
+.logo span{color:var(--black);}
+
+.search-box{display:flex;align-items:center;background:#f0eeea;border:1px solid var(--border);border-radius:4px;padding:0 10px;gap:6px;}
+.search-box input{border:none;background:transparent;font-family:'PT Sans',sans-serif;font-size:13px;width:160px;padding:7px 0;outline:none;}
+
+/* BREADCRUMB */
+.breadcrumb{max-width:1200px;margin:14px auto 0;padding:0 16px;font-size:12px;color:var(--light);}
+.breadcrumb a{color:var(--light);}
+.breadcrumb a:hover{color:var(--red);}
+.breadcrumb span{margin:0 6px;}
+
+/* PAGE TITLE */
+.page-
+.page-title{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.page-subtitle{font-size:13px;color:var(--light);margin-top:4px;}
+
+/* FILTER BAR */
+.filter-bar{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:60px;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,0.05);}
+.filter-inner{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filter-group{display:flex;flex-direction:column;gap:3px;}
+.filter-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--light);}
+.filter-select{border:1px solid var(--border);border-radius:3px;padding:6px 10px;font-family:'PT Sans',sans-serif;font-size:13px;color:var(--mid);background:#fff;cursor:pointer;outline:none;min-width:130px;}
+.filter-select:hover{border-color:#aaa;}
+.filter-sep{width:1px;height:36px;background:var(--border);margin:0 4px;align-self:center;}
+.filter-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.ftag{padding:5px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:var(--mid);background:#fff;transition:all .15s;white-space:nowrap;}
+.ftag:hover{border-color:var(--red);color:var(--red);}
+.ftag.active{background:var(--red);color:#fff;border-color:var(--red);}
+.filter-reset{font-size:12px;color:var(--light);cursor:pointer;margin-left:4px;text-decoration:underline;}
+.filter-reset:hover{color:var(--red);}
+.results-count{font-size:13px;color:var(--light);margin-left:auto;white-space:nowrap;}
+
+/* MAIN LAYOUT */
+.main{max-width:1200px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:1fr 280px;gap:24px;}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:16px;}
+.view-btn{padding:7px 14px;border:none;background:#fff;cursor:pointer;font-size:13px;color:var(--mid);transition:all .15s;}
+.view-btn:hover{background:#f8f0f0;color:var(--red);}
+.view-btn.active{background:var(--red);color:#fff;}
+
+/* FILM GRID */
+.film-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.film-card{background:#fff;border-radius:4px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .2s,transform .2s;position:relative;}
+.film-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.16);transform:translateY(-3px);}
+.film-poster{width:100%;aspect-ratio:2/3;display:block;position:relative;overflow:hidden;background:#111;}
+.film-poster-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;}
+.film-age{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:3px;}
+.film-format-badges{position:absolute;bottom:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;}
+.film-fbadge{background:rgba(0,0,0,0.75);color:#fff;font-size:10px;font-weight:700;padding:2px 5px;border-radius:2px;letter-spacing:0.3px;}
+.film-fbadge.imax{background:#1565c0;}
+.film-fbadge.threeD{background:#2e7d32;}
+.film-body{padding:10px 12px 12px;}
+.film-genre{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--red);margin-bottom:4px;}
+.film-title{font-family:'PT Serif',serif;font-size:14px;font-weight:700;line-height:1.3;margin-bottom:5px;}
+.film-meta{font-size:11px;color:var(--light);}
+.film-rating-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.film-stars{color:var(--yellow);font-size:12px;}
+.film-score{font-size:13px;font-weight:700;color:var(--mid);}
+.film-price-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+.film-price{font-size:12px;color:var(--mid);}
+.film-price strong{color:var(--black);font-size:13px;}
+.buy-btn{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;border:none;padding:5px 10px;border-radius:2px;cursor:pointer;transition:background .15s;}
+.buy-btn:hover{background:var(--red-dark);}
+
+/* FILM LIST VIEW */
+.film-list{display:flex;flex-direction:column;gap:0;}
+.film-list-item{display:flex;gap:16px;background:#fff;border-radius:4px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px;cursor:pointer;transition:box-shadow .2s;}
+.film-list-item:hover{box-shadow:0 6px 20px rgba(0,0,0,0.14);}
+.film-list-poster{width:80px;flex-shrink:0;border-radius:3px;overflow:hidden;aspect-ratio:2/3;}
+.film-list-body{flex:1;}
+.film-list-title{font-family:'PT Serif',serif;font-size:17px;font-weight:700;margin-bottom:4px;}
+.film-list-genre{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);letter-spacing:0.6px;margin-bottom:6px;}
+.film-list-desc{font-size:13px;color:var(--mid);line-height:1.5;margin-bottom:8px;}
+.film-list-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.film-list-tag{background:#f0eeea;border:1px solid #ddd;font-size:11px;padding:2px 7px;border-radius:2px;color:var(--mid);}
+.film-list-right{width:160px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+
+/* CINEMA SCHEDULE in sidebar */
+.schedule-cinema{margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.schedule-cinema:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.schedule-cinema-name{font-size:13px;font-weight:700;color:var(--black);margin-bottom:2px;}
+.schedule-cinema-addr{font-size:11px;color:var(--light);margin-bottom:8px;}
+.schedule-times{display:flex;gap:5px;flex-wrap:wrap;}
+.stime{padding:5px 10px;border:1px solid var(--border);border-radius:3px;font-size:12px;font-weight:700;cursor:pointer;color:var(--mid);background:#fff;transition:all .15s;}
+.stime:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.stime.sold{color:#ccc;border-color:#eee;cursor:not-allowed;}
+.stime.few{border-color:#ff9800;color:#e65100;}
+
+/* SIDEBAR */
+.sidebar{}
+.sw{background:#fff;border-radius:4px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;}
+.sw-head{background:var(--dark);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding:10px 14px;}
+.sw-body{padding:14px;}
+.cinema-card{padding:10px 0;border-bottom:1px solid var(--border);}
+.cinema-card:last-child{border-bottom:none;}
+.cinema-name{font-size:13px;font-weight:700;}
+.cinema-addr{font-size:11px;color:var(--light);}
+.cinema-metro{font-size:11px;color:var(--red);margin-top:2px;}
+.cinema-formats{display:flex;gap:4px;margin-top:5px;}
+.cf{font-size:10px;font-weight:700;background:#f0eeea;border:1px solid #ddd;padding:2px 5px;border-radius:2px;color:var(--mid);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:5000;overflow-y:auto;padding:30px 16px;}
+.modal-overlay.open{display:block;}
+.modal-box{background:#fff;max-width:860px;margin:0 auto;border-radius:6px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.35);}
+.modal-head{background:var(--dark);color:#fff;padding:20px 24px;display:flex;gap:20px;align-items:flex-start;}
+.modal-poster{width:100px;flex-shrink:0;border-radius:3px;overflow:hidden;aspect-ratio:2/3;}
+.modal-info{flex:1;}
+.modal-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:5px;}
+.modal-title{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;line-height:1.2;margin-bottom:6px;}
+.modal-meta{font-size:13px;color:#aaa;line-height:1.8;}
+.modal-close{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
+.modal-body{padding:24px;}
+.modal-tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;}
+.mtab{padding:10px 20px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;color:var(--light);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.mtab.active{color:var(--red);border-bottom-color:var(--red);}
+.pane{display:none;} .pane.active{display:block;}
+
+/* Seat map modal */
+.seat-grid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:12px 0;}
+.seat-row{display:flex;align-items:center;gap:3px;}
+.seat-lbl{font-size:10px;font-weight:700;color:#999;width:16px;text-align:right;}
+.seat{width:20px;height:20px;border-radius:3px;border:none;cursor:pointer;font-size:0;transition:transform .1s,background .1s;}
+.seat:hover:not(.taken){transform:scale(1.25);}
+.seat.taken{background:#ddd!important;cursor:not-allowed;}
+.seat.chosen{background:#c8102e!important;}
+
+/* checkout steps */
+.ck-steps{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.ck-step{padding:10px 18px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:3px solid transparent;transition:all .15s;}
+.ck-step.done{color:var(--red);border-bottom-color:var(--red);}
+.ck-step.active{color:var(--red);border-bottom-color:var(--red);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-field label{font-size:12px;color:#888;display:block;margin-bottom:4px;}
+.form-field input,.form-field select{width:100%;border:1px solid #ddd;border-radius:3px;padding:9px 11px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+.form-field input:focus,.form-field select:focus{border-color:var(--red);}
+.pay-opt{display:flex;align-items:center;gap:10px;border:1px solid #ddd;border-radius:3px;padding:11px 14px;cursor:pointer;font-size:14px;margin-bottom:8px;transition:border-color .15s;}
+.pay-opt:hover{border-color:var(--red);}
+.pay-opt input{accent-color:var(--red);}
+.order-summary{background:#f4f2ee;border-radius:4px;padding:14px;font-size:13px;line-height:2;}
+.btn-red{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border:none;padding:12px 28px;border-radius:3px;cursor:pointer;transition:background .15s;}
+.btn-red:hover{background:var(--red-dark);}
+.btn-outline{background:#fff;color:var(--mid);border:1px solid #ddd;font-family:'Oswald',sans-serif;font-size:13px;padding:10px 20px;border-radius:3px;cursor:pointer;}
+.success-block{text-align:center;padding:20px 0;}
+.success-icon{font-size:56px;margin-bottom:14px;}
+.ticket-type-sel{border:2px solid #e0e0e0;border-radius:4px;padding:10px 12px;cursor:pointer;transition:all .15s;background:#fff;margin-bottom:8px;}
+.ticket-type-sel:hover{border-color:var(--red);background:#fff8f8;}
+.ticket-type-sel.sel{border-color:var(--red);background:#fff0f0;}
+/* REVIEWS */
+.review-card{border-bottom:1px solid var(--border);padding:16px 0;}
+.review-card:last-child{border-bottom:none;}
+.review-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;}
+.review-stars{color:var(--yellow);font-size:14px;letter-spacing:1px;}
+.review-helpful{background:none;border:1px solid #ddd;border-radius:3px;font-size:12px;color:#888;padding:3px 10px;cursor:pointer;transition:all .15s;}
+.review-helpful:hover{border-color:var(--red);color:var(--red);}
+.review-helpful.voted{background:#fff0f0;border-color:var(--red);color:var(--red);}
+.star-pick{color:#ddd;transition:color .1s;user-select:none;}
+.star-pick.lit{color:var(--yellow);}
+.rating-bar-wrap{flex:1;}
+.rating-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;}
+.rating-bar-bg{flex:1;height:7px;background:#e8e4dc;border-radius:4px;overflow:hidden;}
+.rating-bar-fill{height:100%;background:var(--yellow);border-radius:4px;transition:width .4s;}
+
+.sw-cinema{padding:10px 0;border-bottom:1px solid var(--border);}
+.sw-cinema:last-child{border-bottom:none;}
+.sw-cinema-name{font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:2px;}
+.sw-cinema-addr{font-size:11px;color:var(--mid);margin-bottom:4px;}
+.sw-cinema-link{font-size:11px;font-weight:700;color:var(--red);text-decoration:none;}
+
+#pane-info, #pane-schedule { display:block !important; }
+#pane-trailer, #pane-reviews, #pane-tickets { display:none; }
+#pane-trailer.active, #pane-reviews.active, #pane-tickets.active { display:block; }
+@media(max-width:600px) {
+  #pane-info > div { grid-template-columns:1fr !important; }
+}
+
+.footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+.footer-grid {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 28px; margin-bottom: 28px;
+}
+.footer-logo {
+  font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.footer-desc { font-size: 13px; line-height: 1.7; color: #888; }
+.footer-col-title {
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--white); margin-bottom: 12px;
+}
+.footer-links { display: flex; flex-direction: column; gap: 6px; }
+.footer-bottom {
+  border-top: 1px solid #333; padding-top: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: #666;
+}
+.footer-grid { grid-template-columns: 1fr 1fr; }
+.footer-grid { grid-template-columns: 1fr; }
+
+/* City strip */
+
+</style>
+<style id="afishi-mobile">
+
+/* ═══════════════════════════════════════════════
+   МОБИЛЬНАЯ АДАПТАЦИЯ — afishi.ru
+   Breakpoints: 768px (tablet), 480px (phone)
+═══════════════════════════════════════════════ */
+
+/* ── Hamburger button ─────────────────────────── */
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px;
+  background: none;
+  border: none;
+  margin-left: auto;
+}
+.burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all .25s;
+}
+.burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile nav drawer ───────────────────────── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+}
+.mobile-nav.open { pointer-events: all; }
+.mobile-nav-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.mobile-nav.open .mobile-nav-overlay { opacity: 1; }
+.mobile-nav-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  background: var(--dark, #1a1a1a);
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-nav.open .mobile-nav-drawer { transform: translateX(0); }
+.mobile-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.mobile-nav-logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+.mobile-nav-logo span { color: var(--red, #c8102e); }
+.mobile-nav-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.mobile-nav-links {
+  padding: 12px 0;
+  flex: 1;
+}
+.mobile-nav-links a {
+  display: block;
+  color: #ddd;
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 13px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  text-decoration: none;
+  transition: background .15s;
+}
+.mobile-nav-links a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.mobile-nav-links a.active { color: var(--gold, #c9a84c); }
+.mobile-nav-links a.highlight {
+  color: var(--gold, #c9a84c);
+  font-weight: 700;
+}
+.mobile-nav-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: 11px;
+  color: #555;
+}
+
+@media (max-width: 768px) {
+  /* ── Header ──────────────────────────────────── */
+  .header-inner, .hi {
+    padding: 0 12px !important;
+    height: 54px !important;
+    gap: 12px !important;
+  }
+  .logo { font-size: 22px !important; }
+  header nav, header nav a { display: none !important; }
+  .burger { display: flex !important; }
+
+  /* ── Topbar ───────────────────────────────────── */
+  .topbar { display: none !important; }
+
+  /* ── Hero / Page hero ────────────────────────── */
+  .page-hero { padding: 20px 0 16px !important; }
+  .page-title, .section-title { font-size: 20px !important; }
+  .hero-inner { padding: 0 12px !important; }
+  .section-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 0 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* ── Filter bar ──────────────────────────────── */
+  .filter-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .filter-inner {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    min-width: max-content;
+  }
+  .filter-group { min-width: 120px; }
+  .filter-select { font-size: 12px !important; padding: 7px 8px !important; }
+
+  /* ── Date tabs ───────────────────────────────── */
+  .date-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    padding: 0 12px !important;
+    gap: 6px !important;
+    scrollbar-width: none;
+  }
+  .date-tabs::-webkit-scrollbar { display: none; }
+  .date-tab { flex-shrink: 0 !important; padding: 6px 14px !important; }
+
+  /* ── City pills ──────────────────────────────── */
+  .city-pills-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none;
+    padding: 8px 12px !important;
+  }
+  .city-pills-wrap::-webkit-scrollbar { display: none; }
+  .city-pills {
+    flex-wrap: nowrap !important;
+    min-width: max-content;
+  }
+  .city-pill { flex-shrink: 0 !important; font-size: 11px !important; padding: 5px 12px !important; }
+
+  /* ── Grids ────────────────────────────────────── */
+  .concert-grid,
+  .concerts-grid,
+  .film-grid,
+  .events-grid,
+  .af-grid,
+  .ex-grid,
+  .kids-grid,
+  #concertGrid,
+  #cinemaGrid,
+  #exhibitsGrid,
+  #kidsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 10px !important;
+  }
+
+  /* ── Cards ────────────────────────────────────── */
+  .concert-card, .film-card, .cinema-card, .event-card, .ai-card {
+    font-size: 12px !important;
+  }
+  .c-poster, .film-poster, .cinema-poster {
+    aspect-ratio: 3/2 !important;
+    font-size: 36px !important;
+  }
+  .c-title, .film-title { font-size: 13px !important; }
+  .c-buy, .buy-btn { font-size: 11px !important; padding: 6px 8px !important; }
+  .c-price { font-size: 12px !important; }
+
+  /* ── Theater list ─────────────────────────────── */
+  #theaterList { padding: 0 10px !important; }
+  .show-card { padding: 12px !important; }
+  .show-poster { width: 60px !important; height: 80px !important; font-size: 24px !important; }
+  .show-title { font-size: 14px !important; }
+
+  /* ── Concert list view ────────────────────────── */
+  .cli-poster { width: 70px !important; }
+  .concert-list-item { padding: 10px !important; }
+
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar { display: none !important; }
+
+  /* ── Main layout ─────────────────────────────── */
+  .main-layout, .layout {
+    grid-template-columns: 1fr !important;
+    padding: 0 10px !important;
+  }
+  .main { padding: 16px 10px !important; }
+
+  /* ── Section spacing ─────────────────────────── */
+  section { margin-bottom: 24px !important; }
+
+  /* ── View toggle (grid/list) ─────────────────── */
+  .view-toggle { display: none !important; }
+
+  /* ── Modal ────────────────────────────────────── */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  .modal-box {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 92vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+  }
+  .modal-poster, #mposter {
+    height: 180px !important;
+    font-size: 52px !important;
+  }
+  .modal-title, #mtitle { font-size: 18px !important; }
+  .modal-tabs { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
+  .modal-tabs::-webkit-scrollbar { display: none; }
+  .modal-tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 8px 12px !important; }
+
+  /* ── Ticket modal ────────────────────────────── */
+  .ck-modal-box {
+    position: fixed !important;
+    inset: 0 !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+  }
+
+  /* ── Floating buttons ────────────────────────── */
+  #addEventFloatBtn, #addVenueFloatBtn {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+  #addEventFloatBtn span:not(:first-child),
+  #addVenueFloatBtn span:not(:first-child) { display: none !important; }
+
+  /* ── Loyalty page ────────────────────────────── */
+  .user-loyalty-card { flex-direction: column !important; text-align: center !important; }
+  .tiers { grid-template-columns: 1fr !important; }
+  .hiw-steps { grid-template-columns: 1fr 1fr !important; }
+  .stats-inner { grid-template-columns: 1fr 1fr !important; }
+  .points-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Articles ────────────────────────────────── */
+  .art-card { flex-direction: column !important; }
+  .art-cover { width: 100% !important; aspect-ratio: 16/6 !important; }
+
+  /* ── Admin panel ─────────────────────────────── */
+  .admin-layout { grid-template-columns: 1fr !important; }
+  .admin-sidebar { display: none !important; }
+  .field-row { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  /* ── Phone — single column ───────────────────── */
+  .concert-grid,
+  .concerts-grid,
+  .film-grid,
+  .events-grid,
+  .af-grid,
+  .ex-grid,
+  .kids-grid,
+  #concertGrid,
+  #cinemaGrid,
+  #exhibitsGrid,
+  #kidsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* ── AI cards single col ─────────────────────── */
+  #aiGrid { grid-template-columns: 1fr !important; }
+
+  /* ── Theater shows ─────────────────────────── */
+  #theaterList .show-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  /* ── Concert card horizontal on phone ──────── */
+  .concert-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+  }
+  .c-poster {
+    width: 90px !important;
+    flex-shrink: 0 !important;
+    aspect-ratio: auto !important;
+    min-height: 90px !important;
+    font-size: 28px !important;
+  }
+  .c-body { flex: 1 !important; }
+  .c-genre { font-size: 9px !important; }
+  .c-meta, .c-venue, .c-stars { display: none !important; }
+
+  /* ── Modal full screen on small phones ──────── */
+  .modal-box { max-height: 100vh !important; border-radius: 0 !important; }
+
+  /* ── Section title smaller ───────────────────── */
+  .section-title { font-size: 17px !important; }
+  .section-icon { font-size: 18px !important; }
+
+  /* ── Page hero compact ───────────────────────── */
+  .page-sub { font-size: 12px !important; }
+
+  /* ── Loyalty compact ─────────────────────────── */
+  .hiw-steps { grid-template-columns: 1fr !important; }
+  .points-grid { grid-template-columns: 1fr !important; }
+  .stat-item { padding: 12px 8px !important; }
+  .stat-num { font-size: 22px !important; }
+}
+
+
+/* ══ РЕКЛАМНЫЕ БЛОКИ ════════════════════════════════════════ */
+.ad-slot{margin:20px 0;text-align:center;position:relative;}
+.ad-label{font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.ad-leaderboard{min-height:90px;display:flex;align-items:center;justify-content:center;background:#f9f7f4;border:1px dashed #ddd;border-radius:6px;}
+.ad-banner-728{width:100%;max-width:728px;height:90px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1a0038,#c8102e);color:#fff;padding:0 24px;border-radius:6px;text-decoration:none;transition:opacity .2s;}
+.ad-banner-728:hover{opacity:.9;}
+.ad-banner-left{font-family:'Oswald',sans-serif;}
+.ad-banner-left b{font-size:18px;font-weight:700;display:block;}
+.ad-banner-left span{font-size:13px;opacity:.8;}
+.ad-banner-cta{background:#fff;color:#c8102e;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;padding:9px 20px;border-radius:4px;white-space:nowrap;}
+/* Нативная карточка-реклама в сетке */
+.ad-native-event{background:linear-gradient(135deg,#1a0038,#2a0a2a) !important;color:#fff;position:relative;overflow:hidden;}
+.ad-native-event::before{content:'Реклама';position:absolute;top:8px;right:8px;background:rgba(255,255,255,.2);color:#fff;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:700;letter-spacing:.5px;}
+.ad-sidebar{width:300px;min-height:250px;background:#f9f7f4;border:1px dashed #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;}
+@media(max-width:768px){.ad-banner-728{display:none;}.ad-slot{display:none;}}
+
+/* ── Рекламные блоки ─────────────────────────────────────── */
+.ad-block{background:#f9f7f4;border:1px solid #e8e6e2;border-radius:6px;overflow:hidden;text-align:center;position:relative;}
+.ad-block::before{content:"Реклама";position:absolute;top:3px;left:6px;font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:.5px;}
+.ad-leaderboard{height:90px;display:flex;align-items:center;justify-content:center;margin:0 0 20px;}
+.ad-rect{width:300px;height:250px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ad-mobile{height:60px;display:flex;align-items:center;justify-content:center;margin:12px 0;}
+.ad-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:12px;color:#aaa;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;transition:background .15s;}
+.ad-inner:hover{background:rgba(0,0,0,.03);}
+.ad-inner img{max-width:100%;max-height:100%;object-fit:contain;}
+/* Скрыть рекламу для подписчиков Plus */
+body.afishi-plus-gold .ad-block,
+body.afishi-plus-plat .ad-block{display:none!important;}
+
+/* ── Рекламные баннеры (sidebar vertical) ────────────────── */
+.ad-sidebar-wrap{margin-bottom:16px;position:relative;}
+.ad-sidebar-label{position:absolute;top:4px;left:6px;font-size:9px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:.4px;z-index:1;}
+.ad-sidebar-close{position:absolute;top:4px;right:6px;background:none;border:none;color:#aaa;cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:2px;z-index:1;}
+.ad-sidebar-close:hover{color:#666;background:rgba(0,0,0,.06);}
+
+/* Формат 240×400 — стандартный sidebar */
+.ad-v-240{width:100%;height:400px;border-radius:8px;overflow:hidden;position:relative;background:#f5f3f0;border:1px solid #e8e6e2;display:flex;align-items:center;justify-content:center;}
+/* Формат 160×600 — wide skyscraper */
+.ad-v-160{width:100%;height:600px;border-radius:8px;overflow:hidden;position:relative;background:#f5f3f0;border:1px solid #e8e6e2;display:flex;align-items:center;justify-content:center;}
+/* Формат 300×250 — rectangle */
+.ad-v-300{width:100%;height:250px;border-radius:8px;overflow:hidden;position:relative;background:#f5f3f0;border:1px solid #e8e6e2;display:flex;align-items:center;justify-content:center;}
+/* Native card */
+.ad-native-card{background:#fff;border:1px solid #e8e6e2;border-radius:8px;padding:14px;margin-bottom:16px;position:relative;}
+
+/* HTML баннер внутри блока */
+.ad-iframe-wrap{width:100%;height:100%;border:none;}
+.ad-placeholder-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#ccc;font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-family:'Oswald',sans-serif;padding:20px;text-align:center;}
+
+/* Скрыть для Plus-подписчиков */
+body.afishi-plus-gold  .ad-sidebar-wrap,
+body.afishi-plus-plat  .ad-sidebar-wrap{display:none!important;}
+
+/* ═══════════════════════════════════════════════════════════
+   AFISHI.RU — ПОДВАЛ (footer)
+   Единый для всех страниц
+═══════════════════════════════════════════════════════════ */
+footer {
+  background: #111;
+  color: #aaa;
+  margin-top: 48px;
+  font-family: 'PT Sans', sans-serif;
+}
+.footer-top {
+  background: #c8102e;
+  padding: 20px;
+  text-align: center;
+}
+.footer-top-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-cta-text {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.footer-cta-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,.8);
+  margin-top: 2px;
+}
+.footer-cta-btn {
+  background: #fff;
+  color: #c8102e;
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.footer-cta-btn:hover { opacity: .88; }
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 20px 0;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+.footer-logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #c8102e;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.footer-logo span { color: #fff; }
+.footer-desc {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #666;
+  margin-bottom: 18px;
+}
+.footer-socials {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: #222;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background .15s;
+}
+.footer-social:hover { background: #333; }
+.footer-col-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: #fff;
+  margin-bottom: 14px;
+}
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-links a {
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+  transition: color .15s;
+  line-height: 1.4;
+}
+.footer-links a:hover { color: #fff; }
+.footer-links a.new::after {
+  content: 'NEW';
+  font-size: 9px;
+  font-weight: 700;
+  background: #c8102e;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.footer-divider {
+  border: none;
+  border-top: 1px solid #222;
+  margin: 0;
+}
+.footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #444;
+}
+.footer-bottom-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-bottom-links a {
+  color: #444;
+  text-decoration: none;
+  font-size: 12px;
+}
+.footer-bottom-links a:hover { color: #888; }
+.footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #666;
+}
+@media (max-width: 900px) {
+  .footer-grid { grid-template-columns: 1fr 1fr 1fr; }
+  .footer-grid > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-top-inner { flex-direction: column; text-align: center; }
+  .footer-bottom { flex-direction: column; text-align: center; }
+  .footer-cta-btn { width: 100%; text-align: center; }
+}
+
+#pane-info, #pane-schedule { display:block !important; }
+.pane { display:none; }
+.pane.active { display:block; }
+
+.cinema-filter-link {
+  font-size:14px;font-weight:700;color:var(--red);cursor:pointer;
+  border-bottom:2px solid transparent;padding-bottom:1px;transition:.15s;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.cinema-filter-link:hover { border-bottom-color:var(--red); }
+</style>
+<link rel="stylesheet" href="mobile.css">
+<script src="firebase.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8102e">
+<!-- Яндекс.Метрика -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+   ym(2234293, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Яндекс.Метрика -->
+</head>
+<body>
+
+<script>
+// ── Аккаунт администратора (seed) ───────────────────────────────
+(function() {
+  try {
+    var KEY = 'afishi_accounts';
+    var accounts = [];
+    try { accounts = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) {}
+    var adminEmail = 'admin@afishi.ru';
+    var exists = accounts.some(function(a) { return a.email === adminEmail; });
+    if (!exists) {
+      accounts.unshift({
+        name:  'Администратор',
+        email: adminEmail,
+        pass:  'Afishi2018!',
+        city:  'Москва',
+        role:  'admin'
+      });
+      localStorage.setItem(KEY, JSON.stringify(accounts));
+    }
+  } catch(e) {}
+})();
+</script>
+
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-links">
+      <a href="#">О сайте</a>
+      <a href="event-add.html">Добавить событие</a>
+      <a href="advertise.html">Реклама</a>
+      <a href="help.html">Помощь</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;cursor:pointer;position:relative;" id="cityToggle" onclick="toggleCity()">
+      📍 Ваш город: <strong style="color:#fff;" id="cityLabel">Волгоград</strong> ▾
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Афиши<span>.ру</span></a>
+      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+<div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
+  <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
+    <span style="font-size:16px;">🍷</span> <span>Ресторан «Волгоград»</span>
+  </a>
+  <div style="border-top:1px solid #f0ede8;margin:6px 0;"></div>
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Ближайшие мероприятия</div>
+  <div id="restDropdownEvents" style="padding:0 8px;">
+    <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
+  </div>
+  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
+</div></nav>
+      <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
+      <div class="search-box">
+        🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
+      </div>
+    </div>
+  </header>
+
+<!-- CITY STRIP -->
+<div class="city-strip">
+  <div class="city-strip-inner" id="cityPillsContainer">
+    <span class="city-label">Город:</span>
+    <!-- Города загружаются динамически -->
+  </div>
+</div>
+
+
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="#">Главная</a><span>›</span><strong style="color:var(--mid);">Кино в <span id="bcCity">Москве</span></strong>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header" style="max-width:1200px;margin:10px auto 0;padding:0 16px 14px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <div>
+      <div class="page-title">🎬 Кино в <span id="pageCity">Москве</span></div>
+      <div class="page-subtitle"><span id="currentDateStr"></span> — <span id="totalCount">26</span> фильмов в прокате</div>
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btnGrid" onclick="setView('grid')">⊞ Сетка</button>
+      <button class="view-btn" id="btnList" onclick="setView('list')">☰ Список</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <div class="filter-group">
+      <div class="filter-label">Дата</div>
+      <select class="filter-select" id="dateFilter" onchange="applyFilters()">
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Кинотеатр</div>
+      <select class="filter-select" id="cinemaFilter" onchange="applyFilters()">
+        <option value="">Все кинотеатры</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Жанр</div>
+      <div class="filter-tags" id="genreFilters">
+        <div class="ftag active" onclick="toggleTag(this,'genre')" data-val="">Все</div>
+        <div class="ftag" onclick="toggleTag(this,'genre')" data-val="Боевик">Боевик</div>
+        <div class="ftag" onclick="toggleTag(this,'genre')" data-val="Комедия">Комедия</div>
+        <div class="ftag" onclick="toggleTag(this,'genre')" data-val="Драма">Драма</div>
+        <div class="ftag" onclick="toggleTag(this,'genre')" data-val="Фантастика">Фантастика</div>
+        <div class="ftag" onclick="toggleTag(this,'genre')" data-val="Семейный">Семейный</div>
+        <div class="ftag" onclick="toggleTag(this,'genre')" data-val="Анимация">Анимация</div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Формат</div>
+      <div class="filter-tags" id="formatFilters">
+        <div class="ftag active" onclick="toggleTag(this,'format')" data-val="">Все</div>
+        <div class="ftag" onclick="toggleTag(this,'format')" data-val="IMAX">IMAX</div>
+        <div class="ftag" onclick="toggleTag(this,'format')" data-val="3D">3D</div>
+        <div class="ftag" onclick="toggleTag(this,'format')" data-val="2D">2D</div>
+      </div>
+    </div>
+    <div class="results-count" id="resultsCount"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div>
+    <div id="filmGrid" class="film-grid"></div>
+    <div id="filmList" class="film-list" style="display:none;"></div>
+    <div id="emptyState" style="display:none;text-align:center;padding:60px 20px;color:var(--light);">
+      <div style="font-size:40px;margin-bottom:12px;">🎬</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:20px;margin-bottom:8px;">Фильмы не найдены</div>
+      <div style="font-size:14px;">Попробуйте изменить фильтры</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sw">
+      <div class="sw-head" id="sidebarCinemasHead">🏙️ Кинотеатры Москвы</div>
+      <div class="sw-body" id="sidebarCinemas"></div>
+    </div>
+
+    <div class="sw">
+      <div class="sw-head">🔥 Хиты недели</div>
+      <div class="sw-body" id="hitsWidget"></div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1a0533,#6a0572);border-radius:4px;padding:18px 16px;color:#fff;margin-bottom:18px;text-align:center;">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">🎟️ Абонемент</div>
+      <div style="font-size:13px;opacity:.85;margin-bottom:14px;line-height:1.5;">4 фильма в месяц всего за 990 ₽ — экономия до 40%</div>
+      <button class="btn-red" style="width:100%;padding:10px;">Купить абонемент</button>
+    </div>
+
+    <div class="sw">
+      <div class="sw-head">🏆 Скоро в прокате</div>
+      <div class="sw-body">
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <div style="font-weight:700;">Мег: Монстр глубины</div>
+          <div style="color:var(--light);font-size:11px;">С 16 августа · Боевик</div>
+        </div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <div style="font-weight:700;">Отряд самоубийц 2</div>
+          <div style="color:var(--light);font-size:11px;">С 5 июля · Боевик</div>
+        </div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <div style="font-weight:700;">Хан Соло: Star Wars</div>
+          <div style="color:var(--light);font-size:11px;">Уже в прокате · Приключения</div>
+        </div>
+        <div style="padding:8px 0;font-size:13px;">
+          <div style="font-weight:700;">Кредо Убийцы 2</div>
+          <div style="color:var(--light);font-size:11px;">С 8 ноября · Боевик</div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Ваши рецензии -->
+    <div class="sw" style="margin-bottom:18px;">
+      <div class="sw-head" style="display:flex;align-items:center;justify-content:space-between;">
+        📝 Ваши рецензии
+        <a href="reviews.html" style="font-size:10px;font-weight:400;text-transform:none;color:rgba(255,255,255,.6);text-decoration:none;">все →</a>
+      </div>
+      <div class="sw-body" id="reviewsWidget">
+        <div style="font-size:12px;color:var(--light);text-align:center;padding:12px 0;">Загрузка...</div>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- FILM MODAL -->
+<div class="modal-overlay" id="filmModal" onclick="handleModalClick(event)">
+  <div class="modal-box" id="modalBox">
+
+    <!-- ШАПКА -->
+    <div class="modal-head">
+      <div class="modal-poster" id="mposter"></div>
+      <div class="modal-info">
+        <div class="modal-cat"  id="mcat"></div>
+        <div class="modal-title" id="mtitle"></div>
+        <div class="modal-meta"  id="mmeta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- О ФИЛЬМЕ — всегда виден -->
+      <div id="pane-info">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div>
+            <div style="font-size:13px;color:var(--mid);line-height:1.7;" id="msynopsis"></div>
+            <div style="margin-top:12px;" id="mcast"></div>
+          </div>
+          <div>
+            <table style="font-size:13px;width:100%;border-collapse:collapse;" id="mdetails"></table>
+            <div style="margin-top:12px;" id="mformats"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:20px;">
+          <button onclick="_shareModal()" style="flex:1;padding:10px;background:#f4f2ee;border:none;border-radius:6px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;cursor:pointer;">📤 Поделиться</button>
+        </div>
+      </div>
+
+      <!-- РАСПИСАНИЕ — всегда виден -->
+      <div id="pane-schedule" style="margin-bottom:20px;">
+        <div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border);">📅 Расписание сеансов</div>
+        <div id="mschedule"></div>
+      </div>
+
+      <!-- ВКЛАДКИ: Трейлер / Отзывы / Купить билет -->
+      <div class="modal-tabs">
+        <div class="mtab" id="tab-trailer"  onclick="switchTab('trailer')">▶ Трейлер</div>
+        <div class="mtab" id="tab-reviews"  onclick="switchTab('reviews')">Отзывы <span id="reviewCountBadge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:3px;"></span></div>
+        <div class="mtab" id="tab-tickets"  onclick="switchTab('tickets')">🎟️ Купить билет</div>
+      </div>
+
+      <!-- Трейлер -->
+      <div class="pane" id="pane-trailer"></div>
+
+      <!-- Отзывы -->
+      <div class="pane" id="pane-reviews">
+        <div id="reviewSummary" style="display:flex;gap:20px;align-items:flex-start;background:#f9f7f4;border-radius:8px;padding:14px;margin-bottom:14px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Отзывы зрителей</div>
+          <select id="reviewSort" onchange="renderReviewList()" style="border:1px solid #ddd;border-radius:3px;padding:4px 8px;font-size:12px;">
+            <option value="new">Сначала новые</option>
+            <option value="top">По рейтингу</option>
+            <option value="pos">Положительные</option>
+            <option value="neg">Критические</option>
+          </select>
+        </div>
+        <div id="reviewList"></div>
+        <div style="background:#fff;border:2px solid var(--red);border-radius:6px;padding:16px;margin-top:16px;">
+          <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Написать отзыв</div>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:700;color:#444;margin-bottom:6px;">Ваша оценка <span id="ratingVal" style="color:var(--red);"></span></div>
+            <div id="starPicker" style="display:flex;gap:6px;cursor:pointer;font-size:28px;line-height:1;"></div>
+          <div id="starLabel" style="font-size:12px;color:var(--red);margin-top:4px;min-height:16px;"></div>
+          </div>
+          <textarea id="reviewText" rows="3" placeholder="Ваш отзыв о фильме..." style="width:100%;border:1px solid #ddd;border-radius:4px;padding:8px;font-size:13px;resize:vertical;font-family:PT Sans,sans-serif;"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <input id="reviewTitle" type="text" placeholder="Заголовок (необязательно)" style="flex:1;border:1px solid #ddd;border-radius:4px;padding:8px;font-size:13px;">
+            <button onclick="submitReview()" class="btn-red" style="padding:8px 20px;">Отправить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Купить билет -->
+      <div class="pane" id="pane-tickets">
+        <div id="ticketBox">
+          <div id="ck-cinema-sel" style="margin-bottom:12px;"></div>
+          <div id="ck-time-sel" style="margin-bottom:12px;"></div>
+          <div id="ck-seat" style="margin-bottom:12px;"></div>
+          <div id="ck-summary" style="margin-bottom:12px;"></div>
+          <div id="ck-price" style="margin-bottom:12px;"></div>
+          <div id="ck-cnt" style="display:none;"></div>
+          <div id="ck-total" style="display:none;"></div>
+          <div id="ck-success-detail" style="display:none;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// =========================================================
+// FILM DATABASE (26 films, July 2018)
+// =========================================================
+const FILMS = [
+  // ─── Волгоград 2026 ──────────────────────────────────────────────
+  { id:'vlg_01', title:'Мастер и Маргарита 2', genre:'Фантастика', country:'Россия', year:2026,
+    duration:135, rating:7.8, votes:0, age:'16+', formats:['2D'], price:350,
+    director:'Михаил Локшин', cast:'Евгений Цыганов, Юлия Снигирь',
+    synopsis:'Продолжение экранизации романа Булгакова.',
+    cinemas:['Киномакс'],
+    poster:'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=300&h=450&fit=crop',
+    dateISO:'2026-06-01', city:'Волгоград', cinema:'Киномакс', date:'1 июня 2026'},
+  { id:'vlg_02', title:'Чебурашка 2', genre:'Семейный', country:'Россия', year:2026,
+    duration:95, rating:7.2, votes:0, age:'0+', formats:['2D','3D'], price:300,
+    director:'Дмитрий Дьяченко', cast:'Михаил Галустян',
+    synopsis:'Новые приключения любимого персонажа.',
+    cinemas:['Синема Парк'],
+    poster:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&h=450&fit=crop',
+    dateISO:'2026-06-05', city:'Волгоград', cinema:'Синема Парк', date:'5 июня 2026'},
+  { id:'vlg_03', title:'Экипаж 2', genre:'Боевик', country:'Россия', year:2026,
+    duration:120, rating:7.5, votes:0, age:'12+', formats:['IMAX','2D'], price:400,
+    director:'Николай Лебедев', cast:'Данила Козловский',
+    synopsis:'Пилоты снова в деле — захватывающий авиационный боевик.',
+    cinemas:['Киномакс'],
+    poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300&h=450&fit=crop',
+    dateISO:'2026-06-12', city:'Волгоград', cinema:'Киномакс', date:'12 июня 2026'},
+  { id:'vlg_04', title:'Повелитель ветра', genre:'Драма', country:'Россия', year:2026,
+    duration:110, rating:8.1, votes:0, age:'12+', formats:['2D'], price:380,
+    director:'Игорь Волошин', cast:'Фёдор Бондарчук',
+    synopsis:'История покорения океана на яхте в одиночку.',
+    cinemas:['Синема Парк'],
+    poster:'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=300&h=450&fit=crop',
+    dateISO:'2026-06-19', city:'Волгоград', cinema:'Синема Парк', date:'19 июня 2026'},
+  { id:'vlg_05', title:'Майор Гром: Тёмный рыцарь', genre:'Боевик', country:'Россия', year:2026,
+    duration:130, rating:7.9, votes:0, age:'12+', formats:['IMAX','2D','3D'], price:450,
+    director:'Олег Трофим', cast:'Тихон Жизневский',
+    synopsis:'Новое дело майора Грома — самый ожидаемый российский комикс-боевик.',
+    cinemas:['Киномакс', 'Синема Парк'],
+    poster:'https://images.unsplash.com/photo-1611787640592-ebac527e5e63?w=300&h=450&fit=crop',
+    dateISO:'2026-06-26', city:'Волгоград', cinema:'Киномакс', date:'26 июня 2026'},
+  { id:'vlg_06', title:'Летучий корабль', genre:'Семейный', country:'Россия', year:2026,
+    duration:100, rating:7.4, votes:0, age:'6+', formats:['2D','3D'], price:320,
+    director:'Илья Учитель', cast:'Константин Хабенский',
+    synopsis:'Музыкальное приключение по мотивам советского мультфильма.',
+    cinemas:['Синема Парк', 'Киномакс'],
+    poster:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=450&fit=crop',
+    dateISO:'2026-07-03', city:'Волгоград', cinema:'Синема Парк', date:'3 июля 2026'},
+
+];
+
+const CINEMAS_TIMES = {
+  // Москва
+  'КАРО Фильм':  ['11:00','13:40','16:10','18:55','21:20'],
+  'Октябрь':     ['12:00','15:00','18:00','21:00'],
+  'Формула Кино':['10:30','13:15','16:00','18:45','22:00'],
+  'Монополь':    ['13:00','16:30','19:30'],
+  'Пионер':      ['16:00','19:00','21:30'],
+  'Иллюзион':    ['17:00','19:30'],
+  'Синема Стар': ['10:45','13:10','15:35','18:00','20:25'],
+  'Родина':      ['12:00','15:00','18:00','20:30'],
+  // Волгоград (данные из kinoafisha.info, mori.film, empire-vlg.ru, 5zvezd.ru)
+  'Киномакс': ['10:20','12:40','14:40','16:20','18:20','20:40','23:20'],
+  'Синема Парк': ['10:55','13:10','15:30','17:50','20:10','21:20','23:40'],
+  'Пять звёзд': ['10:25','10:45','13:40','15:40','16:55','19:05','19:50','20:00'],
+  'Mori Cinema': ['10:30','12:50','15:10','17:30','19:50','22:10'],
+  'Empire Cinema': ['13:00','15:30','18:00','20:30','22:05'],
+  'Синема 5': ['11:15','13:45','16:15','18:45','21:15'],
+  'Гиппопо': ['12:00','15:00','18:00','20:30'],
+};
+
+// Маппинг кинотеатров по городам
+const CINEMA_CITY = {
+  'Москва':          ['Синема Парк','КАРО Фильм','Октябрь','Формула Кино','Монополь','Пионер','Иллюзион','Атриум'],
+  'Санкт-Петербург': ['Кинополис СПб','Каро Питер','Аврора','Формула Питер'],
+  'Екатеринбург':    ['Синема Парк Екб','Монополь Урал','Кинотеатр Урал'],
+  'Казань':          ['Родина Казань','IMAX Казань','Синема Казань'],
+  'Новосибирск':     ['Синема Парк НСК','Победа НСК','Формула НСК'],
+  'Краснодар':       ['Монополь Юг','Синема Краснодар','Аврора Кубань'],
+  'Нижний Новгород': ['Формула НН','КАРО НН','Синема НН'],
+  'Ростов-на-Дону':  ['Синема Ростов','Монополь Дон','Формула Ростов'],
+  'Уфа':             ['Синема Уфа','Монополь Уфа'],
+  'Пермь':           ['Синема Пермь','Кристалл Пермь'],
+  'Красноярск':      ['Синема Красноярск','Победа Красноярск'],
+  'Волгоград':        ['Киномакс','Синема Парк','Пять звёзд','Mori Cinema','Empire Cinema','Синема 5','Гиппопо'],
+};
+
+// Добавляем поле city в FILMS на основе маппинга кинотеатров
+// (фильм показывается в городе, если хотя бы один его кинотеатр в этом городе)
+function getFilmCities(film) {
+  var cities = [];
+  Object.keys(CINEMA_CITY).forEach(function(city) {
+    var citycinemas = CINEMA_CITY[city];
+    if (film.cinemas && film.cinemas.some(function(cn) { return citycinemas.includes(cn); })) {
+      cities.push(city);
+    }
+  });
+  return cities.length ? cities : ['Москва']; // default
+}
+
+
+// =============================================
+// CITIES DATABASE
+// =============================================
+const CITIES_DATA = {
+  'Москве': {
+    label: 'Москве',
+    titleLabel: 'Москве',
+    bcLabel: 'Москве',
+    cinemas: [
+      { name:'Синема Парк',url:'cinema-sinemapark-volgograd.html',   addr:'Охотный Ряд, ТЦ «Галерея Актёр»',        district:'🔴 м. Охотный Ряд',      formats:['IMAX','3D','4DX','Dolby'] },
+      { name:'КАРО Фильм',    addr:'Ленинградский пр-т, 16',                   district:'🟤 м. Белорусская',        formats:['3D','VIP'] },
+      { name:'Октябрь',       addr:'Новый Арбат, 24',                          district:'🔵 м. Арбатская',          formats:['IMAX','3D','Arri'] },
+      { name:'Формула Кино',url:'cinema-formularino-volgograd.html',  addr:'ТЦ «Европейский», пл. Киевского вокзала',  district:'🔵 м. Киевская',           formats:['3D','4DX'] },
+      { name:'Пионер',        addr:'Кутузовский пр-т, 21',                     district:'🔵 м. Кутузовская',        formats:['2D','Арт-хаус'] },
+      { name:'Иллюзион',      addr:'Котельническая наб., 1/15',                district:'🔴 м. Таганская',          formats:['35мм','Ретро'] },
+      { name:'Монополь',      addr:'Большая Никитская, 18',                    district:'🔴 м. Охотный Ряд',        formats:['3D','Лаунж'] },
+    ],
+    filmCinemas: ['Синема Парк','КАРО Фильм','Октябрь','Формула Кино','Монополь','Пионер','Иллюзион'],
+  },
+  'Волгограде': {
+    label: 'Волгограде',
+    titleLabel: 'Волгограде',
+    bcLabel: 'Волгограде',
+    cinemas: [
+      { name:'Киномакс',      url:'https://kinomax.ru/volgograd',            addr:'Рабоче-Крестьянская ул., 10',                           district:'🔵 Ворошиловский', formats:['3D','2D'] },
+      { name:'Синема Парк',   url:'https://kinoteatr.ru/volgograd/evropa-city-mall/', addr:'просп. Ленина, 54б, ТРЦ «Европа Сити Молл», 4 эт.', district:'🟢 Центральный',    formats:['2D','3D'] },
+      { name:'Пять звёзд',    url:'https://5zvezd.ru/vlg/schedule',          addr:'Рабоче-Крестьянская ул., 9Б, ТЦ «Ворошиловский», 4 зала', district:'🔵 Ворошиловский', formats:['2D'] },
+      { name:'Mori Cinema',   url:'https://mori.film/schedule/6',            addr:'ул. Землячки, 110Б, ТРЦ «Мармелад», 2 эт. · 7 залов · Atmos',             district:'🟡 Дзержинский',  formats:['2D','3D'] },
+      { name:'Empire Cinema', url:'https://empire-vlg.ru',                   addr:'Краснознаменская ул., 9, ТРЦ «Пирамида», 4 эт. · +7 (933) 223-48-14',        district:'🟢 Центральный',    formats:['2D','3D'] },
+      { name:'Синема 5',      url:'https://cinema5.ru/volgograd/',               addr:'бул. 30-летия Победы, 21, ТРЦ «Парк Хаус», 3 эт.',     district:'🟣 Кировский',     formats:['2D'] },
+      { name:'Гиппопо',       url:'https://xn--c1aksadab.xn--p1ai/kinoteatr/', addr:'просп. Героев Сталинграда, 68, РЦ «Гиппопо» · 1 зал · +7 (8442) 67-22-22',          district:'🔴 Красноармейский', formats:['2D'] }
+    ]
+  },
+};
+
+let currentCity = localStorage.getItem('afishi_city') || 'Волгоград';
+
+function toggleCity() {
+  const next = currentCity === 'Москве' ? 'Волгограде' : 'Москве';
+  switchCity(next);
+}
+
+let currentView = 'grid';
+let activeGenre = '';
+let activeFormats = new Set();
+let currentFilm = null;
+let ckState = { cinema:'', time:'', type:null, seats:[] };
+
+// ---- RENDER ----
+function renderAll() {
+  try {
+  // Filter by detected city
+  let citycinemas = (typeof currentCity !== 'undefined' && currentCity && typeof CINEMA_CITY !== 'undefined')
+    ? (CINEMA_CITY[currentCity] || []) : [];
+  
+  let films = [...FILMS];
+  
+  // City filter: show films playing in current city (or all if city unknown)
+  if (citycinemas.length) {
+    let cityFilms = films.filter(f => f.cinemas && f.cinemas.some(cn => citycinemas.includes(cn)));
+    // Fallback: if no films for this city, show all
+    if (cityFilms.length > 0) {
+      films = cityFilms;
+    }
+  }
+
+  // Показывать только будущие и текущие анонсы
+  var today = new Date(); today.setHours(0,0,0,0);
+  films = films.filter(function(f) {
+    if (!f.dateISO) return true; // без даты — показываем (анонс без даты)
+    var d = new Date(f.dateISO);
+    return !isNaN(d) && d >= today;
+  });
+  if (activeGenre) films = films.filter(f => f.genre === activeGenre);
+  if (activeFormats.size) films = films.filter(f => [...activeFormats].every(fmt => f.formats.includes(fmt)));
+  const cinemaVal = document.getElementById('cinemaFilter')?.value || '';
+  if (cinemaVal) films = films.filter(f => f.cinemas.includes(cinemaVal));
+  const sort = document.getElementById('sortFilter')?.value || '';
+  if (sort==='rating') films.sort((a,b)=>b.rating-a.rating);
+  else if (sort==='price') films.sort((a,b)=>a.price-b.price);
+  else if (sort==='alpha') films.sort((a,b)=>a.title.localeCompare(b.title,'ru'));
+  else if (sort==='new') films.sort((a,b)=>(b.new?1:0)-(a.new?1:0));
+
+  (document.getElementById('resultsCount')||{}).textContent = `Найдено: ${films.length}`;
+  (document.getElementById('totalCount')||{}).textContent = films.length;
+
+  const grid = document.getElementById('filmGrid');
+  const list = document.getElementById('filmList');
+  const empty = document.getElementById('emptyState');
+  if (!grid || !list) return; // DOM не готов
+  grid.innerHTML = ''; list.innerHTML = '';
+
+  if (!films.length) { if(empty) empty.style.display='block'; return; }
+  if(empty) empty.style.display='none';
+
+  films.forEach(f => {
+    if (currentView==='grid') grid.appendChild(makeGridCard(f));
+    else list.appendChild(makeListCard(f));
+  });
+
+  // Hits sidebar — безопасный рендер
+  try {
+    var hits = [...FILMS].sort(function(a,b){return b.rating-a.rating;}).slice(0,5);
+    var hw2 = document.getElementById('hitsWidget');
+    if (hw2 && hits.length) {
+      var hHtml = '';
+      hits.forEach(function(f,i) {
+        hHtml += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border,#e8e6e2);cursor:pointer;" onclick="openModal(\'' + f.id + '\')">'
+          + '<div style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;color:'+(i===0?'var(--red)':'#ccc')+';width:24px;text-align:center;">'+(i+1)+'</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:13px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+f.title+'</div>'
+          + '<div style="font-size:11px;color:#888;">'+f.genre+(f.price?' · от '+f.price.toLocaleString('ru')+' ₽':'')+'</div>'
+          + '</div></div>';
+      });
+      hw2.innerHTML = hHtml;
+    }
+  } catch(e) { /* hitsWidget не готов */ }
+
+  } catch(e) { console.warn('renderAll:', e.message); }
+}
+
+function makeGridCard(f) {
+  const el = document.createElement('div');
+  el.className = 'film-card';
+  const stars = Math.round(f.rating/2);
+  const starsStr = '★'.repeat(stars)+'☆'.repeat(5-stars);
+  const fmtBadges = f.formats.map(fmt => `<div class="film-fbadge ${fmt==='IMAX'?'imax':fmt==='3D'?'threeD':''}">${fmt}</div>`).join('');
+  const newBadge = f.new ? `<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:2px;letter-spacing:.5px;">НОВИНКА</div>` : '';
+  el.innerHTML = `
+    <div class="film-poster" style="background:${f.color};position:relative;overflow:hidden;">
+      ${f.poster ? `<img src="${f.poster}" alt="${f.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;" loading="lazy">` : ''}
+      <div class="film-poster-img" style="font-size:42px;${f.poster ? 'opacity:0;' : ''}">${f.icon}</div>
+      ${newBadge}
+      <div class="film-age">${f.age}</div>
+      <div class="film-format-badges">${fmtBadges}</div>
+    </div>
+    <div class="film-body">
+      <div class="film-genre">${f.genre} · ${f.country} · ${f.year}</div>
+      <div class="film-title">${f.title}</div>
+      <div class="film-meta">${f.director} · ${f.duration} мин</div>
+      <div class="film-rating-row">
+        <span class="film-stars">${starsStr}</span>
+        <span class="film-score">${f.rating}</span>
+      </div>
+      <div class="film-price-row">
+        <div class="film-price">от <strong>${f.price} ₽</strong></div>
+        <button class="buy-btn" onclick="event.stopPropagation();openModal('${f.id}',true)">Билеты</button>
+      </div>
+    </div>`;
+  el.onclick = () => openModal(f.id);
+  return el;
+}
+
+function makeListCard(f) {
+  const el = document.createElement('div');
+  el.className = 'film-list-item';
+  const stars = Math.round(f.rating/2);
+  const starsStr = '★'.repeat(stars)+'☆'.repeat(5-stars);
+  const fmtTags = f.formats.map(fmt=>`<span class="film-list-tag">${fmt}</span>`).join('');
+  el.innerHTML = `
+    <div class="film-list-poster" style="background:${f.color};display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;overflow:hidden;">${f.poster ? `<img src="${f.poster}" alt="${f.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">` : f.icon}</div>
+    <div class="film-list-body">
+      <div class="film-list-genre">${f.genre} · ${f.country} · ${f.year} · ${f.age}</div>
+      <div class="film-list-title">${f.title}</div>
+      <div class="film-list-desc">${f.synopsis.substring(0,140)}…</div>
+      <div class="film-list-tags">${fmtTags}<span class="film-list-tag">${f.duration} мин</span></div>
+    </div>
+    <div class="film-list-right">
+      <div style="font-size:14px;color:var(--yellow);">${starsStr} <strong>${f.rating}</strong></div>
+      <div style="font-size:12px;color:var(--light);">${(f.votes/1000).toFixed(0)}K голосов</div>
+      <div style="font-size:14px;font-weight:700;">от ${f.price} ₽</div>
+      <button class="buy-btn" style="width:100%;padding:8px 0;" onclick="openModal('${f.id}',true)">Купить билет</button>
+    </div>`;
+  el.onclick = () => openModal(f.id);
+  return el;
+}
+
+// ---- VIEW ----
+function setView(v) {
+  currentView = v;
+  document.getElementById('filmGrid').style.display = v==='grid'?'grid':'none';
+  document.getElementById('filmList').style.display = v==='list'?'flex':'none';
+  document.getElementById('btnGrid').classList.toggle('active', v==='grid');
+  document.getElementById('btnList').classList.toggle('active', v==='list');
+  // Загрузить постеры из localStorage (добавленные через admin-panel)
+try {
+  var _fp = JSON.parse(localStorage.getItem('afishi_film_posters') || '{}');
+  Object.keys(_fp).forEach(function(pid) {
+    var _ff = FILMS.find(function(x){ return String(x.id) === String(pid); });
+    if (_ff && _fp[pid]) _ff.poster = _fp[pid];
+  });
+} catch(e) {}
+
+// Показать текущую дату
+(function() {
+  var months = ['января','февраля','марта','апреля','мая','июня',
+                'июля','августа','сентября','октября','ноября','декабря'];
+  var d = new Date();
+  var str = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  var el = document.getElementById('currentDateStr');
+  if (el) el.textContent = str;
+})();
+
+renderAll();
+}
+
+// ---- FILTERS ----
+function toggleTag(el, group) {
+  const val = el.dataset.val;
+  if (group==='genre') {
+    document.querySelectorAll('#genreFilters .ftag').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    activeGenre = val;
+  } else {
+    el.classList.toggle('active');
+    if (el.classList.contains('active')) activeFormats.add(val);
+    else activeFormats.delete(val);
+  }
+  applyFilters();
+}
+
+function applyFilters() { renderAll(); }
+
+// ---- MODAL ----
+function openModal(id, goTickets=false) {
+  currentFilm = FILMS.find(f=>f.id===id);
+  const f = currentFilm;
+  (document.getElementById('mcat')||{}).textContent = `${f.genre} · ${f.country} · ${f.year}`;
+  (document.getElementById('mtitle')||{}).textContent = f.title;
+  (document.getElementById('mmeta')||{}).innerHTML = `Реж. ${f.director} · ${f.duration} мин · ${f.age} · ${f.rating}★ (${(f.votes/1000).toFixed(0)}K голосов)`;
+  var _mp = document.getElementById('mposter');
+  if (_mp) {
+    if (f.poster) {
+      var _mpImg = document.createElement('img');
+      _mpImg.src = f.poster;
+      _mpImg.alt = f.title || '';
+      _mpImg.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top center;';
+      _mpImg.onerror = function() { this.style.display='none'; };
+      _mp.innerHTML = '';
+      _mp.style.cssText = 'background:' + (f.color||'#0a0a0a') + ';position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;';
+      _mp.appendChild(_mpImg);
+    } else {
+      _mp.innerHTML = '<div style="width:100%;height:100%;background:' + (f.color||'#0a0a0a') + ';display:flex;align-items:center;justify-content:center;font-size:36px;">' + (f.icon|| '🎬') + '</div>';
+    }
+  }
+  (document.getElementById('msynopsis')||{}).textContent = f.synopsis;
+  (document.getElementById('mcast')||{}).innerHTML = `<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:4px;">В ролях</div><div style="font-size:13px;">${f.cast}</div>`;
+  const rows = [['Страна',f.country],['Год',f.year],['Длительность',f.duration+' мин'],['Возраст',f.age],['Жанр',f.genre]];
+  (document.getElementById('mdetails')||{}).innerHTML = rows.map(([k,v])=>`<tr><td style="color:#888;padding:4px 0;width:110px;font-size:12px;">${k}</td><td style="font-size:13px;font-weight:700;">${v}</td></tr>`).join('');
+  (document.getElementById('mformats')||{}).innerHTML = `<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:6px;">Форматы</div><div style="display:flex;gap:6px;">${f.formats.map(fmt=>`<span style="background:#f0eeea;border:1px solid #ddd;font-size:12px;font-weight:700;padding:3px 9px;border-radius:2px;">${fmt}</span>`).join('')}</div>`;
+
+  // Schedule
+  const sch = document.getElementById('mschedule');
+  if (!sch) return;
+  sch.innerHTML = '';
+  f.cinemas.forEach(cn => {
+    const times = CINEMAS_TIMES[cn] || [];
+    const sold = new Set([times[0],times[times.length-1]]);
+    const few = new Set([times[1]]);
+    sch.innerHTML += `<div class="schedule-cinema">
+      <div class="schedule-cinema-name">
+        <span class="cinema-filter-link" onclick="filterByCinemaFromModal('${cn}')" title="Показать все фильмы в этом кинотеатре">🎬 ${cn}</span>
+      </div>
+      <div class="schedule-cinema-addr">${getCinemaAddr(cn)}</div>
+      <div class="schedule-times">${times.map(t=>`<div class="stime ${sold.has(t)?'sold':''} ${few.has(t)?'few':''}" onclick="openModal('${f.id}',true)">${t}${few.has(t)?' <small style="font-size:9px;">!</small>':''}</div>`).join('')}</div>
+    </div>`;
+  });
+
+  // Tickets setup
+  ckState = {cinema: f.cinemas[0], time:'', type: {name:'Стандарт',price:f.price}, seats:[]};
+  renderCkCinemas();
+  renderCkTimes();
+  renderCkTypes();
+  ckGoStep(1);
+
+  switchTab(goTickets?'tickets':'info');
+  document.getElementById('filmModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function getCinemaAddr(n) {
+  const allCinemas = [...CITIES_DATA['Москве'].cinemas, ...CITIES_DATA['Волгограде'].cinemas];
+  const found = allCinemas.find(c => c.name === n);
+  return found ? found.addr : '';
+}
+
+function closeModal() {
+  document.getElementById('filmModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+function handleModalClick(e) {
+  if (e.target===document.getElementById('filmModal')) closeModal();
+}
+
+function switchTab(tab) {
+  ['trailer','reviews','tickets'].forEach(function(id) {
+    var el  = document.getElementById('pane-' + id);
+    var tab_el = document.getElementById('tab-' + id);
+    var active = (id === tab);
+    if (el) el.classList.toggle('active', active);
+    if (tab_el) tab_el.classList.toggle('active', active);
+  });
+  if (tab === 'reviews') {
+    renderReviewSummary && renderReviewSummary();
+    renderReviewList && renderReviewList();
+  }
+  if (tab === 'tickets') renderTickets && renderTickets();
+  if (tab === 'trailer') renderTrailerPane && renderTrailerPane();
+}
+
+// =============================================
+// REVIEWS ENGINE
+// =============================================
+
+const REVIEWS_DB = {}; // filmId -> array of review objects
+
+const AVATAR_COLORS = ['#e53935','#1e88e5','#43a047','#8e24aa','#f4511e','#00897b','#3949ab','#c0ca33','#d81b60','#00acc1'];
+const NAMES = ['Алексей К.','Мария В.','Дмитрий П.','Ольга С.','Иван Т.','Екатерина Л.','Сергей Н.','Наталья Ф.','Андрей Г.','Юлия М.','Павел Р.','Анна Д.','Николай Ш.','Татьяна Б.'];
+
+// Pre-seed reviews for each film
+const SEED_REVIEWS = {
+  default: [
+    { name:'Алексей К.', score:5, text:'Отличный фильм! Давно не получал такого удовольствия от просмотра. Спецэффекты на высоте, актёры великолепны, сюжет держит в напряжении до последней минуты.', date:'30 июня 2018', helpful:24 },
+    { name:'Мария В.', score:4, text:'Хороший фильм, но ожидала немного большего. Первые два часа очень динамичные, финал чуть разочаровал. В целом рекомендую к просмотру.', date:'29 июня 2018', helpful:11 },
+    { name:'Дмитрий П.', score:5, text:'Смотрел в IMAX — это что-то невероятное. Картинка просто сумасшедшая. Обязательно идите в хороший зал.', date:'28 июня 2018', helpful:18 },
+  ],
+  1: [ // Миссия невыполнима
+    { name:'Сергей Н.', score:5, text:'Том Круз в свои 55 делает трюки, которые молодые не рискнут повторить. Финальная погоня на вертолёте — это шедевр. Лучший фильм франшизы!', date:'30 июня 2018', helpful:47 },
+    { name:'Ольга С.', score:4, text:'Очень динамично и захватывающе. Генри Кавилл отлично вписался в роль. Единственный минус — немного затянут первый акт.', date:'29 июня 2018', helpful:19 },
+    { name:'Иван Т.', score:5, text:'Сидел в кино с открытым ртом. Трюки без компьютерной графики — это что-то невероятное. Кино для настоящих ценителей боевиков.', date:'28 июня 2018', helpful:33 },
+    { name:'Екатерина Л.', score:3, text:'Хорошо снято, но для меня это уже шестой фильм — немного надоело. Схема одна и та же: задание, предатель, погоня, взрыв. Но Том Круз — молодец.', date:'27 июня 2018', helpful:8 },
+  ],
+  3: [ // Лето
+    { name:'Наталья Ф.', score:5, text:'Серебренников снял шедевр. Чёрно-белая картинка, дух Ленинграда 80-х, живая музыка — всё это создаёт неповторимую атмосферу. Фильм-ощущение.', date:'30 июня 2018', helpful:38 },
+    { name:'Андрей Г.', score:5, text:'Тео Ю невероятен. Музыка Цоя и Майка Науменко звучит как будто сейчас. Это больше чем кино — это документ эпохи.', date:'28 июня 2018', helpful:25 },
+    { name:'Павел Р.', score:4, text:'Стильно, атмосферно, немного медленно. Для ценителей авторского кино — обязательно. Массовой публике может показаться скучным.', date:'26 июня 2018', helpful:14 },
+  ],
+  7: [ // Мстители
+    { name:'Алексей К.', score:5, text:'10 лет MCU привели к этому. Все герои собраны, Танос — лучший злодей Marvel. Финал просто убивает. Плакал в зале.', date:'30 июня 2018', helpful:89 },
+    { name:'Юлия М.', score:5, text:'Я не фанат супергероики, но это кино захватило с первых минут. Братья Руссо знают своё дело. Жду вторую часть!', date:'29 июня 2018', helpful:56 },
+    { name:'Николай Ш.', score:4, text:'Грандиозно, но из-за количества персонажей некоторым уделено слишком мало экранного времени. Смотрите в IMAX — того стоит.', date:'28 июня 2018', helpful:31 },
+    { name:'Татьяна Б.', score:3, text:'Если не смотрели предыдущие 18 фильмов, вы просто ничего не поймёте. Хорошее кино, но требует домашней работы.', date:'27 июня 2018', helpful:22 },
+  ],
+  8: [ // Тихое место
+    { name:'Мария В.', score:5, text:'Самый страшный фильм за последние годы. И при этом почти без диалогов. Тишина в зале была абсолютной — все боялись дышать.', date:'30 июня 2018', helpful:43 },
+    { name:'Дмитрий П.', score:5, text:'Джон Красински — режиссёр-открытие. Эмили Блант великолепна. Редкий случай, когда хоррор берёт не кровью, а атмосферой.', date:'29 июня 2018', helpful:37 },
+    { name:'Сергей Н.', score:4, text:'Отличная концепция, хорошая реализация. Немного провисает середина, но финал компенсирует всё.', date:'27 июня 2018', helpful:15 },
+  ],
+};
+
+const STAR_LABELS = ['','Ужасно 😤','Плохо 😕','Так себе 😐','Нормально 🙂','Хорошо 👍','Хорошо 👍','Очень хорошо 😊','Отлично 🔥','Превосходно ⭐','Шедевр! 🏆'];
+
+let pickedStars = 0;
+
+function initStarPicker() {
+  pickedStars = 0;
+  const el = document.getElementById('starPicker');
+  el.innerHTML = '';
+  for (let i=1;i<=10;i++) {
+    const s = document.createElement('span');
+    s.className = 'star-pick';
+    s.textContent = '★';
+    s.dataset.val = i;
+    s.style.cssText = 'font-size:28px;transition:transform .1s,color .1s;';
+    s.onmouseover = () => { highlightStars(i); (document.getElementById('starLabel')||{}).textContent = i + '/10 — ' + STAR_LABELS[i]; };
+    s.onmouseleave = () => { highlightStars(pickedStars); (document.getElementById('starLabel')||{}).textContent = pickedStars ? pickedStars+'/10 — '+STAR_LABELS[pickedStars] : ''; };
+    s.onclick = () => { pickedStars=i; highlightStars(i); (document.getElementById('starLabel')||{}).textContent = i+'/10 — '+STAR_LABELS[i]; };
+    el.appendChild(s);
+  }
+  const lbl = document.getElementById('starLabel');
+  if (lbl) lbl.textContent = '';
+  // charcount
+  const ta = document.getElementById('reviewText');
+  if (ta) ta.oninput = () => { const cc = document.getElementById('charCount'); if(cc) cc.textContent = ta.value.length+' / 1000'; };
+}
+
+function highlightStars(n) {
+  document.querySelectorAll('.star-pick').forEach((s,i) => s.classList.toggle('lit', i<n));
+}
+
+function getOrSeedReviews(filmId) {
+  if (!REVIEWS_DB[filmId]) {
+    const seed = SEED_REVIEWS[filmId] || SEED_REVIEWS.default || [];
+    REVIEWS_DB[filmId] = (Array.isArray(seed) ? seed : []).map((r,i) => ({
+      ...r, id: Date.now()+i, voted: false
+    }));
+  }
+  return REVIEWS_DB[filmId];
+}
+
+function renderReviewsPane() {
+  const f = currentFilm;
+  const reviews = getOrSeedReviews(f.id);
+  
+  // Show/hide form based on auth state
+  const formWrap = document.getElementById('cinemaReviewFormWrap');
+  const authGate = document.getElementById('cinemaReviewAuthGate');
+  if (formWrap && authGate) {
+    const loggedIn = window.Afishi && window.Afishi.isLoggedIn();
+    formWrap.style.display = loggedIn ? 'block' : 'none';
+    authGate.style.display = loggedIn ? 'none' : 'flex';
+  }
+
+  // Badge count
+  (document.getElementById('reviewCountBadge')||{}).textContent = reviews.length;
+  document.getElementById('reviewCountBadge').style.background = '#c8102e';
+  document.getElementById('reviewCountBadge').style.color = '#fff';
+
+  // Summary block
+  const avg = reviews.reduce((s,r)=>s+r.score,0)/reviews.length;
+  const dist = [5,4,3,2,1].map(n=>({ n, cnt: reviews.filter(r=>r.score===n).length }));
+  const maxCnt = Math.max(...dist.map(d=>d.cnt),1);
+  (document.getElementById('reviewSummary')||{}).innerHTML = `
+    <div style="text-align:center;flex-shrink:0;">
+      <div style="font-family:'Oswald',sans-serif);font-size:54px;font-weight:700;color:var(--black);line-height:1;">${avg.toFixed(1)}</div>
+      <div style="color:var(--yellow);font-size:20px;letter-spacing:2px;margin:4px 0;">${'★'.repeat(Math.round(avg))}${'☆'.repeat(5-Math.round(avg))}</div>
+      <div style="font-size:12px;color:var(--light);">${reviews.length} ${pluralReviews(reviews.length)}</div>
+    </div>
+    <div class="rating-bar-wrap">
+      ${dist.map(d=>`
+        <div class="rating-bar-row">
+          <span style="color:var(--yellow);font-size:13px;">${'★'.repeat(d.n)}</span>
+          <div class="rating-bar-bg"><div class="rating-bar-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
+          <span style="color:var(--light);width:20px;text-align:right;">${d.cnt}</span>
+        </div>`).join('')}
+    </div>
+    <div style="flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-self:center;">
+      <div style="font-size:13px;color:var(--mid);">👍 Рекомендуют: <strong>${Math.round(reviews.filter(r=>r.score>=4).length/reviews.length*100)}%</strong></div>
+      <div style="font-size:13px;color:var(--mid);">📅 Последний отзыв: <strong>${reviews[0]?.date|| '—'}</strong></div>
+    </div>`;
+
+  initStarPicker();
+  renderReviewList();
+}
+
+function pluralReviews(n) {
+  if (n%10===1&&n%100!==11) return 'отзыв';
+  if ([2,3,4].includes(n%10)&&![12,13,14].includes(n%100)) return 'отзыва';
+  return 'отзывов';
+}
+
+function renderReviewList() {
+  const f = currentFilm;
+  if (!f) return;
+  const reviews = getOrSeedReviews(f.id);
+  const sort = document.getElementById('reviewSort')?.value || 'new';
+  let sorted = [...reviews];
+  if (sort==='top') sorted.sort((a,b)=>b.helpful-a.helpful);
+  else if (sort==='pos') sorted = sorted.filter(r=>r.score>=4).sort((a,b)=>b.score-a.score);
+  else if (sort==='neg') sorted = sorted.filter(r=>r.score<=3).sort((a,b)=>a.score-b.score);
+
+  (document.getElementById('reviewListCount')||{}).textContent = `(${sorted.length})`;
+  const el = document.getElementById('reviewList');
+  el.innerHTML = '';
+
+  if (!sorted.length) {
+    el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--light);font-size:14px;">Отзывов в этой категории пока нет</div>`;
+    return;
+  }
+
+  sorted.forEach(r => {
+    const initials = r.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const colorIdx = r.name.charCodeAt(0) % AVATAR_COLORS.length;
+    const starsHtml = '★'.repeat(r.score) + '☆'.repeat(5-r.score);
+    const scoreLabel = r.score>=5?'Отлично':r.score>=4?'Хорошо':r.score>=3?'Нормально':'Не понравилось';
+    const scoreBg = r.score>=4?'#e8f5e9':r.score>=3?'#fff8e1':'#fce4ec';
+    const scoreCol = r.score>=4?'#2e7d32':r.score>=3?'#f57f17':'#c62828';
+    const div = document.createElement('div');
+    div.className = 'review-card';
+    const titleBlock = r.title ? `<div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:6px;">"${r.title}"</div>` : '';
+    const newBadge = r.isNew ? `<span style="background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;">Новый</span>` : '';
+    div.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div class="review-avatar" style="background:${AVATAR_COLORS[colorIdx]};">${initials}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+            <strong style="font-size:14px;">${r.name}</strong>${newBadge}
+            <span class="review-stars">${starsHtml}</span>
+            <span style="background:${scoreBg};color:${scoreCol};font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;">${scoreLabel} ${r.score}/10</span>
+            <span style="font-size:11px;color:var(--light);margin-left:auto;">${r.date}</span>
+          </div>
+          ${titleBlock}
+          <div style="font-size:14px;color:var(--mid);line-height:1.65;margin-bottom:10px;">${r.text}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--light);">Полезный отзыв?</span>
+            <button class="review-helpful ${r.voted?'voted':''}" onclick="voteHelpful(${r.id})">
+              👍 ${r.helpful}
+            </button>
+          </div>
+        </div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+function voteHelpful(id) {
+  const f = currentFilm;
+  const reviews = getOrSeedReviews(f.id);
+  const r = reviews.find(x=>x.id===id);
+  if (!r) return;
+  if (r.voted) { r.helpful--; r.voted=false; }
+  else { r.helpful++; r.voted=true; }
+  renderReviewList();
+}
+
+function submitReview() {
+  // Auth gate — only registered users can write reviews
+  if (!window.Afishi | !window.Afishi.isLoggedIn()) {
+    window.Afishi && window.Afishi.openAuth(function() { renderReviewsPane(); });
+    return;
+  }
+  const f = currentFilm;
+  const name = document.getElementById('reviewName').value.trim();
+  const text = document.getElementById('reviewText').value.trim();
+  const titleVal = (document.getElementById('reviewTitle')?.value|| '').trim();
+  const msg = document.getElementById('reviewFormMsg');
+
+  const showErr = (t) => { if(!msg) return; msg.textContent=t; msg.style.color='#c8102e'; msg.style.display='inline'; setTimeout(()=>msg.style.display='none',3000); };
+
+  if (!pickedStars)    { showErr('⚠️ Поставьте оценку — наведите мышь на звёздочки'); return; }
+  if (!name)           { showErr('⚠️ Введите ваше имя'); return; }
+  if (text.length < 20){ showErr('⚠️ Напишите чуть подробнее — минимум 20 символов'); return; }
+
+  const reviews = getOrSeedReviews(f.id);
+  const today = new Date();
+  reviews.unshift({
+    id: Date.now(),
+    name,
+    score: pickedStars,
+    title: titleVal,
+    text,
+    date: `${today.getDate()} ${['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'][today.getMonth()]} ${today.getFullYear()}`,
+    helpful: 0,
+    voted: false,
+    isNew: true,
+  });
+
+  // Reset form
+  document.getElementById('reviewName').value = '';
+  document.getElementById('reviewText').value = '';
+  if (document.getElementById('reviewTitle')) document.getElementById('reviewTitle').value = '';
+  if (document.getElementById('charCount')) (document.getElementById('charCount')||{}).textContent= '0 / 1000';
+  pickedStars = 0;
+  initStarPicker();
+
+  msg.textContent = '✓ Отзыв опубликован! Спасибо!';
+  msg.style.color = 'green';
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display='none', 3000);
+
+  renderReviewsPane();
+}
+
+// ---- CHECKOUT ----
+function renderCkCinemas() {
+  const f = currentFilm;
+  const el = document.getElementById('ck-cinemas');
+  el.innerHTML = '';
+  f.cinemas.forEach((cn,i) => {
+    const d = document.createElement('div');
+    d.style.cssText = `border:2px solid ${ckState.cinema===cn?'var(--red)':'#e0e0e0'};border-radius:4px;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:${ckState.cinema===cn?'#fff0f0':'#fff'};transition:all .15s;font-size:13px;`;
+    d.innerHTML = `<div><strong>${cn}</strong><div style="font-size:11px;color:#888;">${getCinemaAddr(cn)}</div></div><div style="font-size:11px;color:var(--red);font-weight:700;">${ckState.cinema===cn?'✓ Выбран':''}</div>`;
+    d.onclick = () => { ckState.cinema=cn; renderCkCinemas(); renderCkTimes(); };
+    el.appendChild(d);
+  });
+}
+
+function renderCkTimes() {
+  const times = CINEMAS_TIMES[ckState.cinema]|| [];
+  const el = document.getElementById('ck-times');
+  el.innerHTML = '';
+  times.forEach((t,i) => {
+    const d = document.createElement('div');
+    d.className = 'stime' + (ckState.time===t?' stime-active':'');
+    d.style.cssText = `padding:9px 16px;border:2px solid ${ckState.time===t?'var(--red)':'#e0e0e0'};border-radius:4px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;background:${ckState.time===t?'var(--red)':'#fff'};color:${ckState.time===t?'#fff':'var(--mid)'};transition:all .15s;`;
+    d.textContent = t;
+    d.onclick = () => { ckState.time=t; renderCkTimes(); };
+    el.appendChild(d);
+  });
+  if (!ckState.time && times.length) { ckState.time=times[0]; renderCkTimes(); }
+}
+
+function renderCkTypes() {
+  const f = currentFilm;
+  const types = [
+    {name:'Стандарт',price:f.price},
+    {name:'Комфорт',price:Math.round(f.price*1.4)},
+    {name:'VIP',price:Math.round(f.price*2.5)},
+  ];
+  const el = document.getElementById('ck-types');
+  el.innerHTML = '';
+  types.forEach((t,i) => {
+    const d = document.createElement('div');
+    d.className = 'ticket-type-sel' + (ckState.type.name===t.name?' sel':'');
+    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:14px;font-weight:700;">${t.name}</div>
+      <div style="font-size:16px;font-weight:700;color:var(--red);">${t.price.toLocaleString('ru')} ₽</div>
+    </div>`;
+    d.onclick = () => { ckState.type=t; ckState.seats=[]; renderCkTypes(); renderSeatMap2(); updateCkTotal(); };
+    el.appendChild(d);
+  });
+}
+
+function renderSeatMap2() {
+  const el = document.getElementById('ck-seatmap');
+  el.innerHTML = '';
+  const rows=7, cols=12;
+  const taken = new Set();
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) if (Math.random()<0.3) taken.add(`${r}-${c}`);
+  const labels='АБВГДЕЖ';
+  for (let r=0;r<rows;r++) {
+    const row = document.createElement('div');
+    row.className='seat-row';
+    const lbl=document.createElement('span'); lbl.className='seat-lbl'; lbl.textContent=labels[r]; row.appendChild(lbl);
+    for (let c=0;c<cols;c++) {
+      const key=`${r}-${c}`;
+      const s=document.createElement('button'); s.className='seat'+(taken.has(key)?' taken':'');
+      const chosen = ckState.seats.includes(key);
+      s.style.background = taken.has(key)?'#ddd':chosen?'#c8102e':'#4caf50';
+      if (!taken.has(key)) s.onclick=()=>toggleSeat2(s,key);
+      row.appendChild(s);
+    }
+    el.appendChild(row);
+  }
+}
+
+function toggleSeat2(btn,key) {
+  const i=ckState.seats.indexOf(key);
+  if (i>=0) { ckState.seats.splice(i,1); btn.style.background='#4caf50'; }
+  else { ckState.seats.push(key); btn.style.background='#c8102e'; }
+  updateCkTotal();
+}
+
+function updateCkTotal() {
+  const cnt=ckState.seats.length|1;
+  const total=(ckState.type.price*cnt).toLocaleString('ru');
+  (document.getElementById('ck-cnt')||{}).textContent=ckState.seats.length;
+  (document.getElementById('ck-total')||{}).textContent=total+' ₽';
+}
+
+function ckGoStep(n) {
+  [1,2,3,4].forEach(i => { document.getElementById('ckPane'+i).style.display=i===n?'block':'none'; });
+  ['cks1','cks2','cks3'].forEach((id,i) => {
+    const el=document.getElementById(id);
+    el.classList.toggle('active',i<n);
+    el.classList.toggle('done',i<n);
+  });
+  if (n===2) renderSeatMap2();
+  if (n===3) {
+    const f=currentFilm;
+    const cnt=Math.max(ckState.seats.length,1);
+    const total=(ckState.type.price*cnt).toLocaleString('ru');
+    (document.getElementById('ck-summary')||{}).innerHTML=`
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:8px;">Ваш заказ</div>
+      <div>🎬 <strong>${f.title}</strong></div>
+      <div>📅 1 июля, ${ckState.time}</div>
+      <div>📍 ${ckState.cinema}</div>
+      <div>🎟️ ${ckState.type.name} × ${cnt}</div>
+      <div style="margin-top:10px;font-size:17px;font-weight:700;color:var(--red);">Итого: ${total} ₽</div>`;
+  }
+}
+
+function ckBuy() {
+  const f=currentFilm;
+  const cnt=Math.max(ckState.seats.length,1);
+  const total=(ckState.type.price*cnt).toLocaleString('ru');
+  (document.getElementById('ck-success-detail')||{}).innerHTML=`
+    <div><strong>${f.title}</strong></div>
+    <div>📅 1 июля, ${ckState.time}</div>
+    <div>📍 ${ckState.cinema}</div>
+    <div>🎟️ ${ckState.type.name} × ${cnt} шт.</div>
+    <div style="margin-top:8px;font-weight:700;color:var(--red);">Оплачено: ${total} ₽</div>`;
+  ckGoStep(4);
+}
+
+// ── Заполнить дропдаун кинотеатров для города ───────────────────
+function populateCinemaFilter(city) {
+  var sel = document.getElementById('cinemaFilter');
+  if (!sel) return;
+  var cinemas = (typeof CINEMA_CITY !== 'undefined' && CINEMA_CITY[city]) || [];
+  var opts = '<option value="">Все кинотеатры</option>';
+  cinemas.forEach(function(cn) { opts += '<option value="' + cn + '">' + cn + '</option>'; });
+  sel.innerHTML = opts;
+
+  var sb = document.getElementById('sidebarCinemas');
+  if (!sb) return;
+  // Обновить заголовок
+  var cityData = (typeof CITIES_DATA !== 'undefined') && CITIES_DATA[currentCityOf] || null;
+  if (!cinemas.length) {
+    sb.innerHTML = '<div style="font-size:13px;color:#888;padding:4px 0;">В этом городе нет данных</div>';
+    return;
+  }
+  var cinemaTimes = (typeof CINEMAS_TIMES !== 'undefined' && CINEMAS_TIMES) || {};
+  var html = '';
+  cinemas.forEach(function(cn) {
+    var times = cinemaTimes[cn] || [];
+    var timesHtml = '';
+    times.slice(0, 4).forEach(function(t) {
+      timesHtml += '<span style="background:#f0eeea;border-radius:3px;font-size:11px;padding:2px 6px;margin:1px 2px 1px 0;display:inline-block;cursor:pointer;color:#444;">' + t + '</span>';
+    });
+    var safeCn = cn.replace(/\\/g, '').replace(/"/g, '');
+    html += '<div style="padding:8px 0;border-bottom:1px solid #f5f3f0;cursor:pointer;" onclick="applyFilterByCinema(this)"  data-cinema="' + safeCn + '">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--red);cursor:pointer;margin-bottom:3px;" onclick="applyFilterByCinema(this)" data-cinema="' + safeCn + '">🎬 ' + cn + ' <span style=&quot;font-size:10px;opacity:.6;&quot;>→ все фильмы</span></div>';
+    if (timesHtml) { html += '<div style="margin-top:3px;">' + timesHtml + '</div>'; }
+    html += '</div>';
+  });
+  sb.innerHTML = html;
+}
+
+function applyFilterByCinema(el) {
+  var cn = el.getAttribute('data-cinema');
+  var sel = document.getElementById('cinemaFilter');
+  if (sel) sel.value = cn;
+  if (typeof applyFilters === 'function') applyFilters();
+}
+
+// ── GeoCity callback ──────────────────────────────────────────────
+window._onGeoCity = function(city) {
+  try {
+  currentCity = city;
+  // Обновить пилюли городов
+  document.querySelectorAll('.city-pill').forEach(function(p) {
+    p.classList.toggle('active', (p.dataset.city || p.textContent.trim()) === city);
+  });
+
+  var inCity = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Волгоград':'Волгограде','Казань':'Казани','Новосибирск':'Новосибирске','Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Омск':'Омске','Самара':'Самаре','Воронеж':'Воронеже','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке'};
+  var ofCity = {'Москва':'Москвы','Санкт-Петербург':'Санкт-Петербурга','Екатеринбург':'Екатеринбурга','Волгоград':'Волгограда','Казань':'Казани','Новосибирск':'Новосибирска','Краснодар':'Краснодара','Волгоград':'Волгограда','Нижний Новгород':'Нижнего Новгорода','Ростов-на-Дону':'Ростова-на-Дону','Уфа':'Уфы','Пермь':'Перми','Красноярск':'Красноярска','Омск':'Омска','Самара':'Самары','Воронеж':'Воронежа','Тюмень':'Тюмени','Иркутск':'Иркутска','Владивосток':'Владивостока'};
+
+  var inC  = inCity[city]  || city;
+  var ofC  = ofCity[city]  || city;
+
+  // «🎬 Кино в Волгограде»
+  var pageCity = document.getElementById('pageCity');
+  if (pageCity) pageCity.textContent = inC;
+  var pageHeroCity = document.getElementById('pageHeroCity');
+  if (pageHeroCity) pageHeroCity.textContent = city;
+
+  // Хлебные крошки
+  var bc = document.getElementById('bcCity');
+  if (bc) bc.textContent = inC;
+
+  // cityLabel / cityHint
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = city;
+  var hint = document.getElementById('cityHint');
+  if (hint) hint.textContent = inC;
+
+  // Заголовок вкладки браузера
+  document.title = 'Кино в ' + inC + ' — Афиши.ру';
+
+  // «🎬 Кинотеатры Волгограда»
+  var head = document.getElementById('sidebarCinemasHead');
+  if (head) head.textContent = '🎬 Кинотеатры ' + ofC;
+
+  // Заполнить список кинотеатров и перерисовать
+  populateCinemaFilter(city);
+  renderAll();
+
+  } catch(e) { console.warn('_onGeoCity:', e.message); }
+};
+
+// ── INIT ─────────────────────────────────────────────────────────
+(function() {
+  var saved = localStorage.getItem('afishi_city') || 'Волгоград';
+  currentCity = saved;
+  window.currentCityOf = (({'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Волгоград':'Волгограде','Екатеринбург':'Екатеринбурге'})[saved]) || saved;
+
+  var inCity = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Казань':'Казани','Новосибирск':'Новосибирске','Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Омск':'Омске','Самара':'Самаре','Воронеж':'Воронеже','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке'};
+  var ofCity = {'Москва':'Москвы','Санкт-Петербург':'Санкт-Петербурга','Екатеринбург':'Екатеринбурга','Казань':'Казани','Новосибирск':'Новосибирска','Краснодар':'Краснодара','Волгоград':'Волгограда','Нижний Новгород':'Нижнего Новгорода','Ростов-на-Дону':'Ростова-на-Дону','Уфа':'Уфы','Пермь':'Перми','Красноярск':'Красноярска','Омск':'Омска','Самара':'Самары','Воронеж':'Воронежа','Тюмень':'Тюмени','Иркутск':'Иркутска','Владивосток':'Владивостока'};
+  var inC = inCity[saved] || saved;
+  var ofC = ofCity[saved] || saved;
+
+  // Подсветить нужную пилюлю
+  document.querySelectorAll('.city-pill').forEach(function(p) {
+    p.classList.toggle('active', (p.dataset.city || p.textContent.trim()) === saved);
+  });
+
+  // Обновить все заголовки с городом
+  var pc = document.getElementById('pageCity'); if (pc) pc.textContent = inC;
+  var bc = document.getElementById('bcCity');   if (bc) bc.textContent = inC;
+  var lbl = document.getElementById('cityLabel'); if (lbl) lbl.textContent = saved;
+  var sh = document.getElementById('sidebarCinemasHead'); if (sh) sh.textContent = '🎬 Кинотеатры ' + ofC;
+  document.title = 'Кино в ' + inC + ' — Афиши.ру';
+
+  populateCinemaFilter(saved);
+  renderAll();
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     GeoCity System v2 — afishi.ru
+     ═══════════════════════════════════════════════════ -->
+<script>
+(function(){'use strict';
+  var LS_SESSION='afishi_geo_session',LS_DB='afishi_geo_db',LS_CITY='afishi_city',LS_TTL='afishi_geo_ttl';
+  var KNOWN=['Москва','Санкт-Петербург','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Самара','Омск','Ростов-на-Дону','Уфа','Красноярск','Воронеж','Пермь','Волгоград','Краснодар','Саратов','Тюмень','Ижевск','Барнаул','Иркутск','Хабаровск','Ярославль','Владивосток','Томск','Оренбург','Кемерово','Астрахань','Набережные Челны','Пенза','Рязань','Липецк','Киров','Чебоксары','Калининград','Тула','Белгород','Сочи','Мурманск','Ставрополь'];
+  var GEN={'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Новосибирск':'Новосибирске','Казань':'Казани','Нижний Новгород':'Нижнем Новгороде','Краснодар':'Краснодаре','Волгоград':'Волгограде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке','Томск':'Томске','Барнаул':'Барнауле','Сочи':'Сочи','Тула':'Туле','Ставрополь':'Ставрополе','Калининград':'Калининграде'};
+
+  // AbortController helper — compatible with all browsers
+  
+
+  function norm(r){if(!r)return null;var l=r.toLowerCase();return KNOWN.find(function(c){return c.toLowerCase()===l;})|KNOWN.find(function(c){return l.includes(c.toLowerCase());})|(r.charAt(0).toUpperCase()+r.slice(1));}
+  function gen(city){return GEN[city]|| city;}
+  function lsG(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+  function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function lsD(k){try{localStorage.removeItem(k);}catch(e){}}
+  function dbLoad(){return lsG(LS_DB)||{};}
+  function dbSave(db){lsS(LS_DB,db);}
+  function dbAdd(ip,d){if(!ip|!d.city)return;var db=dbLoad(),e=db[ip]||{ip:ip,visits:0};e.city=d.city;e.region=d.region|| '';e.country=d.country|| '';e.isp=d.isp|| '';e.source=d.source;e.lastSeen=new Date().toISOString();e.visits=(e.visits|| 0)+1;db[ip]=e;dbSave(db);}
+  function dbLookup(ip){return ip?(dbLoad()[ip]|| null):null;}
+  function cacheGet(){var d=lsG(LS_SESSION),t=localStorage.getItem(LS_TTL);if(!d)return null;if(t&&(Date.now()-parseInt(t))/86400000>7){lsD(LS_SESSION);return null;}return d;}
+  function cacheSet(d){lsS(LS_SESSION,d);localStorage.setItem(LS_TTL,String(Date.now()));}
+  function cacheClear(){lsD(LS_SESSION);lsD(LS_TTL);}
+
+  var _tt=null;
+  function toast(msg){
+    var el=document.getElementById('geoToast');
+    if(!el){el=document.createElement('div');el.id='geoToast';el.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';document.body.appendChild(el);}
+    el.textContent=msg;
+    requestAnimationFrame(function(){el.style.opacity='1';el.style.transform='translateX(-50%) translateY(0)';});
+    clearTimeout(_tt);
+    _tt=setTimeout(function(){el.style.opacity='0';el.style.transform='translateX(-50%) translateY(20px)';},3000);
+  }
+
+  function applyUI(city,source){
+    var g=gen(city);
+    var lbl=document.getElementById('cityLabel');
+    if(lbl){lbl.textContent=city;lbl.style.color='#f5c518';setTimeout(function(){lbl.style.color='';},600);}
+    var dot=document.getElementById('cityDot');
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    document.querySelectorAll('.city-pill,[data-city]').forEach(function(p){
+      var v=p.dataset.city || p.textContent.trim();p.classList.toggle('active',v===city);
+    });
+    var hint=document.getElementById('cityHint');if(hint)hint.textContent=g;
+    if(typeof currentCity!=='undefined')window.currentCity=city;
+    localStorage.setItem(LS_CITY,city);
+    if(typeof window._onGeoCity==='function')window._onGeoCity(city,source);
+    if(typeof applyFilters==='function')setTimeout(applyFilters,0);
+    toast('\uD83D\uDCCD Ваш город: '+city);
+  }
+
+  function setCity(city,source){
+    source=source||'manual';
+    var ip=localStorage.getItem('_afishi_ip')||'manual';
+    var data={ip:ip,city:city,region:'',country:'Россия',isp:'',source:source};
+    cacheSet(data);
+    if(source==='manual')dbAdd(ip,data);
+    applyUI(city,source);
+  }
+
+  async function detect(){
+    if(window._pendingCity){var pc=window._pendingCity;window._pendingCity=null;setCity(pc,'manual');return;}
+    var dot=document.getElementById('cityDot');
+
+    // 1. Use cached geo data
+    var cached=cacheGet();
+    if(cached&&cached.city){applyUI(cached.city,'cache');return;}
+
+    // 2. Use last manually picked city
+    var last=localStorage.getItem(LS_CITY);
+    if(last){applyUI(last,'last-manual');if(dot){dot.style.background='#4caf50';dot.style.animation='';}return;}
+
+    // 3. Try geo APIs silently (blocked in some environments — OK)
+    if(dot){dot.style.background='#f5c518';dot.style.animation='pulse 1s infinite';}
+    var found=false;
+
+    try{
+      var r1=await Promise.race([fetch('https://ip-api.com/json/?fields=status,city,regionName,country,query,isp,timezone&lang=ru'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d1=await r1.json();
+      if(d1.status==='success'&&d1.city){var c1=norm(d1.city);if(c1){cacheSave({ip:d1.query,city:c1,region:d1.regionName,country:d1.country,isp:d1.isp,timezone:d1.timezone,source:'ip-api'});applyUI(c1,'ip-api');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    try{
+      var r2=await Promise.race([fetch('https://ipinfo.io/json'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d2=await r2.json();
+      if(d2.city){var c2=norm(d2.city);if(c2){cacheSave({ip:d2.ip,city:c2,region:d2.region,country:d2.country,isp:d2.org,timezone:d2.timezone,source:'ipinfo'});applyUI(c2,'ipinfo');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    // 4. Silent default — no warning toast
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    applyUI('Волгоград','default');
+  }
+
+  window.GeoCity={detect:detect,setCity:setCity,getCity:function(){return localStorage.getItem(LS_CITY)||null;},clearCache:cacheClear,getDB:dbLoad,clearDB:function(){dbSave({});},removeFromDB:function(ip){var db=dbLoad();delete db[ip];dbSave(db);}};
+  window.switchCity=function(city,btn){setCity(city,'manual');document.querySelectorAll('.city-pill').forEach(function(p){p.classList.remove('active');});if(btn)btn.classList.add('active');};
+  window.detectCity=function(){cacheClear();detect();};
+  window.toggleCityDropdown=function(){var dd=document.getElementById('cityDropdown');if(!dd)return;var open=dd.classList.toggle('open');var sb=document.getElementById('citySelectBtn');if(sb)sb.classList.toggle('open',open);};
+  window.filterManualCities=function(q){var list=document.getElementById('manualCityList');if(!list)return;var f=q?KNOWN.filter(function(c){return c.toLowerCase().includes(q.toLowerCase());}):KNOWN;list.innerHTML=f.map(function(c){return'<div onclick="switchCity(\''+c+'\');var m=document.getElementById(\'manualModal\');if(m)m.style.display=\'none\'" style="padding:7px 10px;border-radius:3px;cursor:pointer;font-size:13px;" onmouseover="this.style.background=\'#fdf0f0\';this.style.color=\'var(--red)\'" onmouseout="this.style.background=\'\';this.style.color=\'\'">'+c+'</div>';}).join('');};
+  window.closeManualModal=function(){var m=document.getElementById('manualModal');if(m)m.style.display='none';};
+
+  document.addEventListener('click',function(e){
+    var dd=document.getElementById('cityDropdown'),btn=document.getElementById('citySelectBtn');
+    if(dd&&btn&&!btn.contains(e.target)&&!dd.contains(e.target)){dd.classList.remove('open');btn.classList.remove('open');}
+  });
+  document.addEventListener('DOMContentLoaded',detect);
+})();
+</script>
+
+<!-- ═══════════ TRAILER+SHARE MODULE ═══════════ -->
+<script>
+
+// ── SHARE / ПОДЕЛИТЬСЯ ───────────────────────────────────────────
+window._shareModal = function() {
+  var title = (document.getElementById('mtitle') || {}).textContent || document.title;
+  var url = window.location.href.split('#')[0];
+  var enc = encodeURIComponent;
+  var links = [
+    ['VK',  '#0077FF','ВКонтакте', 'https://vk.com/share.php?url='+enc(url)+'&title='+enc(title)],
+    ['OK',  '#EE8208','ОК',        'https://connect.ok.ru/offer?url='+enc(url)+'&title='+enc(title)],
+    ['TG',  '#2CA5E0','Telegram',  'https://t.me/share/url?url='+enc(url)+'&text='+enc(title)],
+    ['WA',  '#25D366','WhatsApp',  'https://api.whatsapp.com/send?text='+enc(title+' '+url)],
+    ['ДЗ',  '#000000','Дзен',      'https://dzen.ru/?from=share&url='+enc(url)],
+    ['RT',  '#E00000','Rutube',    'https://rutube.ru/share/?url='+enc(url)],
+    ['ЯН',  '#FC3F1D','Яндекс',    'https://yandex.ru/search/?text='+enc(title+' кино')],
+    ['MX',  '#002BE7','MAX',       'https://max.ru/search?q='+enc(title)]
+  ];
+
+  var html = '<div style="background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:520px;padding:20px 16px;">';
+  html += '<div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;text-align:center;">📤 Поделиться</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
+  links.forEach(function(l) {
+    html += '<a href="' + l[3] + '" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:8px;text-decoration:none;min-width:60px;background:#fff;" onclick="closeFilmShare()">';
+    html += '<div style="width:44px;height:44px;border-radius:12px;background:' + l[1] + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:12px;">' + l[0] + '</div>';
+    html += '<div style="font-size:10px;color:#444;font-weight:700;font-family:Oswald,sans-serif;text-transform:uppercase;">' + l[2] + '</div>';
+    html += '</a>';
+  });
+  html += '</div>';
+  html += '<button id="filmShareCopyBtn" onclick="navigator.clipboard.writeText(\'' + url + '\').then(function(){document.getElementById(\'filmShareCopyBtn\').textContent=\'✓ Скопировано\'})" style="margin-top:12px;width:100%;padding:10px;background:#f4f2ee;border:none;border-radius:8px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;cursor:pointer;">📋 Скопировать ссылку</button>';
+  html += '</div>';
+
+  var ov = document.getElementById('_filmShareOv');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = '_filmShareOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;';
+    ov.onclick = function(e){ if(e.target===ov) closeFilmShare(); };
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = html;
+  ov.style.display = 'flex';
+}
+function closeFilmShare() {
+  var ov = document.getElementById('_filmShareOv');
+  if (ov) ov.style.display = 'none';
+};
+
+function _showSharePanel(title, url) {
+  var el = document.getElementById('_afishiSharePanel');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_afishiSharePanel';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9500;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);';
+    document.body.appendChild(el);
+  }
+  var enc = encodeURIComponent;
+  var links = [
+    {e:'✈️', n:'Telegram',  h:'https://t.me/share/url?url='+enc(url)+'&text='+enc(title)},
+    {e:'🟢', n:'WhatsApp',  h:'https://wa.me/?text='+enc(title+' '+url)},
+    {e:'🔵', n:'ВКонтакте', h:'https://vk.com/share.php?url='+enc(url)+'&title='+enc(title)},
+    {e:'✉️', n:'Email',     h:'mailto:?subject='+enc(title)+'&body='+enc(url)},
+  ];
+  var btnHtml = links.map(function(l){
+    return `<button onclick="window.open('${l.h}','_blank')" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#f9f7f4;border:1.5px solid #e0e0e0;border-radius:8px;padding:14px 8px;cursor:pointer;font-size:11px;font-weight:700;color:#444;" onmouseover="this.style.borderColor='#c8102e'" onmouseout="this.style.borderColor='#e0e0e0'"><span style="font-size:24px;">${l.e}</span>${l.n}</button>`;
+  }).join('');
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:500px;padding:22px 20px 32px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">↗ Поделиться</div>
+        <button id="_sharePanelClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">✕</button>
+      </div>
+      <div style="font-size:13px;color:#666;margin-bottom:16px;padding:10px 12px;background:#f9f7f4;border-radius:6px;font-weight:700;">📍 ${title}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">${btnHtml}</div>
+      <div style="display:flex;gap:8px;">
+        <input id="_shareUrlInp" value="${url}" readonly style="flex:1;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:12px;color:#666;outline:none;"/>
+        <button id="_shareCopyBtn" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;white-space:nowrap;">Скопировать</button>
+      </div>
+    </div>`;
+  el.style.display = 'flex';
+  el.onclick = function(e){ if(e.target===el) el.style.display='none'; };
+  document.getElementById('_sharePanelClose').onclick = function(){ el.style.display='none'; };
+  document.getElementById('_shareCopyBtn').onclick = function() {
+    var inp = document.getElementById('_shareUrlInp');
+    try { navigator.clipboard.writeText(inp.value); } catch(e2) { inp.select(); document.execCommand('copy'); }
+    var btn = document.getElementById('_shareCopyBtn'); if(btn) btn.textContent = '✓ Скопировано!';
+    setTimeout(function(){ btn.textContent = 'Скопировать'; }, 2500);
+  };
+}
+
+// ── TRAILER OR ADMIN PANEL ───────────────────────────────────────
+window._renderTrailerOrAdmin = function(containerId, pageType, itemId, ytId, itemTitle) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var stored = _getStoredTrailer(pageType, itemId);
+  var activeYtId = stored | ytId || '';
+  var user = window.Afishi && Afishi.getUser ? Afishi.getUser() : null;
+  var isAdmin = user && (user.venueAdmin || user.isAdmin || user.role === 'admin');
+
+  if (activeYtId) {
+    if (window.Afishi && Afishi.renderTrailerPane) {
+      Afishi.renderTrailerPane(containerId, activeYtId, itemTitle || '');
+    }
+    if (isAdmin) {
+      var editDiv = document.createElement('div');
+      editDiv.style.cssText = 'padding:0 24px 12px;';
+      editDiv.innerHTML = `<button onclick="_showTrailerAdminForm('${containerId}','${pageType}','${itemId}','${activeYtId}')" style="background:none;border:1px dashed #aaa;color:#888;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;">✏️ Изменить трейлер</button>`;
+      el.appendChild(editDiv);
+    }
+  } else {
+    el.innerHTML = `
+      <div style="padding:20px 24px;">
+        <div style="background:linear-gradient(135deg,#1a1a1a,#2d2d2d);border-radius:8px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+          <div style="text-align:center;color:#fff;">
+            <div style="font-size:52px;opacity:.25;margin-bottom:10px;">▶</div>
+            <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:600;">Трейлер пока не добавлен</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;">Видео появится здесь после добавления</div>
+          </div>
+        </div>
+        ${isAdmin ? `<div id="_trailerAdminInject_${containerId}"></div>` :
+          '<div style="text-align:center;padding:8px;font-size:12px;color:#aaa;">Администратор заведения может добавить трейлер в личном кабинете</div>'}
+      </div>`;
+    if (isAdmin) _showTrailerAdminForm(containerId, pageType, itemId, '');
+  }
+};
+
+function _showTrailerAdminForm(containerId, pageType, itemId, currentYtId) {
+  var areaId = '_trailerAdminInject_' + containerId;
+  var area = document.getElementById(areaId);
+  if (!area) {
+    area = document.createElement('div');
+    area.id = areaId;
+    var parent = document.getElementById(containerId);
+    if (parent) parent.appendChild(area);
+  }
+  if (!area) return;
+  area.innerHTML = `
+    <div style="background:#fff8dc;border:2px dashed #f5c518;border-radius:8px;padding:16px 18px;">
+      <div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#7a5c00;margin-bottom:10px;">🔧 Панель администратора — трейлер</div>
+      <div style="font-size:12px;color:#666;margin-bottom:10px;">Ссылка YouTube или ID видео (11 символов):</div>
+      <div style="display:flex;gap:8px;">
+        <input id="_ytInp_${containerId}" type="text" value="${currentYtId|| ''}" placeholder="youtube.com/watch?v=... или xxxxxxxx"
+          style="flex:1;border:1.5px solid #e0e0e0;border-radius:5px;padding:9px 12px;font-size:13px;outline:none;"/>
+        <button onclick="_saveTrailerAdmin('${containerId}','${pageType}','${itemId}')"
+          style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;padding:9px 16px;border-radius:5px;cursor:pointer;white-space:nowrap;">Сохранить</button>
+      </div>
+      ${currentYtId ? `<button onclick="_clearTrailer('${containerId}','${pageType}','${itemId}')" style="margin-top:8px;background:none;border:none;color:#aaa;font-size:11px;cursor:pointer;text-decoration:underline;">Удалить трейлер</button>` : ''}
+    </div>`;
+}
+
+function _saveTrailerAdmin(containerId, pageType, itemId) {
+  var inp = document.getElementById('_ytInp_' + containerId);
+  if (!inp) return;
+  var ytId = _extractYtId(inp.value.trim());
+  if (!ytId) { alert('Неверная ссылка. Вставьте URL YouTube или 11-значный ID видео.'); return; }
+  _setStoredTrailer(pageType, itemId, ytId);
+  var title = (document.getElementById('mtitle') || {}).textContent || '';
+  _renderTrailerOrAdmin(containerId, pageType, itemId, '', title);
+  _afishiToast('✅ Трейлер сохранён — теперь виден всем посетителям');
+}
+
+function _clearTrailer(containerId, pageType, itemId) {
+  if (!confirm('Удалить трейлер?')) return;
+  _removeStoredTrailer(pageType, itemId);
+  _renderTrailerOrAdmin(containerId, pageType, itemId, '', '');
+}
+
+function _extractYtId(raw) {
+  if (!raw) return '';
+  var m = raw.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+  return '';
+}
+
+function _getStoredTrailer(pt, id) {
+  try { return (JSON.parse(localStorage.getItem('afishi_trailers')|| '{}'))[pt+'_'+id]|| ''; } catch(e){return '';}
+}
+function _setStoredTrailer(pt, id, ytId) {
+  try { var db=JSON.parse(localStorage.getItem('afishi_trailers')|| '{}'); db[pt+'_'+id]=ytId; localStorage.setItem('afishi_trailers',JSON.stringify(db)); } catch(e){}
+}
+function _removeStoredTrailer(pt, id) {
+  try { var db=JSON.parse(localStorage.getItem('afishi_trailers')|| '{}'); delete db[pt+'_'+id]; localStorage.setItem('afishi_trailers',JSON.stringify(db)); } catch(e){}
+}
+
+function _afishiToast(msg) {
+  var t = document.getElementById('afishiToast');
+  if (!t) { t=document.createElement('div');t.id='afishiToast';t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';document.body.appendChild(t);}
+  t.textContent=msg;
+  requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});
+  setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},4000);
+}
+
+</script>
+<script>
+window._mapButtons = function(addr, name, city) {
+  if (!addr && !name) return '';
+  var q = encodeURIComponent((name|| '') + (addr?', '+addr:'') + (city?', '+city:''));
+  var q2 = encodeURIComponent((addr|name|| '') + (city?', '+city:''));
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">' +
+    '<a href="https://maps.yandex.ru/?text=' + q + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#fc3f1d;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:8px 14px;border-radius:4px;text-decoration:none;white-space:nowrap;">\uD83D\uDDFA\uFE0F \u042F\u043D\u0434\u0435\u043A\u0441.\u041A\u0430\u0440\u0442\u044B</a>' +
+    '<a href="https://2gis.ru/search/' + q2 + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#00b133;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:8px 14px;border-radius:4px;text-decoration:none;white-space:nowrap;">\uD83C\uDFD9\uFE0F 2\u0413\u0418\u0421</a>' +
+    '</div>';
+};
+window._mapPanel = function(addr, name, city, metro) {
+  if (!addr && !name) return '<div style="padding:20px;text-align:center;color:#888;">Адрес не указан</div>';
+  var q = encodeURIComponent((name|| '') + (addr?', '+addr:'') + (city?', '+city:''));
+  var q2 = encodeURIComponent((addr|name|| '') + (city?', '+city:''));
+  return '<div style="padding:4px 0 12px;">' +
+    '<div style="background:linear-gradient(135deg,#e8f0fe,#dce8ff);border-radius:8px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">' +
+      '<div style="text-align:center;padding:0 20px;">' +
+        '<div style="font-size:36px;margin-bottom:8px;">\uD83D\uDDFA\uFE0F</div>' +
+        '<div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#333;">' + (name|| '') + '</div>' +
+        (addr ? '<div style="font-size:12px;color:#555;margin-top:3px;">\uD83D\uDCCD ' + addr + '</div>' : '') +
+        (metro ? '<div style="font-size:12px;color:#555;margin-top:2px;">' + metro + '</div>' : '') +
+      '</div>' +
+    '</div>' +
+    (addr ? '<div style="background:#f9f7f4;border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:13px;"><span style="color:#888;">\uD83D\uDCCD </span><strong>' + addr + (city?', '+city:'') + '</strong></div>' : '') +
+    (metro ? '<div style="background:#f9f7f4;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;"><span style="color:#888;">\uD83D\uDE87 </span><strong>' + metro + '</strong></div>' : '') +
+    '<a href="https://maps.yandex.ru/?text='+q+'" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#fc3f1d;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px;border-radius:6px;text-decoration:none;margin-bottom:8px;">\uD83D\uDDFA\uFE0F \u042F\u043D\u0434\u0435\u043A\u0441.\u041A\u0430\u0440\u0442\u044B</a>' +
+    '<a href="https://2gis.ru/search/'+q2+'" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#00b133;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px;border-radius:6px;text-decoration:none;">\uD83C\uDFD9\uFE0F 2\u0413\u0418\u0421</a>' +
+  '</div>';
+};
+</script>
+
+<!-- ДОБАВИТЬ ЗАВЕДЕНИЕ - плавающая кнопка -->
+<a href="venue-add.html" id="addVenueFloatBtn"
+   style="position:fixed;bottom:24px;right:24px;z-index:800;
+          display:flex;align-items:center;gap:8px;
+          background:var(--red,#c8102e);color:#fff;
+          font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;
+          text-transform:uppercase;letter-spacing:.4px;
+          padding:13px 20px;border-radius:50px;
+          box-shadow:0 4px 20px rgba(200,16,46,.4);
+          text-decoration:none;transition:all .2s;"
+   onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 24px rgba(200,16,46,.5)'"
+   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(200,16,46,.4)'">
+  🏛️ + Добавить заведение
+</a>
+
+
+<!-- ДОБАВИТЬ СОБЫТИЕ - кнопка -->
+<a href="event-add.html" id="addEventFloatBtn"
+   style="position:fixed;bottom:80px;right:24px;z-index:800;
+          display:flex;align-items:center;gap:8px;
+          background:#1a0a2e;color:#fff;
+          font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;
+          text-transform:uppercase;letter-spacing:.4px;
+          padding:13px 20px;border-radius:50px;
+          box-shadow:0 4px 20px rgba(26,10,46,.4);
+          text-decoration:none;transition:all .2s;"
+   onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 24px rgba(26,10,46,.6)'"
+   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(26,10,46,.4)'">
+  🎪 + Добавить событие
+</a>
+
+<script>
+window.addEventListener('error', function(e) {
+  var msg = (e.message || '') + ' || ' + (e.filename || '').split('/').pop() + ':' + e.lineno;
+  var el = document.getElementById('_dbgErr');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_dbgErr';
+    el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#c00;color:#fff;font-size:12px;padding:6px 12px;z-index:9999;font-family:monospace;';
+    document.body.appendChild(el);
+  }
+  el.textContent = '❌ ' + msg;
+});
+</script>
+<script id="afishi-mobile-nav">
+
+// ══════════════════════════════════════════════
+// MOBILE NAV — Hamburger + Drawer
+// ══════════════════════════════════════════════
+(function() {
+  function buildMobileNav() {
+    if (document.getElementById('mobileNavDrawer')) return;
+
+    // Get nav links from desktop nav
+    var desktopNav = document.querySelector('header nav');
+    var links = desktopNav ? Array.from(desktopNav.querySelectorAll('a')) : [];
+    var currentHref = location.pathname.split('/').pop() || 'index.html';
+
+    var linksHtml = links.map(function(a) {
+      var isActive = a.href.indexOf(currentHref) >= 0;
+      var isHighlight = a.style.color === 'var(--gold)' | a.getAttribute('style') === 'color:var(--gold)' | (a.textContent && a.textContent.includes('Плюс'));
+      return '<a href="' + a.href + '" class="' + (isActive ? 'active' : '') + (isHighlight ? ' highlight' : '') + '">' + a.textContent + '</a>';
+    }).join('');
+
+    // Also add common links if nav is empty
+    if (!links.length) {
+      linksHtml = [
+        '<a href="index.html">Главная</a>',
+        '<a href="concerts.html">Концерты</a>',
+        '<a href="theater.html">Театр</a>',
+        '<a href="cinema.html">Кино</a>',
+        '<a href="exhibits.html">Выставки</a>',
+        '<a href="kids.html">Детям</a>',
+        '<a href="articles.html">Статьи</a>',
+      ].join('');
+    }
+
+    // Add utility links
+    linksHtml += '<a href="event-add.html">🎪 Добавить событие</a>';
+    linksHtml += '<a href="venue-add.html">🏛️ Добавить заведение</a>';
+
+    // Create burger button
+    var burger = document.createElement('button');
+    burger.className = 'burger';
+    burger.id = 'burgerBtn';
+    burger.setAttribute('aria-label', 'Меню');
+    burger.innerHTML = '<span></span><span></span><span></span>';
+
+    // Create mobile nav
+    var nav = document.createElement('div');
+    nav.className = 'mobile-nav';
+    nav.id = 'mobileNavDrawer';
+    nav.innerHTML =
+      '<div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>' +
+      '<div class="mobile-nav-drawer">' +
+        '<div class="mobile-nav-head">' +
+          '<div class="mobile-nav-logo">Афиши<span>.ру</span></div>' +
+          '<button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Закрыть">✕</button>' +
+        '</div>' +
+        '<div class="mobile-nav-links">' + linksHtml + '</div>' +
+        '<div class="mobile-nav-footer">© 2002–2026 afishi.ru</div>' +
+      '</div>';
+
+    // Insert burger into header
+    var headerInner = document.querySelector('.header-inner, .hi');
+    if (headerInner) headerInner.appendChild(burger);
+
+    nav.style.display = 'none'; // Hidden by default
+    document.body.appendChild(nav);
+
+    burger.addEventListener('click', toggleMobileNav);
+  }
+
+  window.toggleMobileNav = function() {
+    var nav = document.getElementById('mobileNavDrawer');
+    var burger = document.getElementById('burgerBtn');
+    if (!nav) return;
+    var isOpen = nav.classList.contains('open');
+    nav.style.display = isOpen ? 'none' : 'block';
+    setTimeout(function() {
+      nav.classList.toggle('open', !isOpen);
+      if (burger) burger.classList.toggle('open', !isOpen);
+      document.body.style.overflow = isOpen ? '' : 'hidden';
+    }, 10);
+    if (!isOpen) nav.style.display = 'block';
+  };
+
+  window.closeMobileNav = function() {
+    var nav = document.getElementById('mobileNavDrawer');
+    var burger = document.getElementById('burgerBtn');
+    if (!nav) return;
+    nav.classList.remove('open');
+    if (burger) burger.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(function() { if (!nav.classList.contains('open')) nav.style.display = 'none'; }, 300);
+  };
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMobileNav();
+  });
+
+  // Build on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', buildMobileNav);
+  } else {
+    buildMobileNav();
+  }
+})();
+
+</script>
+
+<script>
+// ── Рекламная система afishi.ru ───────────────────────────
+(function() {
+  // Скрыть рекламу для Plus-подписчиков
+  try {
+    var u = JSON.parse(localStorage.getItem('afishi_user') || 'null');
+    var ly = JSON.parse(localStorage.getItem('afishi_loyalty') || 'null');
+    if (ly && (ly.tier === 'gold' | ly.tier === 'platinum')) {
+      document.body.classList.add('afishi-plus-' + (ly.tier === 'gold' ? 'gold' : 'plat'));
+    }
+  } catch(e) {}
+})();
+
+function adClick(zone) {
+  // Analytics tracking
+  console.log('Ad click:', zone);
+  // window.ym && ym(YADEX_ID, 'reachGoal', 'ad_click_' + zone);
+}
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// AFISHI BANNER SYSTEM v1 — управляется через админку
+// ════════════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  var PAGE_ID = (function() {
+    var p = location.pathname.split('/').pop().replace('.html','') || 'index';
+    return p || 'index';
+  })();
+
+  // ── Получить конфиг баннеров из localStorage ─────────────────
+  function getBannerConfig() {
+    try {
+      var cfg = JSON.parse(localStorage.getItem('afishi_banners') || 'null');
+      return cfg | getDefaultConfig();
+    } catch(e) { return getDefaultConfig(); }
+  }
+
+  function getDefaultConfig() {
+    return {
+      enabled: true,
+      banners: [
+        {
+          id: 'banner_default_1',
+          name: 'Яндекс.Директ — Sidebar 240×400',
+          type: 'yandex',
+          format: '240x400',
+          yandexBlockId: '',
+          pages: ['all'],
+          cities: ['all'],
+          active: false,
+          impressions: 0,
+          clicks: 0,
+          maxImpressions: 0
+        },
+        {
+          id: 'banner_house_1',
+          name: 'House Ad — АфишиПлюс',
+          type: 'html',
+          format: '240x400',
+          html: '<a href="loyalty.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#1a1a1a,#2a1a3a);color:#fff;text-decoration:none;padding:20px;text-align:center;"><div style="font-size:48px;margin-bottom:12px;">⭐</div><div style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;">АфишиПлюс</div><div style="font-size:13px;opacity:.7;margin-bottom:16px;">Скидка 15% на все билеты</div><div style="background:#c9a84c;color:#1a1a1a;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px 20px;border-radius:4px;">от 299 ₽/мес</div></a>',
+          pages: ['all'],
+          cities: ['all'],
+          active: true,
+          impressions: 0,
+          clicks: 0,
+          maxImpressions: 0
+        }
+      ]
+    };
+  }
+
+  // ── Скрыть рекламу для Plus ──────────────────────────────────
+  try {
+    var ly = JSON.parse(localStorage.getItem('afishi_loyalty') || 'null');
+    if (ly && (ly.tier === 'gold' | ly.tier === 'platinum')) {
+      document.body.classList.add('afishi-plus-' + (ly.tier === 'gold' ? 'gold' : 'plat'));
+      return; // не рендерим баннеры для подписчиков
+    }
+  } catch(e) {}
+
+  // ── Определить текущий город ─────────────────────────────────
+  var currentCity = (function() {
+    try { return localStorage.getItem('afishi_city') || 'all'; } catch(e) { return 'all'; }
+  })();
+
+  // ── Выбрать подходящий баннер ────────────────────────────────
+  function pickBanner(cfg) {
+    if (!cfg.enabled) return null;
+    var candidates = (cfg.banners || []).filter(function(b) {
+      if (!b.active) return false;
+      // Page filter
+      var pageOk = b.pages.includes('all') | b.pages.includes(PAGE_ID);
+      if (!pageOk) return false;
+      // City filter
+      var cityOk = b.cities.includes('all') | b.cities.includes(currentCity);
+      if (!cityOk) return false;
+      // Impression limit
+      if (b.maxImpressions > 0 && b.impressions >= b.maxImpressions) return false;
+      return true;
+    });
+    if (!candidates.length) return null;
+    // Random from candidates (weighted rotation)
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  // ── Записать показ ────────────────────────────────────────────
+  function recordImpression(bannerId) {
+    try {
+      var cfg = JSON.parse(localStorage.getItem('afishi_banners') || 'null');
+      if (!cfg) return;
+      var b = (cfg.banners || []).find(function(x){ return x.id === bannerId; });
+      if (b) { b.impressions = (b.impressions || 0) + 1; }
+      localStorage.setItem('afishi_banners', JSON.stringify(cfg));
+    } catch(e) {}
+  }
+
+  // ── Записать клик ─────────────────────────────────────────────
+  function recordClick(bannerId) {
+    try {
+      var cfg = JSON.parse(localStorage.getItem('afishi_banners') || 'null');
+      if (!cfg) return;
+      var b = (cfg.banners || []).find(function(x){ return x.id === bannerId; });
+      if (b) { b.clicks = (b.clicks || 0) + 1; }
+      localStorage.setItem('afishi_banners', JSON.stringify(cfg));
+    } catch(e) {}
+  }
+
+  // ── Рендер баннера ────────────────────────────────────────────
+  function renderBanner(banner, container) {
+    var formatH = {'240x400': 400, '160x600': 600, '300x250': 250, 'native': 0}[banner.format] | 400;
+    var formatCls = {'240x400':'ad-v-240','160x600':'ad-v-160','300x250':'ad-v-300','native':'ad-native-card'}[banner.format] || 'ad-v-240';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'ad-sidebar-wrap';
+    wrap.dataset.bannerId = banner.id;
+
+    var label = document.createElement('div');
+    label.className = 'ad-sidebar-label';
+    label.textContent = 'Реклама';
+    wrap.appendChild(label);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'ad-sidebar-close';
+    closeBtn.title = 'Закрыть';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = function() { wrap.style.display = 'none'; };
+    wrap.appendChild(closeBtn);
+
+    var inner = document.createElement('div');
+    inner.className = formatCls;
+
+    if (banner.type === 'yandex' && banner.yandexBlockId) {
+      // Яндекс.Директ блок
+      inner.innerHTML = '<div id="yandex_rtb_' + banner.yandexBlockId + '"></div>';
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+      // Load Yandex script
+      (function(w, d, n, s, t) {
+        w[n] = w[n] || [];
+        w[n].push(function() {
+          if (window.Ya && window.Ya.Context) {
+            Ya.Context.AdvManager.render({
+              blockId: banner.yandexBlockId,
+              renderTo: 'yandex_rtb_' + banner.yandexBlockId,
+              async: true
+            });
+          }
+        });
+        t = d.getElementsByTagName('script')[0];
+        s = d.createElement('script');
+        s.type = 'text/javascript';
+        s.src = '//an.yandex.ru/system/context.js';
+        s.async = true;
+        t.parentNode.insertBefore(s, t);
+      })(this, this.document, 'yandexContextAsyncCallbacks');
+
+    } else if (banner.type === 'html' && banner.html) {
+      // Произвольный HTML баннер
+      inner.innerHTML = banner.html;
+      // Track clicks
+      inner.addEventListener('click', function() { recordClick(banner.id); });
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+
+    } else if (banner.type === 'image' && banner.imageUrl) {
+      // Картинка-баннер
+      var link = document.createElement('a');
+      link.href = banner.linkUrl || '#';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.style.cssText = 'display:block;width:100%;height:100%;';
+      link.addEventListener('click', function() { recordClick(banner.id); });
+      var img = document.createElement('img');
+      img.src = banner.imageUrl;
+      img.alt = banner.name || 'Реклама';
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      link.appendChild(img);
+      inner.appendChild(link);
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+
+    } else if (banner.type === 'code' && banner.code) {
+      // Произвольный код (iframe src или embed)
+      inner.innerHTML = banner.code;
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+
+    } else {
+      // Заглушка-плейсхолдер (баннер активен но не настроен)
+      inner.innerHTML = '<div class="ad-placeholder-inner"><div style="font-size:36px;margin-bottom:8px;">📢</div><div>Рекламное место</div><div style="font-size:9px;opacity:.5;margin-top:4px;">' + (banner.format || '240×400') + '</div></div>';
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+    }
+
+    recordImpression(banner.id);
+  }
+
+  // ── Инициализация ─────────────────────────────────────────────
+  function initBanners() {
+    var aside = document.querySelector('aside');
+    if (!aside) return;
+
+    var cfg = getBannerConfig();
+    var banner = pickBanner(cfg);
+    if (banner) {
+      renderBanner(banner, aside);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBanners);
+  } else {
+    initBanners();
+  }
+
+  // Expose for admin panel
+  window.AfishiBanners = {
+    getConfig: getBannerConfig,
+    reload: initBanners
+  };
+})();
+</script>
+<script>
+// ── Смена города → перефильтровать контент ───────────────────────
+var _origPageOnGeoCity = window._onGeoCity;
+window._onGeoCity = function(city, source) {
+  if (_origPageOnGeoCity) _origPageOnGeoCity(city, source);
+  try {
+    // Обновить currentCity на этой странице
+    if (typeof currentCity !== 'undefined') currentCity = city;
+    if (typeof window.currentCity !== 'undefined') window.currentCity = city;
+    // Перефильтровать контент под новый город
+    if (typeof applyFilters === 'function') setTimeout(applyFilters, 50);
+  } catch(e) {}
+};
+</script>
+
+<footer>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+    </div>
+  </div>
+
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Колонка 1: Логотип + описание + соцсети -->
+      <div>
+        <div class="footer-logo">Афиши<span>.ру</span></div>
+        <div class="footer-desc">
+          Крупнейший агрегатор событий и мероприятий в России.
+          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
+          Основан в 2002 году.
+        </div>
+        <div class="footer-socials">
+          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
+          </a>
+          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
+          </a>
+          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
+          </a>
+          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Колонка 2: Разделы -->
+      <div>
+        <div class="footer-col-title">Разделы</div>
+        <div class="footer-links">
+          <a href="concerts.html">🎸 Концерты</a>
+          <a href="theater.html">🎭 Театр и балет</a>
+          <a href="cinema.html">🎬 Кино</a>
+          <a href="exhibits.html">🖼️ Выставки</a>
+          <a href="kids.html">🧸 Детям</a>
+          <a href="articles.html">📝 Статьи</a>
+          <a href="film-database.html">📽️ База фильмов</a>
+          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
+            🏛 Пушкинская карта
+          </a>
+        </div>
+      </div>
+
+      <!-- Колонка 3: Площадки Волгограда -->
+      <div>
+        <div class="footer-col-title">Площадки</div>
+        <div class="footer-links" id="footerVenuesList">
+          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
+          <a href="venue-arena.html">Стадион Волгоград Арена</a>
+          <a href="venue-dom-ofitserov-volgograd.html">Дом Офицеров</a>
+          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
+          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
+          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
+          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
+        </div>
+      </div>
+
+      <!-- Города перенесены в шапку сайта -->
+
+      <!-- Колонка 5: Компания -->
+      <div>
+        <div class="footer-col-title">Компания</div>
+        <div class="footer-links">
+          <a href="about.html">О проекте</a>
+          <a href="advertise.html">Реклама на сайте</a>
+          <a href="event-add.html">Добавить событие</a>
+          <a href="venue-add.html">Добавить площадку</a>
+          <a href="loyalty.html">АфишиПлюс ⭐</a>
+          <a href="partners.html">Партнёрам</a>
+          <a href="jobs.html">Вакансии</a>
+          <a href="admin-info.html">Администраторам</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="footer-divider">
+
+  <div class="footer-bottom">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span>© 2002–2026 afishi.ru</span>
+      <span class="footer-badge">🌆 Волгоград</span>
+      <span class="footer-badge">🔒 18+</span>
+    </div>
+    <div class="footer-bottom-links">
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="sitemap.html">Карта сайта</a>
+      <a href="admin-info.html">Администраторам</a>
+    </div>
+  </div>
+
+
+<!-- ── Кнопка «Поделиться» ─────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto 28px;padding:0 20px;">
+  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;">
+    <div style="margin-bottom:14px;">
+      <div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;">📢 Поделитесь афишей с друзьями</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);">Расскажите о событиях своего города</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="shareToVK()" style="display:flex;align-items:center;gap:6px;background:#4a76a8;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504C19.224 13.376 19 12.763 20.014 11.276c1.109-1.613 3.244-4.145 1.256-4.145h-3.983c-.61 0-.859.407-.859.407s-1.19 2.516-2.86 4.152c-.699.699-1.012.922-1.394.922-.194 0-.437-.223-.437-.931V7.547c0-.593-.166-.933-.644-.933H7.999c-.374 0-.594.271-.594.531 0 .533.821.677.906 2.183v3.089c0 .75-.136.886-.432.886-.79 0-2.712-2.448-3.855-5.25-.22-.601-.443-.836-1.054-.836H.987C.421 7.117 0 7.366 0 7.986c0 .624 1.812 5.109 5.686 8.984 2.979 2.979 6.951 4.024 9.476 4.024z"/></svg>
+        ВКонтакте
+      </button>
+      <button onclick="shareToOK()" style="display:flex;align-items:center;gap:6px;background:#ee8208;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 6a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm5.8 11.2c-.4.5-1.2.7-1.8.3l-2.1-1.3c-.6.2-1.2.3-1.9.3s-1.3-.1-1.9-.3l-2.1 1.3c-.6.4-1.4.2-1.8-.3-.4-.5-.2-1.3.4-1.6l1.8-1.1c-.7-.6-1.2-1.4-1.5-2.3-.2-.6.2-1.3.9-1.4.6-.1 1.2.2 1.4.8.3.9 1.3 1.6 2.8 1.6s2.5-.7 2.8-1.6c.2-.6.8-.9 1.4-.8.6.1 1.1.7.9 1.4-.3.9-.8 1.7-1.5 2.3l1.8 1.1c.6.3.8 1.1.4 1.6z"/></svg>
+        ОК
+      </button>
+      <button onclick="shareToTelegram()" style="display:flex;align-items:center;gap:6px;background:#0088cc;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+        Telegram
+      </button>
+      <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:6px;background:#25d366;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button onclick="shareToDzen()" style="display:flex;align-items:center;gap:6px;background:#ff6600;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor"><path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm23.3 53.3c-10.1 0-18.3 3.4-23.3 9.7-5-6.3-13.2-9.7-23.3-9.7-1.7 0-3.3.1-3.3-3.3 0-3.4 1.6-3.3 3.3-3.3 10.1 0 18.3-3.4 23.3-9.7 5 6.3 13.2 9.7 23.3 9.7 1.7 0 3.3-.1 3.3 3.3 0 3.4-1.6 3.3-3.3 3.3z"/></svg>
+        Дзен
+      </button>
+      <button onclick="shareToRutube()" style="display:flex;align-items:center;gap:6px;background:#060a11;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4.8 13.2l-6 3.6c-.2.1-.4.2-.6.2-.2 0-.4-.1-.6-.2-.4-.2-.6-.6-.6-1V8.4c0-.4.2-.8.6-1 .2-.1.4-.1.6-.2.2 0 .4.1.6.2l6 3.6c.4.2.6.6.6 1s-.2.8-.6 1.2z"/></svg>
+        Rutube
+      </button>
+      <button onclick="shareToYandex()" style="display:flex;align-items:center;gap:6px;background:#fc3f1d;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm-1.65 18.923h-2.113V9.596H9.587C9.1 11.42 8.625 13.007 8.225 14.08c-.722 1.927-1.517 2.594-2.816 2.594-.45 0-.857-.077-1.036-.174l.18-1.71c.167.064.386.115.578.115.5 0 .87-.424 1.25-1.58.6-1.778 1.35-4.665 2.08-7.93h6.573v13.528z"/></svg>
+        Яндекс
+      </button>
+      <button onclick="shareToMAX()" style="display:flex;align-items:center;gap:6px;background:#6c17c9;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
+        MAX
+      </button>
+      <button onclick="copyPageLink(this)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Скопировать</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- ── Партнёры: билетные операторы ─────────────────────── -->
+  <div style="border-top:1px solid rgba(255,255,255,.08);padding:20px 24px 0;margin-top:4px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;">Билеты</span>
+      <a href="https://vlg.kassir.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner" 
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassir.ru
+      </a>
+      <a href="https://kassy.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassy.ru
+      </a>
+      <a href="https://qtickets.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        qtickets.ru
+      </a>
+    </div>
+  </div>
+<!-- share functions see below -->
+
+
+<div id="sharePanelOverlay" onclick="if(event.target===this)closeSharePanel()">
+  <div id="sharePanel">
+    <div class="sp-title" id="spTitle">📤 Поделиться</div>
+    <div class="sp-grid">
+      <button class="sp-btn" onclick="shareTo('vk')">
+        <div class="sp-ico" style="background:#0077FF;"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.09 13.5h-1.61c-.61 0-.8-.48-1.88-1.58-1-.92-1.41-.92-1.67-.92-.37 0-.49.1-.49.62v1.44c0 .44-.14.7-1.28.7-1.87 0-3.94-1.14-5.4-3.27-2.19-3.09-2.79-5.39-2.79-5.88 0-.25.1-.49.62-.49h1.61c.47 0 .64.21.82.71.89 2.58 2.39 4.84 3.01 4.84.23 0 .33-.11.33-.7V9.89c-.07-1.25-.73-1.36-.73-1.8 0-.22.18-.44.47-.44h2.53c.4 0 .54.21.54.67v3.56c0 .4.18.54.29.54.23 0 .43-.14.86-.57 1.33-1.49 2.28-3.78 2.28-3.78.13-.25.33-.49.8-.49h1.61c.48 0 .58.25.48.57-.2.94-2.16 3.71-2.16 3.71-.17.27-.23.39 0 .69.17.22.73.71 1.1 1.14.68.77 1.2 1.42 1.34 1.87.14.44-.09.66-.56.66z"/></svg></div>
+</footer>
+
+
+<script>
+// ── Загрузчик счётчиков аналитики (afishi_analytics из adminки) ─
+(function() {
+  try {
+    var cfg = JSON.parse(localStorage.getItem('afishi_analytics') || '{}');
+    if (!cfg | !Object.keys(cfg).length) return;
+
+    // Яндекс.Метрика
+    if (cfg.yandex_id) {
+      // Standard Metrika init
+      (function(m,e,t,r,i,k,a){m[i]=m[i]|function(){(m[i].a=m[i].a|| []).push(arguments)};
+      m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0];
+      k.async=1;k.src=r;a.parentNode.insertBefore(k,a)})(window,document,'script',
+      'https://mc.yandex.ru/metrika/tag.js','ym');
+      ym(parseInt(cfg.yandex_id), 'init', {clickmap:true,trackLinks:true,accurateTrackBounce:true});
+    } else if (cfg.yandex_code) {
+      var d = document.createElement('div');
+      d.innerHTML = cfg.yandex_code;
+      var scripts = d.querySelectorAll('script');
+      scripts.forEach(function(s) {
+        var ns = document.createElement('script');
+        if (s.src) ns.src = s.src;
+        else ns.textContent = s.textContent;
+        ns.async = true;
+        document.head.appendChild(ns);
+      });
+    }
+
+    // Google Analytics 4
+    if (cfg.google_id) {
+      var gs = document.createElement('script');
+      gs.src = 'https://www.googletagmanager.com/gtag/js?id=' + cfg.google_id;
+      gs.async = true;
+      document.head.appendChild(gs);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function(){ dataLayer.push(arguments); };
+      gtag('js', new Date());
+      gtag('config', cfg.google_id);
+    } else if (cfg.google_code) {
+      var d2 = document.createElement('div');
+      d2.innerHTML = cfg.google_code;
+      d2.querySelectorAll('script').forEach(function(s) {
+        var ns = document.createElement('script');
+        if (s.src) ns.src = s.src;
+        else ns.textContent = s.textContent;
+        ns.async = true;
+        document.head.appendChild(ns);
+      });
+    }
+
+    // Custom code
+    if (cfg.custom_code) {
+      var d3 = document.createElement('div');
+      d3.innerHTML = cfg.custom_code;
+      d3.querySelectorAll('script').forEach(function(s) {
+        var ns = document.createElement('script');
+        if (s.src) ns.src = s.src;
+        else ns.textContent = s.textContent;
+        ns.async = true;
+        document.head.appendChild(ns);
+      });
+    }
+  } catch(e) {}
+})();
+</script>
+
+
+
+
+<script>
+(function() {
+  function rvW() {
+    var el = document.getElementById('reviewsWidget');
+    if (!el) return;
+    var db = {};
+    try { db = JSON.parse(localStorage.getItem('afishi_reviews') || '{}'); } catch(e) {}
+    var revs = [];
+    Object.keys(db).forEach(function(k) {
+      if (k.indexOf('cinema::') < 0 && k.indexOf('film::') < 0) return;
+      var id = k.split('::')[1] || '';
+      (db[k] || []).forEach(function(r) {
+        revs.push({ score: r.score, title: r.title, name: r.name, itemId: id });
+      });
+    });
+    revs = revs.slice(0, 5);
+    if (!revs.length) {
+      el.innerHTML = '<p style="font-size:12px;color:#aaa;text-align:center;padding:10px 0;">Рецензий нет. <a href="reviews.html" style="color:#c8102e;">Написать →</a></p>';
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    revs.forEach(function(r) {
+      var col = r.score >= 8 ? '#2e7d32' : r.score >= 5 ? '#f57f17' : '#c62828';
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'padding:9px 0;border-bottom:1px solid #eee;cursor:pointer;';
+      wrap.addEventListener('click', function() { location.href = 'reviews.html'; });
+      wrap.innerHTML =
+        '<div style="display:flex;gap:8px;align-items:flex-start;">' +
+        '<div style="font-size:20px;font-weight:700;color:' + col + ';font-family:Oswald,sans-serif;flex-shrink:0;">' + (r.score|| 0) + '</div>' +
+        '<div><div style="font-size:12px;font-weight:700;">' + (r.itemId || '') + '</div>' +
+        (r.title ? '<div style="font-size:11px;color:#666;">&laquo;' + r.title + '&raquo;</div>' : '') +
+        '<div style="font-size:11px;color:#aaa;">' + (r.name || 'Аноним') + '</div>' +
+        '</div></div>';
+      frag.appendChild(wrap);
+    });
+    var link = document.createElement('div');
+    link.style.cssText = 'text-align:center;margin-top:8px;';
+    link.innerHTML = '<a href="reviews.html" style="font-size:12px;font-weight:700;color:#c8102e;text-decoration:none;">Все рецензии →</a>';
+    frag.appendChild(link);
+    el.innerHTML = '';
+    el.appendChild(frag);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', rvW);
+  } else {
+    rvW();
+  }
+})();
+</script>
+
+<script>
+// ── Определение города по IP и управление шапкой ────────────────
+(function initCityStrip() {
+  var CITIES = ['Волгоград', 'Москва', 'Санкт-Петербург', 'Екатеринбург', 'Казань', 'Краснодар', 'Ростов-на-Дону', 'Новосибирск'];
+  
+  function setCurrentCity(city) {
+    try { localStorage.setItem('afishi_city', city); } catch(e) {}
+    window.currentCity = city;
+    if (window.switchCity) window.switchCity(city);
+    // Обновить видимые элементы с городом
+    document.querySelectorAll('[data-city-label]').forEach(function(el) {
+      el.textContent = city;
+    });
+    renderCityPills(city);
+  }
+
+  function renderCityPills(activeCity) {
+    var container = document.getElementById('cityPillsContainer');
+    if (!container) return;
+    container.innerHTML = '<span class="city-label">Город:</span>';
+    CITIES.forEach(function(c) {
+      var pill = document.createElement('button');
+      pill.className = 'city-pill' + (c === activeCity ? ' active' : '');
+      pill.textContent = c;
+      pill.onclick = function() { setCurrentCity(c); };
+      container.appendChild(pill);
+    });
+  }
+
+  // Определить сохранённый или определить по IP
+  var saved = '';
+  try { saved = localStorage.getItem('afishi_city') || ''; } catch(e) {}
+  
+  if (saved && CITIES.indexOf(saved) >= 0) {
+    window.currentCity = saved;
+    document.addEventListener('DOMContentLoaded', function() { renderCityPills(saved); });
+  } else {
+    // Определить по IP через бесплатный API
+    var fallback = 'Волгоград';
+    document.addEventListener('DOMContentLoaded', function() { renderCityPills(fallback); });
+    try {
+      fetch('https://ipapi.co/json/')
+        .then(function(r){ return r.json(); })
+        .then(function(d) {
+          var detected = d.city || '';
+          var matched = CITIES.find(function(c){ return c === detected | detected.includes(c); });
+          var city = matched | fallback;
+          window.currentCity = city;
+          try { localStorage.setItem('afishi_city', city); } catch(e) {}
+          renderCityPills(city);
+          if (window.renderConcerts) renderConcerts(city);
+        })
+        .catch(function() {
+          window.currentCity = fallback;
+          renderCityPills(fallback);
+        });
+    } catch(e) {
+      window.currentCity = fallback;
+      renderCityPills(fallback);
+    }
+  }
+})();
+
+// ── Заполнить фильтр дат ──────────────────────────────────
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('dateFilter');
+    if (!sel) return;
+    var now = new Date();
+    var days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    sel.innerHTML = '';
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(now);
+      d.setDate(now.getDate() + i);
+      var opt = document.createElement('option');
+      var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      opt.value = iso;
+      if (i === 0) opt.textContent = 'Сегодня, ' + d.getDate() + ' ' + months[d.getMonth()];
+      else if (i === 1) opt.textContent = 'Завтра, ' + d.getDate() + ' ' + months[d.getMonth()];
+      else opt.textContent = d.getDate() + ' ' + months[d.getMonth()] + ' (' + days[d.getDay()] + ')';
+      sel.appendChild(opt);
+    }
+  });
+})();
+
+function filterByCinemaFromModal(cinemaName) {
+  // Закрыть модал
+  closeModal();
+  // Выбрать кинотеатр в фильтре
+  var sel = document.getElementById('cinemaFilter');
+  if (sel) {
+    // Найти нужную опцию
+    var found = false;
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === cinemaName || sel.options[i].text === cinemaName) {
+        sel.selectedIndex = i;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      // Добавить опцию если нет
+      var opt = document.createElement('option');
+      opt.value = cinemaName;
+      opt.textContent = cinemaName;
+      sel.appendChild(opt);
+      sel.value = cinemaName;
+    }
+  }
+  // Применить фильтр
+  if (typeof applyFilters === 'function') applyFilters();
+  // Прокрутить к списку фильмов
+  var grid = document.getElementById('filmGrid') || document.querySelector('.films-grid') || document.querySelector('.movies-grid');
+  if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Показать уведомление
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-family:Oswald,sans-serif;font-weight:700;z-index:5000;text-transform:uppercase;letter-spacing:.5px;';
+  banner.textContent = '🎬 ' + cinemaName;
+  document.body.appendChild(banner);
+  setTimeout(function(){ banner.remove(); }, 2500);
+}
+</script>
+
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+
+<script>
+// ── Авто-загрузка трейлеров из API (обновляется каждый день в 13:00) ─────
+(function() {
+  async function loadTrailers() {
+    try {
+      const r = await fetch('/api/trailers/get');
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!data.trailers) return;
+      
+      // Сохранить в localStorage для использования на странице
+      try {
+        localStorage.setItem('afishi_trailers_cache', JSON.stringify(data));
+        localStorage.setItem('afishi_trailers_updated', data.updated_at || new Date().toISOString());
+      } catch(e) {}
+      
+      // Применить трейлеры к карточкам фильмов
+      applyTrailersToFilms(data.trailers);
+    } catch(e) {
+      console.log('Trailers not available:', e.message);
+      // Фоллбэк: загрузить из localStorage
+      try {
+        const cached = JSON.parse(localStorage.getItem('afishi_trailers_cache') || 'null');
+        if (cached && cached.trailers) applyTrailersToFilms(cached.trailers);
+      } catch(e2) {}
+    }
+  }
+  
+  function applyTrailersToFilms(trailers) {
+    trailers.forEach(function(film) {
+      if (!film.trailer || !film.trailer.video_id) return;
+      // Найти карточки с этим фильмом по заголовку
+      var titleLower = (film.title_ru || '').toLowerCase();
+      document.querySelectorAll('.film-card, .movie-card, [data-film-title]').forEach(function(card) {
+        var cardTitle = (card.dataset.filmTitle || card.querySelector('h3,h2,.title')?.textContent || '').toLowerCase();
+        if (cardTitle && (cardTitle.includes(titleLower) || titleLower.includes(cardTitle))) {
+          // Добавить кнопку трейлера
+          if (!card.querySelector('.trailer-btn')) {
+            var btn = document.createElement('a');
+            btn.href = film.trailer.url;
+            btn.target = '_blank';
+            btn.rel = 'noopener';
+            btn.className = 'trailer-btn';
+            btn.innerHTML = '▶ Трейлер';
+            btn.style.cssText = 'display:inline-block;margin-top:8px;padding:4px 12px;background:#c8102e;color:#fff;border-radius:4px;text-decoration:none;font-size:13px;';
+            card.appendChild(btn);
+          }
+          // Обновить data-атрибут
+          card.dataset.trailerId = film.trailer.video_id;
+          card.dataset.trailerUrl = film.trailer.url;
+          card.dataset.trailerSource = film.trailer.source || '';
+        }
+      });
+    });
+  }
+  
+  // Загрузить при открытии страницы
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadTrailers);
+  } else {
+    loadTrailers();
+  }
+})();
+</script>
+<script>
+
+// ══ Featured Announce — редактируемый анонс ══════════════════
+
+function featuredCardClick() {
+  var feat = null;
+  try { feat = JSON.parse(localStorage.getItem('afishi_featured') || 'null'); } catch(e) {}
+  if (feat && feat.id && typeof openModal === 'function') {
+    openModal(feat.id);
+  }
+}
+
+function initFeatured() {
+  // Показать кнопку редактирования только admin
+  var editBtn = document.getElementById('featuredEditBtn');
+  if (editBtn) {
+    try {
+      var u = JSON.parse(localStorage.getItem('afishi_user') || 'null');
+      if (u && (u.role === 'admin' || u.role === 'moderator')) {
+        editBtn.style.display = 'block';
+      }
+    } catch(e) {}
+  }
+  // Загрузить сохранённый анонс
+  renderFeatured();
+  renderHeroAside();
+}
+
+function renderFeatured() {
+  var feat = null;
+  try { feat = JSON.parse(localStorage.getItem('afishi_featured') || 'null'); } catch(e) {}
+  var card = document.getElementById('featuredCard');
+  if (!card) return;
+  if (!feat || !feat.title) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  var bg = document.getElementById('featuredBg');
+  if (bg && feat.photo) { bg.style.backgroundImage = 'url(' + feat.photo + ')'; bg.style.opacity = '.4'; }
+  var el = function(id) { return document.getElementById(id); };
+  if (el('featuredGenre'))  el('featuredGenre').textContent = feat.genre || '';
+  if (el('featuredTitle'))  el('featuredTitle').textContent = feat.title || '';
+  if (el('featuredMeta'))   el('featuredMeta').textContent  = feat.meta || '';
+  if (el('featuredBadge'))  el('featuredBadge').textContent = feat.badge || '🔥 Анонс редакции';
+}
+
+// ── Hero aside cards (2 маленьких анонса) ─────────────────
+function renderHeroAside() {
+  var container = document.getElementById('heroAsideContainer');
+  if (!container) return;
+  var cards = [];
+  var _cityHero = localStorage.getItem('afishi_city') || 'Волгоград';
+  var _allHeroIdx = {};
+  try { _allHeroIdx = JSON.parse(localStorage.getItem('afishi_hero_aside_cities') || '{}'); } catch(e) {}
+  cards = _allHeroIdx[_cityHero] || [];
+  // Фоллбэк
+  if (!cards.length) { try { cards = JSON.parse(localStorage.getItem('afishi_hero_aside') || '[]'); } catch(e) {} }
+  if (!cards.length) {
+    cards = [
+      {badge:'Театр',title:'«Мастер и Маргарита» — МХТ им. Чехова',
+       meta:'1 июля · 19:00 · от 1 200 ₽',bg:'linear-gradient(135deg,#0d1b2a,#1b4f72)',
+       icon:'🎭',link:'theater.html'},
+      {badge:'Выставка',title:'Айвазовский & Куинджи — Третьяковка',
+       meta:'до 20 августа · от 400 ₽',bg:'linear-gradient(135deg,#0b3d0b,#1e7a1e)',
+       icon:'🖼️',link:'exhibits.html'}
+    ];
+  }
+  container.innerHTML = cards.slice(0,2).map(function(c) {
+    var card = document.createElement('div');
+    card.className = 'hero-aside-card';
+    card.style.cssText = 'background:'+c.bg+';height:162px;cursor:'+(c.link?'pointer':'default')+';';
+    if (c.link) card.onclick = function(){ location.href = c.link; };
+    card.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.4;">'+c.icon+'</div>'
+      + '<div class="hero-aside-overlay">'
+      + '<div class="hero-badge" style="font-size:10px;">'+c.badge+'</div>'
+      + '<div class="hero-aside-title">'+c.title+'</div>'
+      + '<div style="font-size:11px;opacity:.75;margin-top:3px;">'+c.meta+'</div>'
+      + '</div>';
+    return card.outerHTML;
+  }).join('');
+}
+
+
+function openFeaturedEditor() {
+  document.getElementById('featuredModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Предзаполнить поля
+  var feat = null;
+  try { feat = JSON.parse(localStorage.getItem('afishi_featured') || 'null'); } catch(e) {}
+  if (feat) {
+    var s = function(id, v) { var e=document.getElementById(id); if(e && v) e.value=v; };
+    s('feat_title', feat.title); s('feat_genre', feat.genre);
+    s('feat_meta', feat.meta); s('feat_photo', feat.photo);
+  }
+  // Загрузить список мероприятий
+  loadFeaturedList();
+}
+
+function closeFeaturedModal() {
+  document.getElementById('featuredModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function loadFeaturedList() {
+  var list = document.getElementById('featuredList');
+  if (!list) return;
+  // Собрать все мероприятия
+  var events = [];
+  if (typeof CONCERTS !== 'undefined') {
+    CONCERTS.forEach(function(c) {
+      if (c && c.title) events.push({
+        id: c.id, title: c.title, genre: c.genre, photo: c.photo,
+        meta: (c.date || c.dateShort||'') + (c.venues&&c.venues[0] ? ' · '+c.venues[0].name : ''),
+        type: 'concert'
+      });
+    });
+  }
+  // Из LS events
+  try {
+    var lsEv = JSON.parse(localStorage.getItem('afishi_pending_events')|| '[]');
+    lsEv.filter(function(e){return e&&e.status==='approved';}).forEach(function(e){
+      events.push({id:e.id,title:e.title,genre:e.cat || e.genre||'',photo:e.photo||'',meta:(e.dateStart||'')+(e.venue?' · '+e.venue:''),type:'event'});
+    });
+  } catch(ex) {}
+  
+  window._featuredEvents = events;
+  renderFeaturedList(events);
+}
+
+function renderFeaturedList(events) {
+  var list = document.getElementById('featuredList');
+  if (!list) return;
+  var feat = null;
+  try { feat = JSON.parse(localStorage.getItem('afishi_featured')||'null'); } catch(e) {}
+  var selectedId = feat && feat.id;
+  
+  list.innerHTML = '';
+  events.slice(0, 30).forEach(function(ev) {
+    var item = document.createElement('div');
+    item.className = 'feat-item' + (String(ev.id) === String(selectedId) ? ' selected' : '');
+    item.innerHTML =
+      '<img loading="lazy" class="feat-thumb" src="' + (ev.photo||'') + '">' +
+      '<div class="feat-info">' +
+        '<div class="feat-name">' + (ev.title||'') + '</div>' +
+        '<div class="feat-sub">' + (ev.genre||'') + (ev.meta ? ' · '+ev.meta : '') + '</div>' +
+      '</div>' +
+      '<button onclick="selectFeatured(' + JSON.stringify(ev).replace(/</g,'\u003c') + ')" style="background:#c8102e;color:#fff;border:none;border-radius:5px;padding:6px 12px;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;">Выбрать</button>';
+    list.appendChild(item);
+  });
+  if (!events.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;">Мероприятий не найдено</div>';
+  }
+}
+
+function filterFeaturedList() {
+  var q = ((document.getElementById('featuredSearch')|| {}).value||'').toLowerCase();
+  var events = (window._featuredEvents || []).filter(function(e){ return (e.title||'').toLowerCase().includes(q); });
+  renderFeaturedList(events);
+}
+
+function selectFeatured(ev) {
+  try { localStorage.setItem('afishi_featured', JSON.stringify(ev)); } catch(e) {}
+  renderFeatured();
+  closeFeaturedModal();
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border-radius:6px;z-index:9999;';
+  t.textContent = '✅ Анонс обновлён: ' + ev.title;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();}, 3000);
+}
+
+function saveFeaturedManual() {
+  var g = function(id){ return (document.getElementById(id)|| {}).value||''; };
+  var feat = { title:g('feat_title'), genre:g('feat_genre'), meta:g('feat_meta'), photo:g('feat_photo'), id:null };
+  if (!feat.title) { alert('Введите заголовок'); return; }
+  try { localStorage.setItem('afishi_featured', JSON.stringify(feat)); } catch(e) {}
+  renderFeatured();
+  closeFeaturedModal();
+}
+
+function clearFeatured() {
+  if (!confirm('Убрать анонс с главной?')) return;
+  try { localStorage.removeItem('afishi_featured'); } catch(e) {}
+  var card = document.getElementById('featuredCard');
+  if (card) card.style.display = 'none';
+  closeFeaturedModal();
+}
+
+
+function toggleRestDropdown(e) {
+  e.preventDefault();
+  var dd = document.getElementById('restDropdown');
+  if (!dd) return;
+  var isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    renderRestDropdownEvents();
+    // Закрыть при клике вне
+    setTimeout(function() {
+      document.addEventListener('click', function closeDD(ev) {
+        if (!dd.contains(ev.target)) {
+          dd.style.display = 'none';
+          document.removeEventListener('click', closeDD);
+        }
+      });
+    }, 10);
+  }
+}
+
+function renderRestDropdownEvents() {
+  var el = document.getElementById('restDropdownEvents');
+  if (!el) return;
+  var allDB = window.CONCERTS_DB || [];
+  var restEvents = allDB.filter(function(ev) {
+    var v = (ev.venue || '').toLowerCase();
+    return v.indexOf('ресторан') >= 0 || v.indexOf('restvlg') >= 0;
+  });
+  if (!restEvents.length) {
+    el.innerHTML = '<div style="padding:12px;color:#aaa;font-size:12px;text-align:center">Нет мероприятий</div>';
+    return;
+  }
+  var html = '';
+  restEvents.slice(0,3).forEach(function(ev) {
+    var card = document.createElement('a');
+    card.href = 'concerts.html';
+    card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px;color:#333;font-size:12px;text-decoration:none;border-radius:4px;';
+    card.onmouseover = function(){ this.style.background='#f9f7f4'; };
+    card.onmouseout  = function(){ this.style.background=''; };
+    card.innerHTML = '<span style="font-size:16px;">'+(ev.icon||'🎵')+'</span>'
+      + '<div><div style="font-weight:700;">'+(ev.artist || ev.title||'')+'</div>'
+      + '<div style="color:#888;font-size:11px;">'+(ev.date||'')+' · '+(ev.venue||'')+'</div></div>';
+    el.appendChild(card);
+  });
+}
+
+
+// ── Концерты в ресторанах ─────────────────────────────────
+function renderRestaurantConcerts(city) {
+  var grid = document.getElementById('restConcertsGrid');
+  var section = document.getElementById('section-rest-concerts');
+  if (!grid || !section) return;
+  city = city || window.currentCity || 'Волгоград';
+  var today = new Date(); today.setHours(0,0,0,0);
+  var restDB = (window.CONCERTS_DB || []).filter(function(ev) {
+    var v = (ev.venue || '').toLowerCase();
+    var d = new Date(ev.dateISO || '');
+    return !isNaN(d) && d >= today
+      && (v.indexOf('ресторан') >= 0 || v.indexOf('restvlg') >= 0)
+      && (!ev.city || ev.city === city);
+  });
+  if (!restDB.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  var title = document.getElementById('restConcertsTitle');
+  if (title) title.textContent = '🍷 Концерты в ресторанах · ' + city;
+  grid.innerHTML = '';
+  restDB.slice(0,4).forEach(function(ev) {
+    var card = document.createElement('div');
+    card.className = 'concert-card';
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', function(){ location.href = 'concerts.html'; });
+    var price = ev.price ? ('от ' + ((ev.price)||0).toLocaleString('ru') + ' ₽') : '';
+    card.innerHTML = '<div class="cc-img" style="background:' + ev.color
+      + ';background-image:url(' + ev.photo + ');background-size:cover;background-position:center;">'
+      + '<div class="cc-badge">' + (ev.genre||'') + '</div></div>'
+      + '<div class="cc-body">'
+      + '<div class="cc-title">' + (ev.title||'') + '</div>'
+      + '<div class="cc-meta">📅 ' + ev.date + ' · ' + ev.venue + '</div>'
+      + (price ? '<div class="cc-price">' + price + '</div>' : '')
+      + '</div>';
+    grid.appendChild(card);
+  });
+}
+
+
+// ── Share Panel ────────────────────────────────────────────
+var _sharePanelURL = '';
+var _sharePanelTitle = '';
+
+function openSharePanel(title, url) {
+  _sharePanelURL   = url || window.location.href;
+  _sharePanelTitle = title || document.title;
+  var el = document.getElementById('spTitle');
+  if (el) el.textContent = '📤 Поделиться: ' + (_sharePanelTitle.length > 30 ? _sharePanelTitle.slice(0,30) + '…' : _sharePanelTitle);
+  var ov = document.getElementById('sharePanelOverlay');
+  if (ov) { ov.style.display = 'flex'; ov.classList.add('open'); }
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSharePanel() {
+  var ov = document.getElementById('sharePanelOverlay');
+  if (ov) { ov.style.display = 'none'; ov.classList.remove('open'); }
+  document.body.style.overflow = '';
+}
+
+function shareTo(platform) {
+  var url   = encodeURIComponent(_sharePanelURL);
+  var title = encodeURIComponent(_sharePanelTitle);
+  var links = {
+    vk:       'https://vk.com/share.php?url=' + url + '&title=' + title,
+    ok:       'https://connect.ok.ru/offer?url=' + url + '&title=' + title,
+    telegram: 'https://t.me/share/url?url=' + url + '&text=' + title,
+    whatsapp: 'https://api.whatsapp.com/send?text=' + title + '%20' + url,
+    dzen:     'https://dzen.ru/editor?url=' + url,
+    rutube:   'https://rutube.ru/share/?url=' + url,
+    yandex:   'https://yandex.ru/search/?text=' + title + '&source=share',
+    max:      'https://max.ru/share?url=' + url + '&text=' + title
+  };
+  var href = links[platform];
+  if (href) {
+    window.open(href, '_blank', 'noopener,noreferrer,width=600,height=500');
+  }
+}
+
+function copyShareLink() {
+  var url = _sharePanelURL;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      var btn = document.querySelector('.sp-copy');
+      if (btn) { btn.textContent = '✅ Скопировано!'; setTimeout(function(){ btn.textContent = '📋 Скопировать ссылку'; }, 2000); }
+    }).catch(function(){});
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    ta.remove();
+  }
+  closeSharePanel();
+}
+
+// Переопределить shareToFriend чтобы использовал панель
+window._showSharePanel = function(title, url) {
+  openSharePanel(title || document.title, url || window.location.href);
+};
+
+</script>
+</body>
+</html>

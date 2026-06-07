@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
+
+window.switchCity = function(city) {
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+};
+
+
+
+
+// ── Инициализация города из localStorage ───────────────────────
+(function() {
+  var savedCity = null;
+  try { savedCity = localStorage.getItem('afishi_city'); } catch(e) {}
+  if (savedCity) {
+    // Обновить все cityLabel элементы
+    document.addEventListener('DOMContentLoaded', function() {
+      var lbl = document.getElementById('cityLabel');
+      if (lbl && lbl.textContent.trim() === 'Москва') lbl.textContent = savedCity;
+      var topLbl = document.getElementById('cityTopLabel');
+      if (topLbl && topLbl.textContent.trim() === 'Москва') topLbl.textContent = savedCity;
+    });
+  }
+})();
+</script>
+
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Редактировать статью — Афиши.ру</title>
+<link rel="canonical" href="https://afishi.ru/article-edit.html">
+<meta name="description" content="Редактор статей Афиши.ру. Публикуйте обзоры, рецензии и репортажи.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>/* ── Header ──────────────────────────────── */
+header {
+  background: var(--white);
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 28px; height: 64px;
+}
+.header-inner { gap: 12px; }
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.logo { font-size: 24px; }
+.logo{font-size:18px !important;}
+nav { display: flex; gap: 0; flex: 1; }
+nav a {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 0 13px; height: 64px;
+  display: flex; align-items: center;
+  color: var(--mid);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
+nav a { padding: 0 8px; font-size: 12px; }
+.city-strip-inner{gap:6px !important;}
+.city-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.city-strip-inner::-webkit-scrollbar { display: none; }
+.city-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-pill {
+  padding: 6px 16px; border: 1.5px solid var(--border);
+  border-radius: 20px; font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--white); color: var(--mid); transition: all .15s;
+}
+.city-pill:hover { border-color: var(--red); color: var(--red); }
+.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
+.city-pill{font-size:11px !important;padding:4px 10px !important;}
+
+:root{--red:#c8102e;--red-d:#9e0c24;--dark:#1a1a1a;--bg:#f4f2ee;--gold:#c9a84c;--border:#e0e0e0;--light:#888;--mid:#444;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PT Sans',sans-serif;background:var(--bg);color:#111;}
+a{color:inherit;text-decoration:none;}
+
+.hi{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:60px;}
+
+.logo span{color:var(--red);}
+
+.page-hero{background:linear-gradient(135deg,#0d0124,#1a0a2e);padding:28px 0 22px;}
+.hero-inner{max-width:900px;margin:0 auto;padding:0 16px;}
+.breadcrumb{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:10px;}
+.breadcrumb a{color:rgba(255,255,255,.5);}
+.page-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:4px;}
+.page-sub{font-size:13px;color:rgba(255,255,255,.45);}
+
+.main{max-width:900px;margin:28px auto;padding:0 16px;}
+
+/* AUTH GATE */
+.auth-gate{background:#fff;border:1px solid var(--border);border-radius:8px;padding:40px;text-align:center;}
+
+/* EDITOR */
+.editor-card{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;}
+.editor-head{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px 20px;}
+.editor-body{padding:20px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);margin-bottom:6px;}
+.req{color:var(--red);}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:4px;padding:10px 12px;font-family:'PT Sans',sans-serif;font-size:14px;color:#111;background:#fff;transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(200,16,46,.06);}
+.field textarea{resize:vertical;min-height:80px;}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:4px;flex-wrap:wrap;background:#f9f7f4;border:1px solid var(--border);border-radius:4px 4px 0 0;padding:8px 10px;border-bottom:none;}
+.tbtn{background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'PT Sans',sans-serif;transition:all .15s;color:var(--mid);}
+.tbtn:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.tbtn.active{background:var(--red);color:#fff;border-color:var(--red);}
+#articleBody{border-radius:0 0 4px 4px;min-height:400px;font-size:15px;line-height:1.7;}
+
+/* COVER */
+.cover-drop{border:2px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;transition:border-color .2s;}
+.cover-drop:hover{border-color:var(--red);background:#fff8f8;}
+
+/* SUBMIT */
+.submit-bar{background:linear-gradient(135deg,#0d0124,#1a0a2e);border-radius:8px;padding:24px;color:#fff;text-align:center;margin-bottom:20px;}
+.btn-red{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:none;padding:12px 28px;border-radius:4px;cursor:pointer;transition:background .15s;display:inline-block;}
+.btn-red:hover{background:var(--red-d);}
+.btn-out{background:none;border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8);font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:10px 20px;border-radius:4px;cursor:pointer;margin-left:10px;}
+.btn-out:hover{border-color:#fff;color:#fff;}
+
+/* SUCCESS */
+.success-block{display:none;text-align:center;padding:50px 20px;}
+
+/* DRAFTS SIDEBAR */
+.sc{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;}
+.sc-h{background:var(--dark);color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:11px 16px;}
+.sc-b{padding:14px 16px;}
+
+.layout{display:grid;grid-template-columns:1fr 260px;gap:20px;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}}
+
+footer{background:var(--dark);color:#555;font-size:12px;padding:16px 0;margin-top:40px;}
+.fi{max-width:900px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;}
+
+.footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+.footer-grid {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 28px; margin-bottom: 28px;
+}
+.footer-logo {
+  font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.footer-desc { font-size: 13px; line-height: 1.7; color: #888; }
+.footer-col-title {
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--white); margin-bottom: 12px;
+}
+.footer-links { display: flex; flex-direction: column; gap: 6px; }
+.footer-bottom {
+  border-top: 1px solid #333; padding-top: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: #666;
+}
+.footer-grid { grid-template-columns: 1fr 1fr; }
+.footer-grid { grid-template-columns: 1fr; }
+</style>
+<style id="afishi-mobile">
+
+/* ═══════════════════════════════════════════════
+   МОБИЛЬНАЯ АДАПТАЦИЯ — afishi.ru
+   Breakpoints: 768px (tablet), 480px (phone)
+═══════════════════════════════════════════════ */
+
+/* ── Hamburger button ─────────────────────────── */
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px;
+  background: none;
+  border: none;
+  margin-left: auto;
+}
+.burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all .25s;
+}
+.burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile nav drawer ───────────────────────── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+}
+.mobile-nav.open { pointer-events: all; }
+.mobile-nav-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.mobile-nav.open .mobile-nav-overlay { opacity: 1; }
+.mobile-nav-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  background: var(--dark, #1a1a1a);
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-nav.open .mobile-nav-drawer { transform: translateX(0); }
+.mobile-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.mobile-nav-logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+.mobile-nav-logo span { color: var(--red, #c8102e); }
+.mobile-nav-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.mobile-nav-links {
+  padding: 12px 0;
+  flex: 1;
+}
+.mobile-nav-links a {
+  display: block;
+  color: #ddd;
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 13px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  text-decoration: none;
+  transition: background .15s;
+}
+.mobile-nav-links a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.mobile-nav-links a.active { color: var(--gold, #c9a84c); }
+.mobile-nav-links a.highlight {
+  color: var(--gold, #c9a84c);
+  font-weight: 700;
+}
+.mobile-nav-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: 11px;
+  color: #555;
+}
+
+@media (max-width: 768px) {
+  /* ── Header ──────────────────────────────────── */
+  .header-inner, .hi {
+    padding: 0 12px !important;
+    height: 54px !important;
+    gap: 12px !important;
+  }
+  .logo { font-size: 22px !important; }
+  header nav, header nav a { display: none !important; }
+  .burger { display: flex !important; }
+
+  /* ── Topbar ───────────────────────────────────── */
+  .topbar { display: none !important; }
+
+  /* ── Hero / Page hero ────────────────────────── */
+  .page-hero { padding: 20px 0 16px !important; }
+  .page-title, .section-title { font-size: 20px !important; }
+  .hero-inner { padding: 0 12px !important; }
+  .section-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 0 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* ── Filter bar ──────────────────────────────── */
+  .filter-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .filter-inner {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    min-width: max-content;
+  }
+  .filter-group { min-width: 120px; }
+  .filter-select { font-size: 12px !important; padding: 7px 8px !important; }
+
+  /* ── Date tabs ───────────────────────────────── */
+  .date-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    padding: 0 12px !important;
+    gap: 6px !important;
+    scrollbar-width: none;
+  }
+  .date-tabs::-webkit-scrollbar { display: none; }
+  .date-tab { flex-shrink: 0 !important; padding: 6px 14px !important; }
+
+  /* ── City pills ──────────────────────────────── */
+  .city-pills-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none;
+    padding: 8px 12px !important;
+  }
+  .city-pills-wrap::-webkit-scrollbar { display: none; }
+  .city-pills {
+    flex-wrap: nowrap !important;
+    min-width: max-content;
+  }
+  .city-pill { flex-shrink: 0 !important; font-size: 11px !important; padding: 5px 12px !important; }
+
+  /* ── Grids ────────────────────────────────────── */
+  .concert-grid,
+  .concerts-grid,
+  .film-grid,
+  .events-grid,
+  .af-grid,
+  .ex-grid,
+  .kids-grid,
+  #concertGrid,
+  #cinemaGrid,
+  #exhibitsGrid,
+  #kidsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 10px !important;
+  }
+
+  /* ── Cards ────────────────────────────────────── */
+  .concert-card, .film-card, .cinema-card, .event-card, .ai-card {
+    font-size: 12px !important;
+  }
+  .c-poster, .film-poster, .cinema-poster {
+    aspect-ratio: 3/2 !important;
+    font-size: 36px !important;
+  }
+  .c-title, .film-title { font-size: 13px !important; }
+  .c-buy, .buy-btn { font-size: 11px !important; padding: 6px 8px !important; }
+  .c-price { font-size: 12px !important; }
+
+  /* ── Theater list ─────────────────────────────── */
+  #theaterList { padding: 0 10px !important; }
+  .show-card { padding: 12px !important; }
+  .show-poster { width: 60px !important; height: 80px !important; font-size: 24px !important; }
+  .show-title { font-size: 14px !important; }
+
+  /* ── Concert list view ────────────────────────── */
+  .cli-poster { width: 70px !important; }
+  .concert-list-item { padding: 10px !important; }
+
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar { display: none !important; }
+
+  /* ── Main layout ─────────────────────────────── */
+  .main-layout, .layout {
+    grid-template-columns: 1fr !important;
+    padding: 0 10px !important;
+  }
+  .main { padding: 16px 10px !important; }
+
+  /* ── Section spacing ─────────────────────────── */
+  section { margin-bottom: 24px !important; }
+
+  /* ── View toggle (grid/list) ─────────────────── */
+  .view-toggle { display: none !important; }
+
+  /* ── Modal ────────────────────────────────────── */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  .modal-box {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 92vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+  }
+  .modal-poster, #mposter {
+    height: 180px !important;
+    font-size: 52px !important;
+  }
+  .modal-title, #mtitle { font-size: 18px !important; }
+  .modal-tabs { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
+  .modal-tabs::-webkit-scrollbar { display: none; }
+  .modal-tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 8px 12px !important; }
+
+  /* ── Ticket modal ────────────────────────────── */
+  .ck-modal-box {
+    position: fixed !important;
+    inset: 0 !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+  }
+
+  /* ── Floating buttons ────────────────────────── */
+  #addEventFloatBtn, #addVenueFloatBtn {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+  #addEventFloatBtn span:not(:first-child),
+  #addVenueFloatBtn span:not(:first-child) { display: none !important; }
+
+  /* ── Loyalty page ────────────────────────────── */
+  .user-loyalty-card { flex-direction: column !important; text-align: center !important; }
+  .tiers { grid-template-columns: 1fr !important; }
+  .hiw-steps { grid-template-columns: 1fr 1fr !important; }
+  .stats-inner { grid-template-columns: 1fr 1fr !important; }
+  .points-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Articles ────────────────────────────────── */
+  .art-card { flex-direction: column !important; }
+  .art-cover { width: 100% !important; aspect-ratio: 16/6 !important; }
+
+  /* ── Admin panel ─────────────────────────────── */
+  .admin-layout { grid-template-columns: 1fr !important; }
+  .admin-sidebar { display: none !important; }
+  .field-row { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  /* ── Phone — single column ───────────────────── */
+  .concert-grid,
+  .concerts-grid,
+  .film-grid,
+  .events-grid,
+  .af-grid,
+  .ex-grid,
+  .kids-grid,
+  #concertGrid,
+  #cinemaGrid,
+  #exhibitsGrid,
+  #kidsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* ── AI cards single col ─────────────────────── */
+  #aiGrid { grid-template-columns: 1fr !important; }
+
+  /* ── Theater shows ─────────────────────────── */
+  #theaterList .show-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  /* ── Concert card horizontal on phone ──────── */
+  .concert-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+  }
+  .c-poster {
+    width: 90px !important;
+    flex-shrink: 0 !important;
+    aspect-ratio: auto !important;
+    min-height: 90px !important;
+    font-size: 28px !important;
+  }
+  .c-body { flex: 1 !important; }
+  .c-genre { font-size: 9px !important; }
+  .c-meta, .c-venue, .c-stars { display: none !important; }
+
+  /* ── Modal full screen on small phones ──────── */
+  .modal-box { max-height: 100vh !important; border-radius: 0 !important; }
+
+  /* ── Section title smaller ───────────────────── */
+  .section-title { font-size: 17px !important; }
+  .section-icon { font-size: 18px !important; }
+
+  /* ── Page hero compact ───────────────────────── */
+  .page-sub { font-size: 12px !important; }
+
+  /* ── Loyalty compact ─────────────────────────── */
+  .hiw-steps { grid-template-columns: 1fr !important; }
+  .points-grid { grid-template-columns: 1fr !important; }
+  .stat-item { padding: 12px 8px !important; }
+  .stat-num { font-size: 22px !important; }
+}
+
+</style>
+<!-- Яндекс.Метрика -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+   ym(2234293, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Яндекс.Метрика -->
+</head>
+<body>
+<header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Афиши<span>.ру</span></a>
+      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+<div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
+  <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
+    <span style="font-size:16px;">🍷</span> <span>Ресторан «Волгоград»</span>
+  </a>
+  <div style="border-top:1px solid #f0ede8;margin:6px 0;"></div>
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Ближайшие мероприятия</div>
+  <div id="restDropdownEvents" style="padding:0 8px;">
+    <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
+  </div>
+  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
+</div></nav>
+      <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
+      <div class="search-box">
+        🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
+      </div>
+    </div>
+  </header>
+
+<div class="page-hero">
+  <div class="hero-inner">
+    <div class="breadcrumb"><a href="index.html">Афиши.ру</a> › <a href="articles.html">Статьи</a> › Написать</div>
+    <div class="page-title">✍️ Написать статью</div>
+    <div class="page-sub">Редактор статей и материалов для сайта</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- AUTH GATE -->
+  <div id="authGate" class="auth-gate" style="display:none;">
+    <div style="font-size:48px;margin-bottom:12px;">🔐</div>
+    <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Доступ только для редакторов</div>
+    <div style="font-size:14px;color:var(--light);margin-bottom:20px;">Написание статей доступно редакторам и администраторам.</div>
+    <button class="btn-red" onclick="openAuthModal()">Войти</button>
+  </div>
+
+  <div id="mainForm" style="display:none;">
+
+    <!-- SUCCESS -->
+    <div class="success-block" id="successBlock">
+      <div style="font-size:56px;margin-bottom:14px;">🎉</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px;">Статья опубликована!</div>
+      <div style="font-size:14px;color:var(--light);margin-bottom:24px;">Материал добавлен на сайт и доступен читателям.</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <a href="articles.html" class="btn-red" style="display:inline-block;">Все статьи</a>
+        <button class="btn-out" style="background:var(--red);border-color:var(--red);margin-left:0;" onclick="resetForm()">Написать ещё</button>
+      </div>
+    </div>
+
+    <div class="layout" id="formLayout">
+      <div>
+
+        <!-- ОСНОВНОЕ -->
+        <div class="editor-card">
+          <div class="editor-head">📝 Основное</div>
+          <div class="editor-body">
+            <div class="field">
+              <label>Заголовок статьи <span class="req">*</span></label>
+              <input type="text" id="artTitle" placeholder="Например: Топ-10 концертов августа в Волгограде">
+            </div>
+            <div class="field">
+              <label>Лид / подзаголовок <span class="req">*</span></label>
+              <input type="text" id="artLead" placeholder="Краткое описание (2–3 предложения)">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="field">
+                <label>Категория</label>
+                <select id="artCat">
+                  <option value="news">📰 Новость</option>
+                  <option value="review">⭐ Рецензия</option>
+                  <option value="interview">🎤 Интервью</option>
+                  <option value="guide">📖 Гид</option>
+                  <option value="top">🏆 Топ / Подборка</option>
+                  <option value="report">📸 Репортаж</option>
+                  <option value="announce">📣 Анонс</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Город</label>
+                <input type="text" id="artCity" placeholder="Волгоград">
+              </div>
+            </div>
+            <div class="field">
+              <label>Теги (через запятую)</label>
+              <input type="text" id="artTags" placeholder="концерты, театр, выставки">
+            </div>
+          </div>
+        </div>
+
+        <!-- ОБЛОЖКА -->
+        <div class="editor-card">
+          <div class="editor-head">🖼️ Обложка</div>
+          <div class="editor-body">
+            <div class="cover-drop" id="coverDrop"
+                 onclick="document.getElementById('coverInput').click()"
+                 ondragover="event.preventDefault();this.style.borderColor='var(--red)'"
+                 ondragleave="this.style.borderColor='var(--border)'"
+                 ondrop="handleCoverDrop(event)">
+              <input type="file" id="coverInput" accept="image/*" style="display:none;" onchange="handleCoverSelect(this)">
+              <div id="coverPreview" style="display:none;margin-bottom:10px;">
+                <img id="coverImg" style="max-height:200px;max-width:100%;border-radius:4px;" alt="">
+                <button type="button" onclick="event.stopPropagation();clearCover()"
+                        style="margin-top:6px;background:none;border:1px solid #ddd;border-radius:3px;padding:3px 10px;font-size:11px;cursor:pointer;color:#888;display:block;">✕ Удалить</button>
+              </div>
+              <div id="coverHint">
+                <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+                <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;color:var(--mid);">Загрузить обложку</div>
+                <div style="font-size:12px;color:var(--light);margin-top:3px;">JPG, PNG до 10 МБ · нажмите или перетащите</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- РЕДАКТОР ТЕКСТА -->
+        <div class="editor-card">
+          <div class="editor-head">✍️ Текст статьи</div>
+          <div class="editor-body" style="padding:0;">
+            <div class="toolbar" id="toolbar">
+              <button class="tbtn" onclick="fmt('bold')" title="Жирный"><b>Ж</b></button>
+              <button class="tbtn" onclick="fmt('italic')" title="Курсив"><i>К</i></button>
+              <button class="tbtn" onclick="fmtH2()" title="Заголовок">H2</button>
+              <button class="tbtn" onclick="fmtH3()" title="Подзаголовок">H3</button>
+              <button class="tbtn" onclick="fmt('insertUnorderedList')" title="Список">• —</button>
+              <button class="tbtn" onclick="fmt('insertOrderedList')" title="Нумерованный">1.</button>
+              <button class="tbtn" onclick="fmtQuote()" title="Цитата">❝</button>
+              <button class="tbtn" onclick="fmtLink()" title="Ссылка">🔗</button>
+              <button class="tbtn" onclick="fmt('removeFormat')" title="Убрать форматирование">✕</button>
+            </div>
+            <div id="articleBody" contenteditable="true"
+                 style="padding:20px;min-height:400px;border:1px solid var(--border);border-radius:0 0 4px 4px;font-size:15px;line-height:1.8;outline:none;"
+                 data-placeholder="Начните писать статью..."></div>
+          </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="submit-bar">
+          <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">Готово к публикации?</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.55);margin-bottom:16px;">Статья сразу появится на сайте в разделе «Статьи»</div>
+          <button class="btn-red" onclick="publishArticle()" style="font-size:14px;padding:13px 32px;">
+            📣 Опубликовать
+          </button>
+          <button class="btn-out" onclick="saveDraft()">Сохранить черновик</button>
+        </div>
+
+      </div>
+
+      <!-- SIDEBAR -->
+      <aside>
+        <div class="sc">
+          <div class="sc-h">📂 Черновики</div>
+          <div class="sc-b" id="draftList">
+            <div style="font-size:13px;color:var(--light);">Нет черновиков</div>
+          </div>
+        </div>
+
+        <div class="sc">
+          <div class="sc-h">📋 Категории</div>
+          <div class="sc-b" style="font-size:13px;line-height:1.8;">
+            <div>📰 Новость — актуальные события</div>
+            <div>⭐ Рецензия — отзыв на спектакль/концерт</div>
+            <div>🎤 Интервью — беседа с артистом</div>
+            <div>📖 Гид — куда пойти, что посмотреть</div>
+            <div>🏆 Топ — подборки и рейтинги</div>
+            <div>📸 Репортаж — фото с события</div>
+            <div>📣 Анонс — предстоящие события</div>
+          </div>
+        </div>
+
+        <div class="sc">
+          <div class="sc-h">🔗 Разделы</div>
+          <div class="sc-b">
+            <a href="concerts.html" style="display:block;padding:7px 0;border-bottom:1px solid #f5f3f0;font-size:13px;">🎸 Концерты</a>
+            <a href="theater.html"  style="display:block;padding:7px 0;border-bottom:1px solid #f5f3f0;font-size:13px;">🎭 Театр</a>
+            <a href="cinema.html"   style="display:block;padding:7px 0;border-bottom:1px solid #f5f3f0;font-size:13px;">🎬 Кино</a>
+            <a href="articles.html" style="display:block;padding:7px 0;font-size:13px;">📰 Все статьи</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+    </div>
+  </div>
+
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Колонка 1: Логотип + описание + соцсети -->
+      <div>
+        <div class="footer-logo">Афиши<span>.ру</span></div>
+        <div class="footer-desc">
+          Крупнейший агрегатор событий и мероприятий в России.
+          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
+          Основан в 2002 году.
+        </div>
+        <div class="footer-socials">
+          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
+          </a>
+          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
+          </a>
+          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
+          </a>
+          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Колонка 2: Разделы -->
+      <div>
+        <div class="footer-col-title">Разделы</div>
+        <div class="footer-links">
+          <a href="concerts.html">🎸 Концерты</a>
+          <a href="theater.html">🎭 Театр и балет</a>
+          <a href="cinema.html">🎬 Кино</a>
+          <a href="exhibits.html">🖼️ Выставки</a>
+          <a href="kids.html">🧸 Детям</a>
+          <a href="articles.html">📝 Статьи</a>
+          <a href="film-database.html">📽️ База фильмов</a>
+          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
+            🏛 Пушкинская карта
+          </a>
+        </div>
+      </div>
+
+      <!-- Колонка 3: Площадки Волгограда -->
+      <div>
+        <div class="footer-col-title">Площадки</div>
+        <div class="footer-links" id="footerVenuesList">
+          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
+          <a href="venue-arena.html">Стадион Волгоград Арена</a>
+          <a href="venue-dom-ofitserov-volgograd.html">Дом Офицеров</a>
+          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
+          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
+          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
+          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
+        </div>
+      </div>
+
+      <!-- Города перенесены в шапку сайта -->
+
+      <!-- Колонка 5: Компания -->
+      <div>
+        <div class="footer-col-title">Компания</div>
+        <div class="footer-links">
+          <a href="about.html">О проекте</a>
+          <a href="advertise.html">Реклама на сайте</a>
+          <a href="event-add.html">Добавить событие</a>
+          <a href="venue-add.html">Добавить площадку</a>
+          <a href="loyalty.html">АфишиПлюс ⭐</a>
+          <a href="partners.html">Партнёрам</a>
+          <a href="jobs.html">Вакансии</a>
+          <a href="admin-info.html">Администраторам</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="footer-divider">
+
+  <div class="footer-bottom">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span>© 2002–2026 afishi.ru</span>
+      <span class="footer-badge">🌆 Волгоград</span>
+      <span class="footer-badge">🔒 18+</span>
+    </div>
+    <div class="footer-bottom-links">
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="sitemap.html">Карта сайта</a>
+      <a href="admin-info.html">Администраторам</a>
+    </div>
+  </div>
+
+
+<!-- ── Кнопка «Поделиться» ─────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto 28px;padding:0 20px;">
+  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;">
+    <div style="margin-bottom:14px;">
+      <div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;">📢 Поделитесь афишей с друзьями</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);">Расскажите о событиях своего города</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="shareToVK()" style="display:flex;align-items:center;gap:6px;background:#4a76a8;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504C19.224 13.376 19 12.763 20.014 11.276c1.109-1.613 3.244-4.145 1.256-4.145h-3.983c-.61 0-.859.407-.859.407s-1.19 2.516-2.86 4.152c-.699.699-1.012.922-1.394.922-.194 0-.437-.223-.437-.931V7.547c0-.593-.166-.933-.644-.933H7.999c-.374 0-.594.271-.594.531 0 .533.821.677.906 2.183v3.089c0 .75-.136.886-.432.886-.79 0-2.712-2.448-3.855-5.25-.22-.601-.443-.836-1.054-.836H.987C.421 7.117 0 7.366 0 7.986c0 .624 1.812 5.109 5.686 8.984 2.979 2.979 6.951 4.024 9.476 4.024z"/></svg>
+        ВКонтакте
+      </button>
+      <button onclick="shareToOK()" style="display:flex;align-items:center;gap:6px;background:#ee8208;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 6a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm5.8 11.2c-.4.5-1.2.7-1.8.3l-2.1-1.3c-.6.2-1.2.3-1.9.3s-1.3-.1-1.9-.3l-2.1 1.3c-.6.4-1.4.2-1.8-.3-.4-.5-.2-1.3.4-1.6l1.8-1.1c-.7-.6-1.2-1.4-1.5-2.3-.2-.6.2-1.3.9-1.4.6-.1 1.2.2 1.4.8.3.9 1.3 1.6 2.8 1.6s2.5-.7 2.8-1.6c.2-.6.8-.9 1.4-.8.6.1 1.1.7.9 1.4-.3.9-.8 1.7-1.5 2.3l1.8 1.1c.6.3.8 1.1.4 1.6z"/></svg>
+        ОК
+      </button>
+      <button onclick="shareToTelegram()" style="display:flex;align-items:center;gap:6px;background:#0088cc;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+        Telegram
+      </button>
+      <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:6px;background:#25d366;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button onclick="shareToDzen()" style="display:flex;align-items:center;gap:6px;background:#ff6600;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor"><path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm23.3 53.3c-10.1 0-18.3 3.4-23.3 9.7-5-6.3-13.2-9.7-23.3-9.7-1.7 0-3.3.1-3.3-3.3 0-3.4 1.6-3.3 3.3-3.3 10.1 0 18.3-3.4 23.3-9.7 5 6.3 13.2 9.7 23.3 9.7 1.7 0 3.3-.1 3.3 3.3 0 3.4-1.6 3.3-3.3 3.3z"/></svg>
+        Дзен
+      </button>
+      <button onclick="shareToRutube()" style="display:flex;align-items:center;gap:6px;background:#060a11;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4.8 13.2l-6 3.6c-.2.1-.4.2-.6.2-.2 0-.4-.1-.6-.2-.4-.2-.6-.6-.6-1V8.4c0-.4.2-.8.6-1 .2-.1.4-.1.6-.2.2 0 .4.1.6.2l6 3.6c.4.2.6.6.6 1s-.2.8-.6 1.2z"/></svg>
+        Rutube
+      </button>
+      <button onclick="shareToYandex()" style="display:flex;align-items:center;gap:6px;background:#fc3f1d;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm-1.65 18.923h-2.113V9.596H9.587C9.1 11.42 8.625 13.007 8.225 14.08c-.722 1.927-1.517 2.594-2.816 2.594-.45 0-.857-.077-1.036-.174l.18-1.71c.167.064.386.115.578.115.5 0 .87-.424 1.25-1.58.6-1.778 1.35-4.665 2.08-7.93h6.573v13.528z"/></svg>
+        Яндекс
+      </button>
+      <button onclick="shareToMAX()" style="display:flex;align-items:center;gap:6px;background:#6c17c9;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
+        MAX
+      </button>
+      <button onclick="copyPageLink(this)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Скопировать</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- ── Партнёры: билетные операторы ─────────────────────── -->
+  <div style="border-top:1px solid rgba(255,255,255,.08);padding:20px 24px 0;margin-top:4px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;">Билеты</span>
+      <a href="https://vlg.kassir.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner" 
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassir.ru
+      </a>
+      <a href="https://kassy.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassy.ru
+      </a>
+      <a href="https://qtickets.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        qtickets.ru
+      </a>
+    </div>
+  </div>
+<!-- share functions see below -->
+
+</footer>
+
+<script>
+var coverDataUrl = null;
+
+// ── Auth ─────────────────────────────────────────────────────────
+var EDITOR_ROLES = ['admin','editor','moderator','venue_admin','event_admin'];
+function init() {
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('afishi_user') || 'null'); } catch(e) {}
+  if (!user || EDITOR_ROLES.indexOf(user.role) < 0) {
+    document.getElementById('authGate').style.display = 'block';
+  } else {
+    document.getElementById('mainForm').style.display = 'block';
+    var cityEl = document.getElementById('artCity');
+    if (cityEl) cityEl.value = localStorage.getItem('afishi_city') || 'Москва';
+    loadDraftList();
+  }
+}
+function openAuthModal() {
+  if (window.Afishi && Afishi.requireLogin) Afishi.requireLogin(function() { location.reload(); });
+}
+
+// ── Editor ───────────────────────────────────────────────────────
+function fmt(cmd) { document.execCommand(cmd, false, null); document.getElementById('articleBody').focus(); }
+function fmtH2() {
+  var sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  var range = sel.getRangeAt(0);
+  var h = document.createElement('h2');
+  h.style.cssText = 'font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin:20px 0 8px;';
+  h.textContent = sel.toString() || 'Заголовок раздела';
+  range.deleteContents();
+  range.insertNode(h);
+}
+function fmtH3() {
+  var sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  var range = sel.getRangeAt(0);
+  var h = document.createElement('h3');
+  h.style.cssText = 'font-family:Oswald,sans-serif;font-size:17px;font-weight:700;margin:16px 0 6px;';
+  h.textContent = sel.toString() || 'Подзаголовок';
+  range.deleteContents();
+  range.insertNode(h);
+}
+function fmtQuote() {
+  var sel = window.getSelection();
+  var text = sel.toString() || 'Цитата';
+  var q = document.createElement('blockquote');
+  q.style.cssText = 'border-left:4px solid var(--red);padding:10px 16px;margin:16px 0;background:#fff5f5;font-style:italic;color:#555;font-size:16px;';
+  q.textContent = text;
+  if (sel.rangeCount) { var r = sel.getRangeAt(0); r.deleteContents(); r.insertNode(q); }
+  document.getElementById('articleBody').focus();
+}
+function fmtLink() {
+  var url = prompt('URL ссылки:');
+  if (url) document.execCommand('createLink', false, url);
+}
+
+// ── Cover ────────────────────────────────────────────────────────
+function handleCoverSelect(input) { if (input.files && input.files[0]) loadCover(input.files[0]); }
+function handleCoverDrop(e) {
+  e.preventDefault(); document.getElementById('coverDrop').style.borderColor = 'var(--border)';
+  var f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) loadCover(f);
+}
+function loadCover(file) {
+  if (file.size > 10*1024*1024) { alert('Файл слишком большой'); return; }
+  var r = new FileReader();
+  r.onload = function(e) {
+    coverDataUrl = e.target.result;
+    document.getElementById('coverImg').src = coverDataUrl;
+    document.getElementById('coverPreview').style.display = 'block';
+    document.getElementById('coverHint').style.display = 'none';
+    document.getElementById('coverDrop').style.borderColor = 'var(--red)';
+  };
+  r.readAsDataURL(file);
+}
+function clearCover() {
+  coverDataUrl = null;
+  document.getElementById('coverImg').src = '';
+  document.getElementById('coverPreview').style.display = 'none';
+  document.getElementById('coverHint').style.display = 'block';
+  document.getElementById('coverDrop').style.borderColor = 'var(--border)';
+  document.getElementById('coverInput').value = '';
+}
+
+// ── Collect data ─────────────────────────────────────────────────
+function collectData() {
+  return {
+    title:   (document.getElementById('artTitle').value || '').trim(),
+    lead:    (document.getElementById('artLead').value  || '').trim(),
+    cat:     document.getElementById('artCat').value,
+    city:    (document.getElementById('artCity').value  || '').trim(),
+    tags:    (document.getElementById('artTags').value  || '').split(',').map(function(t){ return t.trim(); }).filter(Boolean),
+    body:    document.getElementById('articleBody').innerHTML.trim(),
+    cover:   coverDataUrl,
+  };
+}
+
+// ── Drafts ───────────────────────────────────────────────────────
+function saveDraft() {
+  var data = collectData();
+  if (!data.title) { alert('Укажите заголовок'); return; }
+  var drafts;
+  try { drafts = JSON.parse(localStorage.getItem('afishi_article_drafts') || '[]'); } catch(e) { drafts = []; }
+  data.draftId  = 'draft_' + Date.now();
+  data.savedAt  = new Date().toLocaleString('ru');
+  drafts.unshift(data);
+  drafts = drafts.slice(0, 10);
+  try { localStorage.setItem('afishi_article_drafts', JSON.stringify(drafts)); } catch(e) {}
+  loadDraftList();
+  alert('✅ Черновик сохранён');
+}
+function loadDraftList() {
+  var drafts;
+  try { drafts = JSON.parse(localStorage.getItem('afishi_article_drafts') || '[]'); } catch(e) { drafts = []; }
+  var el = document.getElementById('draftList');
+  if (!drafts.length) { el.innerHTML = '<div style="font-size:13px;color:var(--light);">Нет черновиков</div>'; return; }
+  el.innerHTML = drafts.map(function(d, i) {
+    return '<div style="padding:8px 0;border-bottom:1px solid #f5f3f0;">'
+      + '<div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + d.title + '</div>'
+      + '<div style="font-size:11px;color:var(--light);margin-bottom:4px;">' + d.savedAt + '</div>'
+      + '<button onclick="loadDraft(' + i + ')" style="background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;font-weight:700;padding:0;">↩ Загрузить</button>'
+      + '</div>';
+  }).join('');
+}
+function loadDraft(idx) {
+  var drafts;
+  try { drafts = JSON.parse(localStorage.getItem('afishi_article_drafts') || '[]'); } catch(e) { return; }
+  var d = drafts[idx]; if (!d) return;
+  document.getElementById('artTitle').value = d.title || '';
+  document.getElementById('artLead').value  = d.lead  || '';
+  document.getElementById('artCat').value   = d.cat   || 'news';
+  document.getElementById('artCity').value  = d.city  || '';
+  document.getElementById('artTags').value  = (d.tags || []).join(', ');
+  document.getElementById('articleBody').innerHTML = d.body || '';
+  if (d.cover) {
+    coverDataUrl = d.cover;
+    document.getElementById('coverImg').src = d.cover;
+    document.getElementById('coverPreview').style.display = 'block';
+    document.getElementById('coverHint').style.display = 'none';
+  }
+}
+
+// ── Publish ──────────────────────────────────────────────────────
+function publishArticle() {
+  var data = collectData();
+  if (!data.title) { alert('Укажите заголовок'); document.getElementById('artTitle').focus(); return; }
+  if (!data.lead)  { alert('Добавьте лид-абзац'); document.getElementById('artLead').focus(); return; }
+  if (!data.body || data.body.length < 50) { alert('Напишите текст статьи (минимум 50 символов)'); document.getElementById('articleBody').focus(); return; }
+
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('afishi_user') || 'null'); } catch(e) {}
+
+  var articles;
+  try { articles = JSON.parse(localStorage.getItem('afishi_articles') || '[]'); } catch(e) { articles = []; }
+
+  var catLabels = {news:'Новость', review:'Рецензия', interview:'Интервью', guide:'Гид', top:'Топ', report:'Репортаж', announce:'Анонс'};
+  articles.unshift({
+    id:        'art_' + Date.now(),
+    title:     data.title,
+    lead:      data.lead,
+    cat:       data.cat,
+    catLabel:  catLabels[data.cat] || data.cat,
+    city:      data.city,
+    tags:      data.tags,
+    body:      data.body,
+    cover:     data.cover,
+    author:    user ? (user.name || user.email) : 'Редакция',
+    authorRole:user ? user.role : 'editor',
+    date:      new Date().toLocaleDateString('ru', {day:'numeric', month:'long', year:'numeric'}),
+    createdAt: Date.now(),
+    status:    'published'
+  });
+  try { localStorage.setItem('afishi_articles', JSON.stringify(articles)); } catch(e) {}
+
+  document.getElementById('formLayout').style.display = 'none';
+  document.getElementById('successBlock').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function resetForm() {
+  document.getElementById('formLayout').style.display = 'grid';
+  document.getElementById('successBlock').style.display = 'none';
+  document.getElementById('artTitle').value = '';
+  document.getElementById('artLead').value  = '';
+  document.getElementById('artTags').value  = '';
+  document.getElementById('articleBody').innerHTML = '';
+  clearCover();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Placeholder for contenteditable
+document.getElementById('articleBody').addEventListener('focus', function() {
+  if (!this.textContent.trim()) this.innerHTML = '';
+});
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+<!-- ═══════════════════════════ AFISHI SHARED MODULE ═══════════════════════════ -->
+<script>
+// ================================================================
+//  AFISHI.RU — SHARED MODULE v2
+//  Auth + Reviews + Trailer  (injected into every page)
+//  Fixed: no containerId/pageId/itemId in onclick attrs
+// ================================================================
+(function () {
+  'use strict';
+
+  // ── CONFIG ────────────────────────────────────────────────────
+  const LS_USER    = 'afishi_user';
+  const LS_REVIEWS = 'afishi_reviews';
+
+  // ── AUTH STATE ────────────────────────────────────────────────
+  let _user = null;
+  try { _user = JSON.parse(localStorage.getItem(LS_USER)); } catch(e){}
+
+  // ── REVIEW STORE ──────────────────────────────────────────────
+  function rvLoad()  { try { return JSON.parse(localStorage.getItem(LS_REVIEWS)) || {}; } catch(e) { return {}; } }
+  function rvSave(db){ try { localStorage.setItem(LS_REVIEWS, JSON.stringify(db)); } catch(e){} }
+  function rvKey(pid, iid) { return pid + '::' + iid; }
+  function rvGet(pid, iid) { return rvLoad()[rvKey(pid, iid)] || []; }
+  function rvAdd(pid, iid, rev) {
+    const db = rvLoad(), k = rvKey(pid, iid);
+    if (!db[k]) db[k] = [];
+    db[k].unshift(rev);
+    rvSave(db);
+    return db[k];
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────
+  const SCORE_LABELS = ['','Провал','Ужасно','Плохо','Слабо','Нормально','Хорошо','Очень хорошо','Отлично','Великолепно','Шедевр!'];
+  const SCORE_EMOJI  = ['','💀','😤','👎','😐','😶','🙂','😊','😍','🤩','🏆'];
+  const AVT_COLORS   = ['#e53935','#1e88e5','#43a047','#8e24aa','#f4511e','#00897b','#3949ab','#d81b60','#00838f','#558b2f'];
+  function avColor(n) { return AVT_COLORS[(n||'A').charCodeAt(0) % AVT_COLORS.length]; }
+  function plural(n, f) {
+    if (n%10===1 && n%100!==11) return f[0];
+    if ([2,3,4].includes(n%10) && ![12,13,14].includes(n%100)) return f[1];
+    return f[2];
+  }
+  function fmtD(d) { return new Date(d||Date.now()).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}); }
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── CURRENT REVIEW CONTEXT (no onclick params needed) ─────────
+  // We store context in the container element itself via data-* attrs
+  // All event handlers read context from closest ancestor with data-rv-*
+
+  // ── CSS ───────────────────────────────────────────────────────
+  const css = `
+/* == AFISHI SHARED MODULE STYLES == */
+#afishiAuthModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9000;align-items:center;justify-content:center;padding:20px;}
+#afishiAuthModal.open{display:flex;}
+.am-box{background:#fff;width:100%;max-width:440px;border-radius:10px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5);position:relative;}
+.am-head{background:linear-gradient(135deg,#1a0a2e,#0a1a2e);padding:24px 28px 20px;color:#fff;}
+.am-title{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+.am-sub{font-size:13px;color:rgba(255,255,255,.5);}
+.am-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#aaa;font-size:20px;cursor:pointer;}
+.am-body{padding:22px 28px 28px;}
+.am-tabs{display:flex;border-bottom:2px solid #f0eeea;margin-bottom:20px;}
+.am-tab{padding:8px 20px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.am-tab.active{color:#c8102e;border-bottom-color:#c8102e;}
+.am-pane{display:none;}.am-pane.active{display:block;}
+.am-field{margin-bottom:14px;}
+.am-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:5px;}
+.am-input{width:100%;border:1.5px solid #e0e0e0;border-radius:5px;padding:10px 13px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+.am-input:focus{border-color:#c8102e;}
+.am-btn{width:100%;background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border:none;padding:12px;border-radius:5px;cursor:pointer;margin-top:4px;}
+.am-btn:hover{background:#9e0c24;}
+.am-err{background:#ffebee;border:1px solid #ffcdd2;color:#c62828;font-size:13px;padding:8px 12px;border-radius:4px;margin-bottom:12px;display:none;}
+.am-ok {background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;font-size:13px;padding:8px 12px;border-radius:4px;margin-bottom:12px;display:none;}
+.am-switch{text-align:center;font-size:13px;color:#888;margin-top:16px;}
+.am-switch a{color:#c8102e;cursor:pointer;font-weight:700;}
+.am-social{display:flex;gap:8px;margin-bottom:18px;}
+.am-soc-btn{flex:1;border:1.5px solid #e0e0e0;border-radius:5px;padding:9px 8px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.am-soc-btn:hover{border-color:#c8102e;color:#c8102e;}
+.am-divider{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:12px;color:#aaa;}
+.am-divider::before,.am-divider::after{content:'';flex:1;height:1px;background:#e0e0e0;}
+.user-btn{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 8px 2px 4px;border-radius:3px;transition:background .15s;font-size:12px;color:#bbb;}
+.user-btn:hover{background:rgba(255,255,255,.08);}
+.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+/* Review pane */
+.rv-panel{padding:20px 24px;}
+.rv-summary{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:18px 20px;margin-bottom:18px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.rv-avg-num{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;line-height:1;}
+.rv-bars{flex:1;min-width:140px;}
+.rv-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.rv-bar-track{flex:1;height:6px;background:#f0eeea;border-radius:3px;overflow:hidden;}
+.rv-bar-fill{height:100%;border-radius:3px;}
+.rv-gate{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:13px;}
+.rv-gate-btn{margin-left:auto;background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.rv-form-box{background:#fff;border:2px solid #f5c518;border-radius:8px;padding:16px 18px;margin-bottom:16px;}
+.rv-form-title{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px;}
+.rv-star-row{display:flex;gap:2px;cursor:pointer;}
+.rv-star{font-size:28px;color:#ddd;transition:color .1s,transform .1s;user-select:none;}
+.rv-star.lit{color:#f5c518;transform:scale(1.1);}
+.rv-star-lbl{font-size:13px;font-weight:700;color:#444;margin-left:8px;min-width:160px;display:inline-block;}
+.rv-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.rv-field-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:4px;}
+.rv-input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:8px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+.rv-input:focus{border-color:#c8102e;}
+.rv-textarea{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:9px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;resize:vertical;line-height:1.6;transition:border-color .15s;}
+.rv-textarea:focus{border-color:#c8102e;}
+.rv-submit-btn{background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:none;padding:10px 22px;border-radius:4px;cursor:pointer;}
+.rv-submit-btn:hover{background:#9e0c24;}
+.rv-msg{font-size:13px;font-weight:600;padding:8px 13px;border-radius:4px;display:none;}
+.rv-sort-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.rv-sort-title{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;}
+.rv-sort-sel{border:1px solid #e0e0e0;border-radius:4px;padding:5px 9px;font-family:'PT Sans',sans-serif;font-size:12px;outline:none;color:#444;}
+.rv-card{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px;transition:box-shadow .2s;}
+.rv-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.rv-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.rv-avt{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.rv-card-stars{color:#f5c518;font-size:12px;letter-spacing:1px;margin-bottom:8px;}
+.rv-card-text{font-size:13px;color:#444;line-height:1.7;margin-bottom:10px;}
+.rv-card-foot{display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid #f5f3f0;}
+.rv-helpful-btn{display:inline-flex;align-items:center;gap:4px;background:#f9f7f4;border:1px solid #ddd;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.rv-helpful-btn.voted{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;}
+.rv-empty{text-align:center;padding:28px 20px;color:#aaa;}
+/* Trailer pane */
+.yt-pane{padding:20px 24px;}
+.yt-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;background:#000;cursor:pointer;}
+.yt-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.yt-thumb{position:absolute;inset:0;}
+.yt-thumb img{width:100%;height:100%;object-fit:cover;}
+.yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.yt-play-btn{width:66px;height:66px;background:rgba(200,16,46,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .2s;}
+.yt-wrap:hover .yt-play-btn{transform:scale(1.1);}
+.yt-info-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;background:#f9f7f4;border-radius:4px;font-size:13px;color:#444;}
+.yt-yt-logo{width:30px;height:30px;background:#ff0000;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+`;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  // ── AUTH MODAL ────────────────────────────────────────────────
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="afishiAuthModal">
+    <div class="am-box">
+      <button class="am-close" id="amClose">✕</button>
+      <div class="am-head">
+        <div class="am-title">Войти на Афиши.ру</div>
+        <div class="am-sub">Чтобы оставлять отзывы и сохранять избранное</div>
+      </div>
+      <div class="am-body">
+        <div class="am-tabs">
+          <div class="am-tab active" id="amTabLogin">Войти</div>
+          <div class="am-tab"        id="amTabReg">Регистрация</div>
+        </div>
+        <div id="amErr" class="am-err"></div>
+        <div id="amOk"  class="am-ok"></div>
+        <div class="am-pane active" id="amPaneLogin">
+          <div class="am-social">
+            <button class="am-soc-btn" id="amSocVk">🔵 ВКонтакте</button>
+            <button class="am-soc-btn" id="amSocGoogle">🔴 Google</button>
+            <button class="am-soc-btn" id="amSocYandex">🟡 Яндекс</button>
+          </div>
+          <div class="am-divider">или через email</div>
+          <div class="am-field"><div class="am-label">Email</div>
+            <input class="am-input" id="amLoginEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div class="am-field"><div class="am-label">Пароль</div>
+            <input class="am-input" id="amLoginPass" type="password" placeholder="••••••••">
+          </div>
+          <button class="am-btn" id="amBtnLogin">Войти</button>
+          <div class="am-switch">Нет аккаунта? <a id="amToReg">Зарегистрируйтесь</a></div>
+        </div>
+        <div class="am-pane" id="amPaneReg">
+          <div class="am-field"><div class="am-label">Имя</div>
+            <input class="am-input" id="amRegName" type="text" placeholder="Иван Петров">
+          </div>
+          <div class="am-field"><div class="am-label">Email</div>
+            <input class="am-input" id="amRegEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div class="am-field"><div class="am-label">Пароль</div>
+            <input class="am-input" id="amRegPass" type="password" placeholder="Минимум 6 символов">
+          </div>
+          <div class="am-field"><div class="am-label">Город</div>
+            <input class="am-input" id="amRegCity" type="text" placeholder="Москва" value="Москва">
+          </div>
+          <button class="am-btn" id="amBtnReg">Создать аккаунт</button>
+          <div class="am-switch">Уже зарегистрированы? <a id="amToLogin">Войти</a></div>
+        </div>
+      </div>
+    </div>
+  </div>`);
+
+  // ── AUTH EVENT LISTENERS (no inline onclick) ──────────────────
+  function $(id) { return document.getElementById(id); }
+  $('amClose').onclick   = () => closeAuth();
+  $('amTabLogin').onclick = () => showTab('login');
+  $('amTabReg').onclick   = () => showTab('reg');
+  $('amToReg').onclick    = () => showTab('reg');
+  $('amToLogin').onclick  = () => showTab('login');
+  $('amBtnLogin').onclick = () => doLogin();
+  $('amBtnReg').onclick   = () => doRegister();
+  $('amSocVk').onclick    = () => socialLogin('vk');
+  $('amSocGoogle').onclick= () => socialLogin('google');
+  $('amSocYandex').onclick= () => socialLogin('yandex');
+  $('amLoginPass').onkeydown = e => { if (e.key==='Enter') doLogin(); };
+  $('afishiAuthModal').onclick = e => { if (e.target === $('afishiAuthModal')) closeAuth(); };
+
+  // ── AUTH LOGIC ────────────────────────────────────────────────
+  function getAccounts() { try { return JSON.parse(localStorage.getItem('afishi_accounts')||'[]'); } catch(e){return[];} }
+  function saveAccounts(a){ try { localStorage.setItem('afishi_accounts',JSON.stringify(a)); } catch(e){} }
+
+  function showMsg(type, msg) {
+    const err = $('amErr'), ok = $('amOk');
+    if (type==='err'){ err.textContent=msg; err.style.display='block'; ok.style.display='none'; }
+    else             { ok.textContent=msg;  ok.style.display='block'; err.style.display='none'; }
+    setTimeout(()=>{ err.style.display='none'; ok.style.display='none'; }, 4000);
+  }
+
+  let _afterLoginCb = null;
+  function closeAuth() {
+    $('afishiAuthModal').classList.remove('open');
+    _afterLoginCb = null;
+  }
+  function showTab(tab) {
+    ['Login','Reg'].forEach(t => {
+      $('amTab'+t).classList.toggle('active', t.toLowerCase()===tab);
+      $('amPane'+t).classList.toggle('active', t.toLowerCase()===tab);
+    });
+    $('amErr').style.display='none'; $('amOk').style.display='none';
+  }
+  function _login(user) {
+    _user = user;
+    try { localStorage.setItem(LS_USER, JSON.stringify(user)); } catch(e){}
+    closeAuth();
+    renderUserBtn();
+    showToast('👋 Добро пожаловать, ' + user.name + '!');
+    if (typeof _afterLoginCb === 'function') { _afterLoginCb(); _afterLoginCb = null; }
+  }
+  function doLogin() {
+    const email = $('amLoginEmail').value.trim().toLowerCase();
+    const pass  = $('amLoginPass').value;
+    if (!email||!pass) return showMsg('err','Введите email и пароль');
+    const found = getAccounts().find(a => a.email===email && a.pass===pass);
+    if (!found) return showMsg('err','Неверный email или пароль');
+    _login(found);
+  }
+  function doRegister() {
+    const name  = $('amRegName').value.trim();
+    const email = $('amRegEmail').value.trim().toLowerCase();
+    const pass  = $('amRegPass').value;
+    const city  = $('amRegCity').value.trim() || 'Москва';
+    if (!name)  return showMsg('err','Укажите имя');
+    if (!email) return showMsg('err','Укажите email');
+    if (!pass||pass.length<6) return showMsg('err','Пароль — минимум 6 символов');
+    const accounts = getAccounts();
+    if (accounts.find(a=>a.email===email)) return showMsg('err','Email уже зарегистрирован');
+    const user = { name, email, pass, city, joined: new Date().toISOString() };
+    accounts.push(user); saveAccounts(accounts);
+    showMsg('ok','Аккаунт создан! Добро пожаловать, '+name+'!');
+    setTimeout(()=>_login(user), 800);
+  }
+  function socialLogin(provider) {
+    const map = { vk:['ВК Пользователь','vk@demo.ru'], google:['Google Пользователь','google@demo.ru'], yandex:['Яндекс Пользователь','yandex@demo.ru'] };
+    const [name,email] = map[provider];
+    const accounts = getAccounts();
+    let user = accounts.find(a=>a.email===email);
+    if (!user) { user={name,email,pass:'',city:'Москва',provider,joined:new Date().toISOString()}; accounts.push(user); saveAccounts(accounts); }
+    _login(user);
+  }
+
+  // ── USER BUTTON ───────────────────────────────────────────────
+  function renderUserBtn() {
+    const topbar = document.querySelector('.topbar-inner > div:first-child') ||
+                   document.querySelector('.topbar-inner');
+    if (!topbar) return;
+    let ub = document.getElementById('afishiUserBtn');
+    if (!ub) {
+      ub = document.createElement('div');
+      ub.id = 'afishiUserBtn';
+      ub.style.cssText = 'margin-left:12px;display:inline-block;';
+      topbar.appendChild(ub);
+    }
+    if (_user) {
+      const initials = _user.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+      ub.innerHTML = `<div class="user-btn" id="afishiUBInner" title="${esc(_user.name)}">
+        <div class="user-avatar" style="background:${avColor(_user.name)};">${initials}</div>
+        <span style="color:#fff;">${esc(_user.name.split(' ')[0])}</span>
+        <span style="color:#666;font-size:9px;">▾</span></div>`;
+      document.getElementById('afishiUBInner').onclick = openUserMenu;
+    } else {
+      ub.innerHTML = `<div class="user-btn" id="afishiUBInner">
+        <span style="font-size:14px;">👤</span><span>Войти</span></div>`;
+      document.getElementById('afishiUBInner').onclick = () => openAuth();
+    }
+  }
+  function openUserMenu() {
+    if (!_user) return openAuth();
+    if (confirm(`Аккаунт: ${_user.name}\nEmail: ${_user.email}\n\nВыйти?`)) {
+      _user=null; localStorage.removeItem(LS_USER); renderUserBtn();
+      showToast('👋 Вы вышли из аккаунта');
+    }
+  }
+
+  // ── TRAILER RENDERER ──────────────────────────────────────────
+  function renderTrailerPane(containerId, ytId, title) {
+    const el = document.getElementById(containerId);
+    if (!el || !ytId) return;
+    el.innerHTML = `
+      <div class="yt-pane">
+        <div style="font-size:13px;color:#888;margin-bottom:12px;">
+          Официальный трейлер — <strong>${esc(title)}</strong>
+        </div>
+        <div class="yt-wrap" data-ytid="${esc(ytId)}">
+          <div class="yt-thumb"><img src="https://img.youtube.com/vi/${esc(ytId)}/maxresdefault.jpg"
+            onerror="this.src='https://img.youtube.com/vi/${esc(ytId)}/hqdefault.jpg'" alt="Трейлер"></div>
+          <div class="yt-play"><div class="yt-play-btn">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white" style="margin-left:4px"><path d="M8 5v14l11-7z"/></svg>
+          </div></div>
+        </div>
+        <div class="yt-info-row">
+          <div class="yt-yt-logo">
+            <svg viewBox="0 0 20 14" width="16" height="11" fill="white"><path d="M19.5 2.2C19.3 1.4 18.6.7 17.8.5 16.2 0 10 0 10 0S3.8 0 2.2.5C1.4.7.7 1.4.5 2.2 0 3.8 0 7 0 7s0 3.2.5 4.8c.2.8.9 1.5 1.7 1.7C3.8 14 10 14 10 14s6.2 0 7.8-.5c.8-.2 1.5-.9 1.7-1.7C20 10.2 20 7 20 7s0-3.2-.5-4.8z"/>
+            <polygon fill="white" points="8,10 13,7 8,4"/></svg>
+          </div>
+          <span>Трейлер загружается с YouTube. Нажмите ▶ для просмотра.</span>
+          <a href="https://www.youtube.com/watch?v=${esc(ytId)}" target="_blank"
+             style="margin-left:auto;color:#c8102e;font-weight:700;font-size:12px;white-space:nowrap;">YouTube →</a>
+        </div>
+      </div>`;
+    // Click on wrapper plays iframe
+    el.querySelector('.yt-wrap').addEventListener('click', function() {
+      const id = this.dataset.ytid;
+      this.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1"
+        frameborder="0" allowfullscreen allow="autoplay; encrypted-media"
+        style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+      this.style.cursor = 'default';
+    });
+  }
+
+  // ── REVIEW PANE ───────────────────────────────────────────────
+  // Context stored in DOM element, events delegated — no containerId in onclick
+  function renderReviewPane(containerId, pageId, itemId, itemTitle) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    // Store context as data attrs on container
+    el.dataset.rvPage  = pageId;
+    el.dataset.rvItem  = itemId;
+    el.dataset.rvTitle = itemTitle || '';
+    _buildReviewPane(el, 'new');
+  }
+
+  function _buildReviewPane(el, sort) {
+    const pageId   = el.dataset.rvPage;
+    const itemId   = el.dataset.rvItem;
+    const itemTitle= el.dataset.rvTitle;
+    const revs     = rvGet(pageId, itemId).map(function(r, idx) {
+      // Normalize old reviews that may lack .id
+      if (!r.id) r.id = 'r_legacy_' + idx + '_' + (r.date || idx);
+      return r;
+    });
+    sort = sort || 'new';
+
+    // ── Summary block ────────────────────────────────────────────
+    let summaryHtml = '';
+    if (revs.length) {
+      const avg    = revs.reduce((s,r)=>s+r.score,0) / revs.length;
+      const maxCnt = Math.max(...Array.from({length:10},(_,i)=>revs.filter(r=>r.score===10-i).length), 1);
+      const col    = avg>=8?'#2e7d32':avg>=6?'#f57f17':'#c62828';
+      const lbl    = avg>=9?'Шедевр':avg>=8?'Отлично':avg>=7?'Хорошо':avg>=6?'Нормально':'Неоднозначно';
+      const recPct = Math.round(revs.filter(r=>r.score>=8).length/revs.length*100);
+      summaryHtml = `
+        <div class="rv-summary">
+          <div style="text-align:center;min-width:88px;flex-shrink:0;">
+            <div class="rv-avg-num" style="color:${col};">${avg.toFixed(1)}</div>
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">из 10</div>
+            <div style="color:#f5c518;font-size:14px;margin-bottom:4px;">${'★'.repeat(Math.round(avg/2))}${'☆'.repeat(5-Math.round(avg/2))}</div>
+            <div style="font-size:12px;font-weight:700;color:${col};">${lbl}</div>
+            <div style="font-size:11px;color:#aaa;margin-top:3px;">${revs.length} ${plural(revs.length,['отзыв','отзыва','отзывов'])}</div>
+          </div>
+          <div class="rv-bars">
+            ${Array.from({length:10},(_,i)=>{const n=10-i,cnt=revs.filter(r=>r.score===n).length;return`
+              <div class="rv-bar-row">
+                <span style="font-size:11px;font-weight:700;color:#666;width:12px;text-align:right;">${n}</span>
+                <span style="font-size:10px;color:#f5c518;">★</span>
+                <div class="rv-bar-track"><div class="rv-bar-fill" style="width:${Math.round(cnt/maxCnt*100)}%;background:${n>=8?'#f5c518':n>=6?'#ff9800':'#c8102e'};"></div></div>
+                <span style="font-size:11px;color:#aaa;width:14px;text-align:right;">${cnt}</span>
+              </div>`;}).join('')}
+          </div>
+          <div style="min-width:110px;">
+            <div style="background:#e8f5e9;border-radius:6px;padding:10px;text-align:center;margin-bottom:8px;">
+              <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:#2e7d32;">${recPct}%</div>
+              <div style="font-size:11px;color:#4caf50;">рекомендуют</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Auth gate or form ────────────────────────────────────────
+    let formHtml = '';
+    if (!_user) {
+      formHtml = `
+        <div class="rv-gate">
+          <span style="font-size:22px;">🔒</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Войдите, чтобы оставить отзыв</div>
+            <div style="font-size:12px;color:#666;">Только для зарегистрированных пользователей</div>
+          </div>
+          <button class="rv-gate-btn rv-open-auth">Войти / Регистрация</button>
+        </div>`;
+    } else {
+      formHtml = `
+        <div class="rv-form-box">
+          <div class="rv-form-title">✍️ Ваш отзыв
+            <span style="font-family:'PT Sans',sans-serif;font-size:12px;font-weight:400;text-transform:none;color:#aaa;margin-left:6px;">
+              — вы вошли как <strong style="color:#333;">${esc(_user.name)}</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <div class="rv-star-row rv-stars" data-val="0">
+              ${Array.from({length:10},(_,i)=>`<span class="rv-star" data-v="${i+1}">★</span>`).join('')}
+            </div>
+            <span class="rv-star-lbl"></span>
+          </div>
+          <div class="rv-fields">
+            <div>
+              <div class="rv-field-lbl">Заголовок</div>
+              <input class="rv-input rv-title-inp" type="text" placeholder="Кратко о впечатлении">
+            </div>
+            <div>
+              <div class="rv-field-lbl">Автор</div>
+              <input class="rv-input" type="text" value="${esc(_user.name)}" readonly style="background:#fafafa;color:#666;">
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <div class="rv-field-lbl">Текст отзыва <span style="color:#c8102e;">*</span></div>
+              <span class="rv-char-count" style="font-size:11px;color:#aaa;">0 / 2000</span>
+            </div>
+            <textarea class="rv-textarea rv-text-inp" maxlength="2000" rows="4"
+              placeholder="Поделитесь впечатлениями..."></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+            <button class="rv-submit-btn rv-do-submit">Опубликовать</button>
+            <div class="rv-msg"></div>
+          </div>
+        </div>`;
+    }
+
+    // ── Reviews list ─────────────────────────────────────────────
+    let listHtml = '';
+    if (revs.length) {
+      let sorted = [...revs];
+      if (sort==='top')     sorted.sort((a,b)=>b.score-a.score);
+      else if (sort==='helpful') sorted.sort((a,b)=>(b.helpful||0)-(a.helpful||0));
+      listHtml = `
+        <div class="rv-sort-row">
+          <div class="rv-sort-title">Отзывы <span style="font-weight:400;font-size:12px;text-transform:none;color:#aaa;">(${revs.length})</span></div>
+          <select class="rv-sort-sel rv-sort-change">
+            <option value="new"${sort==='new'?' selected':''}>Сначала новые</option>
+            <option value="top"${sort==='top'?' selected':''}>По оценке</option>
+            <option value="helpful"${sort==='helpful'?' selected':''}>Полезные</option>
+          </select>
+        </div>
+        ${sorted.map(r => {
+          const initials=(r.name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+          const sBg=r.score>=8?'#e8f5e9':r.score>=6?'#fff8e1':'#fce4ec';
+          const sCol=r.score>=8?'#2e7d32':r.score>=6?'#f57f17':'#c62828';
+          return `<div class="rv-card">
+            <div class="rv-card-head">
+              <div class="rv-avt" style="background:${avColor(r.name)};">${initials}</div>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <strong style="font-size:13px;">${esc(r.name)}</strong>
+                  ${r.title?`<em style="font-size:12px;color:#666;">"${esc(r.title)}"</em>`:''}
+                  <span style="background:${sBg};color:${sCol};font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">${SCORE_LABELS[r.score]} ${SCORE_EMOJI[r.score]}</span>
+                </div>
+                <div style="font-size:11px;color:#aaa;margin-top:1px;">${fmtD(r.date)}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:${sCol};line-height:1;">${r.score}</div>
+                <div style="font-size:9px;color:#aaa;">из 10</div>
+              </div>
+            </div>
+            <div class="rv-card-stars">${'★'.repeat(r.score)}${'☆'.repeat(10-r.score)}</div>
+            <div class="rv-card-text">${esc(r.text)}</div>
+            <div class="rv-card-foot">
+              <span style="font-size:12px;color:#aaa;">Полезный?</span>
+              <button class="rv-helpful-btn${r._voted?' voted':''}" data-rid="${r.id||''}">
+                👍 <span class="rv-hlp-cnt">${r.helpful||0}</span>
+              </button>
+              <button class="rv-report-btn" data-rid="${r.id||''}" 
+                style="margin-left:auto;background:none;border:none;font-size:11px;color:#ccc;cursor:pointer;">⚑ Жалоба</button>
+            </div>
+          </div>`;
+        }).join('')}`;
+    } else {
+      listHtml = `<div class="rv-empty">
+        <div style="font-size:36px;margin-bottom:8px;">💬</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:15px;margin-bottom:5px;">Отзывов пока нет</div>
+        <div style="font-size:12px;">Станьте первым!</div>
+      </div>`;
+    }
+
+    el.innerHTML = `<div class="rv-panel">${summaryHtml}${formHtml}${listHtml}</div>`;
+
+    // ── Event delegation on the container ────────────────────────
+    el.addEventListener('click', function handler(ev) {
+      const t = ev.target;
+      // Auth gate button
+      if (t.classList.contains('rv-open-auth')) {
+        openAuth(() => _buildReviewPane(el, sort));
+        return;
+      }
+      // Submit button
+      if (t.classList.contains('rv-do-submit') || t.closest('.rv-do-submit')) {
+        _doSubmit(el); return;
+      }
+      // Helpful button
+      const hlp = t.closest('.rv-helpful-btn');
+      if (hlp) { _voteHelpful(el, hlp); return; }
+      // Report
+      if (t.classList.contains('rv-report-btn')) {
+        alert('Жалоба отправлена. Модераторы рассмотрят её.'); return;
+      }
+      // Star click
+      if (t.classList.contains('rv-star') && t.closest('.rv-stars')) {
+        const n = parseInt(t.dataset.v);
+        const row = t.closest('.rv-stars');
+        row.dataset.val = n;
+        row.querySelectorAll('.rv-star').forEach((s,i)=>{
+          s.classList.toggle('lit', i<n);
+        });
+        const lbl = row.nextElementSibling;
+        if (lbl&&lbl.classList.contains('rv-star-lbl')) {
+          lbl.textContent = n+'/10 — '+SCORE_LABELS[n]+' '+SCORE_EMOJI[n];
+          lbl.style.color = n>=8?'#2e7d32':n>=6?'#f57f17':'#c62828';
+        }
+        return;
+      }
+    }, {once:false});
+
+    // Star hover
+    el.querySelectorAll('.rv-star').forEach(s => {
+      s.addEventListener('mouseover', function() {
+        const n = parseInt(this.dataset.v);
+        this.closest('.rv-stars').querySelectorAll('.rv-star').forEach((x,i)=>x.classList.toggle('lit',i<n));
+      });
+      s.addEventListener('mouseleave', function() {
+        const row = this.closest('.rv-stars');
+        const cur = parseInt(row.dataset.val||0);
+        row.querySelectorAll('.rv-star').forEach((x,i)=>x.classList.toggle('lit',i<cur));
+      });
+    });
+
+    // Sort change
+    const sortSel = el.querySelector('.rv-sort-change');
+    if (sortSel) sortSel.addEventListener('change', function() {
+      _buildReviewPane(el, this.value);
+    });
+
+    // Char counter
+    const textarea = el.querySelector('.rv-text-inp');
+    const counter  = el.querySelector('.rv-char-count');
+    if (textarea && counter) {
+      textarea.addEventListener('input', function() {
+        counter.textContent = this.value.length + ' / 2000';
+      });
+    }
+
+    // Update badge
+    _updateBadge(pageId, itemId, revs.length);
+  }
+
+  function _doSubmit(el) {
+    if (!_user) return openAuth(() => _buildReviewPane(el));
+    const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
+    const row    = el.querySelector('.rv-stars');
+    const score  = parseInt(row?.dataset.val || '0');
+    const title  = el.querySelector('.rv-title-inp')?.value.trim() || '';
+    const text   = el.querySelector('.rv-text-inp')?.value.trim()  || '';
+    const msgEl  = el.querySelector('.rv-msg');
+
+    function showMsg(t, ok) {
+      if (!msgEl) return;
+      msgEl.textContent = t;
+      msgEl.style.cssText = `display:block;background:${ok?'#e8f5e9':'#ffebee'};border:1px solid ${ok?'#a5d6a7':'#ffcdd2'};color:${ok?'#2e7d32':'#c62828'};font-size:13px;font-weight:600;padding:8px 13px;border-radius:4px;`;
+      if (ok) setTimeout(()=>{ msgEl.style.display='none'; }, 4000);
+    }
+
+    if (!score)           return showMsg('⚠️ Поставьте оценку от 1 до 10', false);
+    if (text.length < 15) return showMsg('⚠️ Напишите хотя бы пару предложений', false);
+
+    rvAdd(pageId, itemId, {
+      id: 'r_' + Date.now(),
+      name: _user.name, score, title, text,
+      date: new Date().toISOString(),
+      helpful: 0, _voted: false,
+    });
+    _buildReviewPane(el, 'new');
+    showToast('✓ Отзыв опубликован!');
+  }
+
+  function _voteHelpful(el, btn) {
+    const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
+    const rid    = btn.dataset.rid;
+    const db     = rvLoad(), k = rvKey(pageId, itemId);
+    if (!db[k]) return;
+    const r = db[k].find(x=>x.id===rid); if (!r) return;
+    r._voted ? r.helpful-- : r.helpful++;
+    r._voted = !r._voted;
+    rvSave(db);
+    btn.classList.toggle('voted', r._voted);
+    const cnt = btn.querySelector('.rv-hlp-cnt');
+    if (cnt) cnt.textContent = r.helpful;
+  }
+
+  function _updateBadge(pageId, itemId, count) {
+    // Try multiple badge ID conventions used across pages
+    const ids = [
+      `rvBadge_${pageId}_${itemId}`,
+      `exRevBadge`,
+      `revBadge`,
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = count || '';
+      if (count > 0) { el.style.background='#c8102e'; el.style.color='#fff'; }
+    });
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────
+  let _tt = null;
+  function showToast(msg) {
+    let el = document.getElementById('afishiToast');
+    if (!el) {
+      el = document.createElement('div'); el.id='afishiToast';
+      el.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    requestAnimationFrame(()=>{ el.style.opacity='1'; el.style.transform='translateX(-50%) translateY(0)'; });
+    clearTimeout(_tt);
+    _tt = setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }, 3000);
+  }
+
+  function openAuth(cb) {
+    _afterLoginCb = cb || null;
+    $('afishiAuthModal').classList.add('open');
+    showTab('login');
+  }
+
+  // ── PUBLIC API ────────────────────────────────────────────────
+  window.Afishi = {
+    openAuth,
+    closeAuth,
+    isLoggedIn: () => !!_user,
+    getUser:    () => _user,
+    renderTrailerPane,
+    renderReviewPane,
+    rvGet,
+    // legacy compat
+    loadYt(ytId, cid) {
+      const wrap = document.querySelector(`#${cid} .yt-wrap`);
+      if (!wrap) return;
+      wrap.innerHTML=`<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+    },
+    // expose for pages that need old submitReview guard
+    requireLogin(cb) { if (!_user) { openAuth(cb); return false; } return true; },
+  };
+
+  document.addEventListener('DOMContentLoaded', renderUserBtn);
+})();
+
+</script>
+<script>
+(function(){'use strict';
+  var LS_SESSION='afishi_geo_session',LS_DB='afishi_geo_db',LS_CITY='afishi_city',LS_TTL='afishi_geo_ttl';
+  var KNOWN=['Москва','Санкт-Петербург','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Самара','Омск','Ростов-на-Дону','Уфа','Красноярск','Воронеж','Пермь','Волгоград','Краснодар','Саратов','Тюмень','Ижевск','Барнаул','Иркутск','Хабаровск','Ярославль','Владивосток','Томск','Оренбург','Кемерово','Астрахань','Набережные Челны','Пенза','Рязань','Липецк','Киров','Чебоксары','Калининград','Тула','Белгород','Сочи','Мурманск','Ставрополь'];
+  var GEN={'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Новосибирск':'Новосибирске','Казань':'Казани','Нижний Новгород':'Нижнем Новгороде','Краснодар':'Краснодаре','Волгоград':'Волгограде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке','Томск':'Томске','Барнаул':'Барнауле','Сочи':'Сочи','Тула':'Туле','Ставрополь':'Ставрополе','Калининград':'Калининграде'};
+
+  // AbortController helper — compatible with all browsers
+  
+
+  function norm(r){if(!r)return null;var l=r.toLowerCase();return KNOWN.find(function(c){return c.toLowerCase()===l;})||KNOWN.find(function(c){return l.includes(c.toLowerCase());})||(r.charAt(0).toUpperCase()+r.slice(1));}
+  function gen(city){return GEN[city]||city;}
+  function lsG(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+  function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function lsD(k){try{localStorage.removeItem(k);}catch(e){}}
+  function dbLoad(){return lsG(LS_DB)||{};}
+  function dbSave(db){lsS(LS_DB,db);}
+  function dbAdd(ip,d){if(!ip||!d.city)return;var db=dbLoad(),e=db[ip]||{ip:ip,visits:0};e.city=d.city;e.region=d.region||'';e.country=d.country||'';e.isp=d.isp||'';e.source=d.source;e.lastSeen=new Date().toISOString();e.visits=(e.visits||0)+1;db[ip]=e;dbSave(db);}
+  function dbLookup(ip){return ip?(dbLoad()[ip]||null):null;}
+  function cacheGet(){var d=lsG(LS_SESSION),t=localStorage.getItem(LS_TTL);if(!d)return null;if(t&&(Date.now()-parseInt(t))/86400000>7){lsD(LS_SESSION);return null;}return d;}
+  function cacheSet(d){lsS(LS_SESSION,d);localStorage.setItem(LS_TTL,String(Date.now()));}
+  function cacheClear(){lsD(LS_SESSION);lsD(LS_TTL);}
+
+  var _tt=null;
+  function toast(msg){
+    var el=document.getElementById('geoToast');
+    if(!el){el=document.createElement('div');el.id='geoToast';el.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';document.body.appendChild(el);}
+    el.textContent=msg;
+    requestAnimationFrame(function(){el.style.opacity='1';el.style.transform='translateX(-50%) translateY(0)';});
+    clearTimeout(_tt);
+    _tt=setTimeout(function(){el.style.opacity='0';el.style.transform='translateX(-50%) translateY(20px)';},3000);
+  }
+
+  function applyUI(city,source){
+    var g=gen(city);
+    var lbl=document.getElementById('cityLabel');
+    if(lbl){lbl.textContent=city;lbl.style.color='#f5c518';setTimeout(function(){lbl.style.color='';},600);}
+    var dot=document.getElementById('cityDot');
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    document.querySelectorAll('.city-pill,[data-city]').forEach(function(p){
+      var v=p.dataset.city||p.textContent.trim();p.classList.toggle('active',v===city);
+    });
+    var hint=document.getElementById('cityHint');if(hint)hint.textContent=g;
+    if(typeof currentCity!=='undefined')window.currentCity=city;
+    localStorage.setItem(LS_CITY,city);
+    if(typeof window._onGeoCity==='function')window._onGeoCity(city,source);
+    if(typeof applyFilters==='function')setTimeout(applyFilters,0);
+    toast('\uD83D\uDCCD Ваш город: '+city);
+  }
+
+  function setCity(city,source){
+    source=source||'manual';
+    var ip=localStorage.getItem('_afishi_ip')||'manual';
+    var data={ip:ip,city:city,region:'',country:'Россия',isp:'',source:source};
+    cacheSet(data);
+    if(source==='manual')dbAdd(ip,data);
+    applyUI(city,source);
+  }
+
+  async function detect(){
+    if(window._pendingCity){var pc=window._pendingCity;window._pendingCity=null;setCity(pc,'manual');return;}
+    var dot=document.getElementById('cityDot');
+
+    // 1. Use cached geo data
+    var cached=cacheGet();
+    if(cached&&cached.city){applyUI(cached.city,'cache');return;}
+
+    // 2. Use last manually picked city
+    var last=localStorage.getItem(LS_CITY);
+    if(last){applyUI(last,'last-manual');if(dot){dot.style.background='#4caf50';dot.style.animation='';}return;}
+
+    // 3. Try geo APIs silently (blocked in some environments — OK)
+    if(dot){dot.style.background='#f5c518';dot.style.animation='pulse 1s infinite';}
+    var found=false;
+
+    try{
+      var r1=await Promise.race([fetch('https://ip-api.com/json/?fields=status,city,regionName,country,query,isp,timezone&lang=ru'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d1=await r1.json();
+      if(d1.status==='success'&&d1.city){var c1=norm(d1.city);if(c1){cacheSave({ip:d1.query,city:c1,region:d1.regionName,country:d1.country,isp:d1.isp,timezone:d1.timezone,source:'ip-api'});applyUI(c1,'ip-api');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    try{
+      var r2=await Promise.race([fetch('https://ipinfo.io/json'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d2=await r2.json();
+      if(d2.city){var c2=norm(d2.city);if(c2){cacheSave({ip:d2.ip,city:c2,region:d2.region,country:d2.country,isp:d2.org,timezone:d2.timezone,source:'ipinfo'});applyUI(c2,'ipinfo');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    // 4. Silent default — no warning toast
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    applyUI('Волгоград','default');
+  }
+
+  window.GeoCity={detect:detect,setCity:setCity,getCity:function(){return localStorage.getItem(LS_CITY)||null;},clearCache:cacheClear,getDB:dbLoad,clearDB:function(){dbSave({});},removeFromDB:function(ip){var db=dbLoad();delete db[ip];dbSave(db);}};
+  window.switchCity=function(city,btn){setCity(city,'manual');document.querySelectorAll('.city-pill').forEach(function(p){p.classList.remove('active');});if(btn)btn.classList.add('active');};
+  window.detectCity=function(){cacheClear();detect();};
+  window.toggleCityDropdown=function(){var dd=document.getElementById('cityDropdown');if(!dd)return;var open=dd.classList.toggle('open');var sb=document.getElementById('citySelectBtn');if(sb)sb.classList.toggle('open',open);};
+  window.filterManualCities=function(q){var list=document.getElementById('manualCityList');if(!list)return;var f=q?KNOWN.filter(function(c){return c.toLowerCase().includes(q.toLowerCase());}):KNOWN;list.innerHTML=f.map(function(c){return'<div onclick="switchCity(\''+c+'\');var m=document.getElementById(\'manualModal\');if(m)m.style.display=\'none\'" style="padding:7px 10px;border-radius:3px;cursor:pointer;font-size:13px;" onmouseover="this.style.background=\'#fdf0f0\';this.style.color=\'var(--red)\'" onmouseout="this.style.background=\'\';this.style.color=\'\'">'+c+'</div>';}).join('');};
+  window.closeManualModal=function(){var m=document.getElementById('manualModal');if(m)m.style.display='none';};
+
+  document.addEventListener('click',function(e){
+    var dd=document.getElementById('cityDropdown'),btn=document.getElementById('citySelectBtn');
+    if(dd&&btn&&!btn.contains(e.target)&&!dd.contains(e.target)){dd.classList.remove('open');btn.classList.remove('open');}
+  });
+  document.addEventListener('DOMContentLoaded',detect);
+})();
+</script>
+<script id="afishi-mobile-nav">
+
+// ══════════════════════════════════════════════
+// MOBILE NAV — Hamburger + Drawer
+// ══════════════════════════════════════════════
+(function() {
+  function buildMobileNav() {
+    if (document.getElementById('mobileNavDrawer')) return;
+
+    // Get nav links from desktop nav
+    var desktopNav = document.querySelector('header nav');
+    var links = desktopNav ? Array.from(desktopNav.querySelectorAll('a')) : [];
+    var currentHref = location.pathname.split('/').pop() || 'index.html';
+
+    var linksHtml = links.map(function(a) {
+      var isActive = a.href.indexOf(currentHref) >= 0;
+      var isHighlight = a.style.color === 'var(--gold)' || a.getAttribute('style') === 'color:var(--gold)' || (a.textContent && a.textContent.includes('Плюс'));
+      return '<a href="' + a.href + '" class="' + (isActive ? 'active' : '') + (isHighlight ? ' highlight' : '') + '">' + a.textContent + '</a>';
+    }).join('');
+
+    // Also add common links if nav is empty
+    if (!links.length) {
+      linksHtml = [
+        '<a href="index.html">Главная</a>',
+        '<a href="concerts.html">Концерты</a>',
+        '<a href="theater.html">Театр</a>',
+        '<a href="cinema.html">Кино</a>',
+        '<a href="exhibits.html">Выставки</a>',
+        '<a href="kids.html">Детям</a>',
+        '<a href="articles.html">Статьи</a>',
+      ].join('');
+    }
+
+    // Add utility links
+    linksHtml += '<a href="event-add.html">🎪 Добавить событие</a>';
+    linksHtml += '<a href="venue-add.html">🏛️ Добавить заведение</a>';
+
+    // Create burger button
+    var burger = document.createElement('button');
+    burger.className = 'burger';
+    burger.id = 'burgerBtn';
+    burger.setAttribute('aria-label', 'Меню');
+    burger.innerHTML = '<span></span><span></span><span></span>';
+
+    // Create mobile nav
+    var nav = document.createElement('div');
+    nav.className = 'mobile-nav';
+    nav.id = 'mobileNavDrawer';
+    nav.innerHTML =
+      '<div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>' +
+      '<div class="mobile-nav-drawer">' +
+        '<div class="mobile-nav-head">' +
+          '<div class="mobile-nav-logo">Афиши<span>.ру</span></div>' +
+          '<button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Закрыть">✕</button>' +
+        '</div>' +
+        '<div class="mobile-nav-links">' + linksHtml + '</div>' +
+        '<div class="mobile-nav-footer">© 2002–2026 afishi.ru</div>' +
+      '</div>';
+
+    // Insert burger into header
+    var headerInner = document.querySelector('.header-inner, .hi');
+    if (headerInner) headerInner.appendChild(burger);
+
+    nav.style.display = 'none'; // Hidden by default
+    document.body.appendChild(nav);
+
+    burger.addEventListener('click', toggleMobileNav);
+  }
+
+  window.toggleMobileNav = function() {
+    var nav = document.getElementById('mobileNavDrawer');
+    var burger = document.getElementById('burgerBtn');
+    if (!nav) return;
+    var isOpen = nav.classList.contains('open');
+    nav.style.display = isOpen ? 'none' : 'block';
+    setTimeout(function() {
+      nav.classList.toggle('open', !isOpen);
+      if (burger) burger.classList.toggle('open', !isOpen);
+      document.body.style.overflow = isOpen ? '' : 'hidden';
+    }, 10);
+    if (!isOpen) nav.style.display = 'block';
+  };
+
+  window.closeMobileNav = function() {
+    var nav = document.getElementById('mobileNavDrawer');
+    var burger = document.getElementById('burgerBtn');
+    if (!nav) return;
+    nav.classList.remove('open');
+    if (burger) burger.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(function() { if (!nav.classList.contains('open')) nav.style.display = 'none'; }, 300);
+  };
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMobileNav();
+  });
+
+  // Build on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', buildMobileNav);
+  } else {
+    buildMobileNav();
+  }
+})();
+
+</script>
+
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+</body>
+</html>

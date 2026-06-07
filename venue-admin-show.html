@@ -1,0 +1,2791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
+
+// switchCity global stub — available immediately for onclick handlers
+window.switchCity = function(city, btn) {
+  // Update pills immediately (visual feedback)
+  document.querySelectorAll('.city-pill').forEach(function(p) {
+    p.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+  // Update city label immediately
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = city;
+  var hint = document.getElementById('cityHint');
+  if (hint) {
+    var gen = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Казань':'Казани','Новосибирск':'Новосибирске','Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке'};
+    hint.textContent = gen[city] || city;
+  }
+  // Delegate to GeoCity when ready, or queue
+  if (window.GeoCity && window.GeoCity.setCity) {
+    window.GeoCity.setCity(city, 'manual');
+  } else {
+    window._pendingCity = city;
+  }
+  // Also update currentCity if defined on the page
+  if (typeof currentCity !== 'undefined') window.currentCity = city;
+  if (typeof applyFilters === 'function') setTimeout(applyFilters, 0);
+  // Save to localStorage immediately
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+};
+
+
+
+
+// ── Инициализация города из localStorage ───────────────────────
+(function() {
+  var savedCity = null;
+  try { savedCity = localStorage.getItem('afishi_city'); } catch(e) {}
+  if (savedCity) {
+    // Обновить все cityLabel элементы
+    document.addEventListener('DOMContentLoaded', function() {
+      var lbl = document.getElementById('cityLabel');
+      if (lbl && lbl.textContent.trim() === 'Москва') lbl.textContent = savedCity;
+      var topLbl = document.getElementById('cityTopLabel');
+      if (topLbl && topLbl.textContent.trim() === 'Москва') topLbl.textContent = savedCity;
+    });
+  }
+})();
+</script>
+
+
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Просмотр площадки — Афиши.ру</title>
+<link rel="canonical" href="https://afishi.ru/venue-admin-show.html">
+<meta name="description" content="Просмотр информации о площадке. Расписание, мероприятия, контакты.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>/* ── Header ──────────────────────────────── */
+header {
+  background: var(--white);
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 28px; height: 64px;
+}
+.header-inner { gap: 12px; }
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.logo { font-size: 24px; }
+.logo{font-size:18px !important;}
+nav { display: flex; gap: 0; flex: 1; }
+nav a {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 0 13px; height: 64px;
+  display: flex; align-items: center;
+  color: var(--mid);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
+nav a { padding: 0 8px; font-size: 12px; }
+.city-strip-inner{gap:6px !important;}
+.city-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.city-strip-inner::-webkit-scrollbar { display: none; }
+.city-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-pill {
+  padding: 6px 16px; border: 1.5px solid var(--border);
+  border-radius: 20px; font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--white); color: var(--mid); transition: all .15s;
+}
+.city-pill:hover { border-color: var(--red); color: var(--red); }
+.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
+.city-pill{font-size:11px !important;padding:4px 10px !important;}
+
+:root{
+  --red:#c8102e;--red-dark:#9e0c24;
+  --black:#111;--dark:#1a1a1a;--mid:#444;--light:#888;
+  --border:#e0e0e0;--bg:#f4f2ee;--white:#fff;--yellow:#f5c518;
+  --gold:#c9a84c;--gold-light:#f0d080;
+  --green:#2e7d32;--green-bg:#e8f5e9;
+  --blue:#1565c0;--blue-bg:#e3f2fd;
+  --shadow:0 2px 10px rgba(0,0,0,.10);--shadow-lg:0 8px 28px rgba(0,0,0,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PT Sans',Arial,sans-serif;background:var(--bg);color:var(--black);font-size:14px;line-height:1.5;}
+a{color:inherit;text-decoration:none;}a:hover{color:var(--red);}
+
+/* TOPBAR */
+.topbar{background:var(--dark);color:#ccc;font-size:12px;padding:5px 0;}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
+.topbar a{color:#bbb;}.topbar a:hover{color:#fff;}
+.topbar-links{display:flex;gap:18px;}
+
+/* HEADER */
+
+.logo span{color:var(--black);}
+
+.search-box{display:flex;align-items:center;background:#f0eeea;border:1px solid var(--border);border-radius:4px;padding:0 10px;gap:6px;}
+.search-box input{border:none;background:transparent;font-family:'PT Sans',sans-serif;font-size:13px;width:140px;padding:7px 0;outline:none;}
+
+/* AUTH MODAL */
+.auth-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:6000;align-items:center;justify-content:center;padding:20px;}
+.auth-overlay.open{display:flex;}
+.auth-box{background:#fff;width:100%;max-width:460px;border-radius:8px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.auth-head{background:linear-gradient(135deg,#0d0812,#2d1454);padding:24px;color:#fff;text-align:center;}
+.auth-head-logo{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:var(--red);letter-spacing:-1px;margin-bottom:6px;}
+.auth-head-logo span{color:#fff;}
+.auth-head-title{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;color:var(--gold-light);}
+.auth-tabs{display:flex;background:#f9f7f4;border-bottom:1px solid var(--border);}
+.auth-tab{flex:1;padding:12px;text-align:center;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;color:var(--light);border-bottom:3px solid transparent;transition:all .15s;}
+.auth-tab.active{color:var(--red);border-bottom-color:var(--red);background:#fff;}
+.auth-body{padding:24px;}
+.auth-pane{display:none;}.auth-pane.active{display:block;}
+.fld{margin-bottom:14px;}
+.fld label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;display:block;margin-bottom:5px;}
+.fld input,.fld select{width:100%;border:1.5px solid var(--border);border-radius:4px;padding:10px 13px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;background:#fff;}
+.fld input:focus,.fld select:focus{border-color:var(--red);}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.venue-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.vtype-card{border:2px solid var(--border);border-radius:6px;padding:12px;cursor:pointer;text-align:center;transition:all .15s;background:#fff;}
+.vtype-card:hover{border-color:#aaa;}
+.vtype-card.sel{border-color:var(--red);background:#fff8f8;}
+.vtype-icon{font-size:28px;margin-bottom:5px;}
+.vtype-name{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.btn-auth{width:100%;background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border:none;padding:13px;border-radius:4px;cursor:pointer;transition:background .15s;margin-top:6px;}
+.btn-auth:hover{background:var(--red-dark);}
+.auth-err{background:#ffebee;border:1px solid #ffcdd2;color:#c62828;font-size:13px;padding:10px 13px;border-radius:3px;margin-bottom:12px;display:none;}
+.auth-divider{text-align:center;font-size:12px;color:var(--light);margin:14px 0;position:relative;}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--border);}
+.auth-divider::before{left:0;}.auth-divider::after{right:0;}
+.social-row{display:flex;gap:8px;}
+.social-btn{flex:1;border:1px solid var(--border);background:#fff;border-radius:4px;padding:9px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;text-align:center;}
+.social-btn:hover{background:#f4f2ee;}
+.auth-close{background:none;border:none;color:#aaa;font-size:20px;cursor:pointer;position:absolute;top:16px;right:16px;line-height:1;}
+
+/* DASHBOARD */
+.dashboard{max-width:1200px;margin:20px auto 40px;padding:0 16px;display:grid;grid-template-columns:260px 1fr;gap:22px;}
+
+/* SIDEBAR NAV */
+.dash-sidebar{background:#fff;border-radius:6px;box-shadow:var(--shadow);overflow:hidden;height:fit-content;position:sticky;top:80px;}
+.dash-venue-card{background:linear-gradient(135deg,#0d0812,#2d1454);padding:20px;text-align:center;color:#fff;}
+.dash-venue-emoji{font-size:44px;margin-bottom:8px;}
+.dash-venue-name{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;line-height:1.2;margin-bottom:4px;}
+.dash-venue-type{font-size:11px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;}
+.dash-venue-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,.2);border:1px solid var(--gold);color:var(--gold-light);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;margin-top:8px;}
+.dash-
+.dash-nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;font-size:14px;color:var(--mid);transition:all .15s;border-left:3px solid transparent;}
+.dash-nav-item:hover{background:#f9f7f4;color:var(--black);}
+.dash-nav-item.active{background:#fff8f8;color:var(--red);border-left-color:var(--red);font-weight:700;}
+.dash-nav-item .nav-icon{font-size:16px;width:20px;text-align:center;}
+.dash-nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.dash-nav-sep{height:1px;background:var(--border);margin:6px 12px;}
+
+/* MAIN CONTENT */
+.dash-main{}
+.dash-pane{display:none;}.dash-pane.active{display:block;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.stat-card{background:#fff;border-radius:6px;box-shadow:var(--shadow);padding:16px;text-align:center;}
+.stat-num{font-family:'Oswald',sans-serif;font-size:32px;font-weight:700;line-height:1;margin-bottom:4px;}
+.stat-label{font-size:12px;color:var(--light);text-transform:uppercase;letter-spacing:.5px;}
+.stat-trend{font-size:11px;margin-top:4px;}
+.stat-trend.up{color:var(--green);}
+.stat-trend.down{color:var(--red);}
+
+/* SECTION CARD */
+.sec-card{background:#fff;border-radius:6px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;}
+.sec-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sec-title{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.sec-body{padding:18px;}
+
+/* ANNOUNCE TABLE */
+.announce-table{width:100%;border-collapse:collapse;}
+.announce-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--light);padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);background:#fafafa;}
+.announce-table td{padding:12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.announce-table tr:last-child td{border-bottom:none;}
+.announce-table tr:hover td{background:#fafafa;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;}
+.status-badge.pub{background:var(--green-bg);color:var(--green);}
+.status-badge.draft{background:#f3f3f3;color:#888;}
+.status-badge.mod{background:#fff8e1;color:#f57f17;}
+.tbl-actions{display:flex;gap:6px;}
+.tbl-btn{padding:5px 10px;border-radius:3px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.3px;transition:all .15s;}
+.tbl-btn.edit{background:#e3f2fd;color:#1565c0;}.tbl-btn.edit:hover{background:#bbdefb;}
+.tbl-btn.del{background:#ffebee;color:#c62828;}.tbl-btn.del:hover{background:#ffcdd2;}
+.tbl-btn.view{background:#f0eeea;color:var(--mid);}.tbl-btn.view:hover{background:#e8e4da;}
+
+/* ANNOUNCE FORM */
+.ann-form{background:#fff;border-radius:6px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px;border-left:4px solid var(--gold);}
+.ann-form-title{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-field{display:flex;flex-direction:column;gap:4px;}
+.form-field.full{grid-column:1/-1;}
+.form-field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;}
+.form-field input,.form-field select,.form-field textarea{border:1.5px solid var(--border);border-radius:4px;padding:9px 12px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;background:#fff;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--red);}
+.form-field textarea{resize:vertical;min-height:80px;}
+.form-actions{display:flex;gap:10px;margin-top:14px;align-items:center;}
+.btn-primary{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border:none;padding:11px 24px;border-radius:4px;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:var(--red-dark);}
+.btn-gold{background:var(--gold);color:#000;font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border:none;padding:11px 24px;border-radius:4px;cursor:pointer;transition:background .15s;}
+.btn-gold:hover{background:#b8902a;}
+.btn-secondary{background:#f0eeea;color:var(--mid);border:1px solid var(--border);font-family:'Oswald',sans-serif;font-size:13px;padding:10px 18px;border-radius:4px;cursor:pointer;}
+.btn-secondary:hover{background:#e8e4da;}
+.form-success{display:none;background:var(--green-bg);border:1px solid #a5d6a7;color:var(--green);font-size:13px;padding:10px 14px;border-radius:4px;font-weight:600;}
+
+/* REVIEWS PANEL */
+.review-item{border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;transition:border-color .2s;}
+.review-item.has-reply{border-color:#a5d6a7;background:#f9fff9;}
+.review-item.pending{border-color:#ffe082;background:#fffde7;}
+.ri-
+.ri-user{display:flex;align-items:center;gap:10px;}
+.ri-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;}
+.ri-name{font-size:14px;font-weight:700;}
+.ri-meta{font-size:11px;color:var(--light);}
+.ri-score{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;padding:4px 10px;border-radius:4px;}
+.ri-stars{color:var(--yellow);font-size:13px;margin-bottom:8px;}
+.ri-text{font-size:13px;color:var(--mid);line-height:1.65;margin-bottom:10px;}
+.ri-show{font-size:12px;color:var(--blue);font-weight:700;margin-bottom:6px;}
+.reply-block{background:#f0f7ff;border-left:3px solid var(--blue);border-radius:0 4px 4px 0;padding:12px 14px;margin-top:10px;}
+.reply-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.reply-text{font-size:13px;color:var(--mid);line-height:1.6;}
+.reply-form{margin-top:10px;}
+.reply-form textarea{width:100%;border:1.5px solid var(--border);border-radius:4px;padding:10px;font-family:'PT Sans',sans-serif;font-size:13px;resize:vertical;min-height:72px;outline:none;transition:border-color .15s;}
+.reply-form textarea:focus{border-color:var(--blue);}
+.reply-actions{display:flex;gap:8px;margin-top:8px;}
+.btn-reply{background:var(--blue-bg);color:var(--blue);border:1px solid #90caf9;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:7px 16px;border-radius:3px;cursor:pointer;transition:all .15s;}
+.btn-reply:hover{background:#bbdefb;}
+
+/* PROFILE */
+.profile-avatar-big{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 14px;border:3px solid var(--gold);}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* NOTIFICATION */
+.notif-item{display:flex;gap:12px;padding:12px;border-radius:4px;margin-bottom:8px;border-left:3px solid transparent;}
+.notif-item.new{background:#e3f2fd;border-left-color:var(--blue);}
+.notif-item.reply{background:#e8f5e9;border-left-color:var(--green);}
+.notif-item.warn{background:#fff8e1;border-left-color:#f57f17;}
+.notif-icon{font-size:20px;flex-shrink:0;}
+.notif-text{font-size:13px;color:var(--mid);flex:1;}
+.notif-time{font-size:11px;color:var(--light);white-space:nowrap;}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:50px 20px;color:var(--light);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-family:'Oswald',sans-serif;font-size:18px;margin-bottom:6px;}
+.empty-sub{font-size:13px;}
+
+/* FOOTER */
+footer{background:var(--dark);color:#aaa;margin-top:40px;padding:24px 0 16px;}
+.footer-bottom-only{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#666;}
+
+/* ─── Мобильная адаптация ─────────────────────────────── */
+@media(max-width:600px){
+  .main{grid-template-columns:1fr !important;padding:0 12px !important;}
+  .hero,.hero-inner{padding:20px 12px !important;}
+  .hero-name{font-size:20px !important;}
+  .hero-addr{font-size:11px !important;}
+  .hero-ico{font-size:32px !important;}
+  .vsb{gap:12px !important;}
+  .ib{padding:14px !important;}
+  
+  .hi{height:48px !important;}
+  
+}
+
+/* ═══ МОБИЛЬНАЯ АДАПТАЦИЯ ПЛОЩАДКИ ═════════════════════════ */
+@media(max-width:640px) {
+  .main {
+    grid-template-columns: 1fr !important;
+    padding: 0 12px !important;
+  }
+  .vsb { margin-top: 16px; }
+  .hero { padding: 20px 12px !important; }
+  .hero-name { font-size: 20px !important; }
+  
+  .er { padding: 10px 0 !important; }
+  button, .btn-buy, .vc-btn {
+    min-height: 44px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+.footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+.footer-grid {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 28px; margin-bottom: 28px;
+}
+.footer-logo {
+  font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.footer-desc { font-size: 13px; line-height: 1.7; color: #888; }
+.footer-col-title {
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--white); margin-bottom: 12px;
+}
+.footer-links { display: flex; flex-direction: column; gap: 6px; }
+.footer-bottom {
+  border-top: 1px solid #333; padding-top: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: #666;
+}
+.footer-grid { grid-template-columns: 1fr 1fr; }
+.footer-grid { grid-template-columns: 1fr; }
+</style>
+
+<!-- Яндекс.Метрика -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+   ym(2234293, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Яндекс.Метрика -->
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-links">
+      <a href="about.html">О сайте</a>
+      <a href="help.html">Помощь</a>
+      <a href="#" onclick="showAuth('register');return false;">Зарегистрировать площадку</a>
+    </div>
+    <div style="font-size:12px;color:#888;">Система для площадок и театров</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Афиши<span>.ру</span></a>
+      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+<div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
+  <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
+    <span style="font-size:16px;">🍷</span> <span>Ресторан «Волгоград»</span>
+  </a>
+  <div style="border-top:1px solid #f0ede8;margin:6px 0;"></div>
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Ближайшие мероприятия</div>
+  <div id="restDropdownEvents" style="padding:0 8px;">
+    <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
+  </div>
+  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
+</div></nav>
+      <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
+      <div class="search-box">
+        🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
+      </div>
+    </div>
+  </header>
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuth()">
+  <div class="auth-box" style="position:relative;">
+    <button class="auth-close" onclick="closeAuth()">✕</button>
+    <div class="auth-head">
+      <div class="auth-head-logo">Афиши<span>.ру</span></div>
+      <div class="auth-head-title" id="authHeadTitle">Кабинет площадки</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="authTabLogin" onclick="showAuthPane('login')">Войти</div>
+      <div class="auth-tab" id="authTabReg" onclick="showAuthPane('register')">Регистрация</div>
+    </div>
+    <div class="auth-body">
+
+      <!-- LOGIN -->
+      <div class="auth-pane active" id="authPaneLogin">
+        <div class="auth-err" id="loginErr"></div>
+        <div class="fld"><label>Email</label><input type="email" id="loginEmail" placeholder="theatre@example.ru"></div>
+        <div class="fld"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+            <input type="checkbox" style="accent-color:var(--red);"> Запомнить меня
+          </label>
+          <a href="#" style="font-size:13px;color:var(--red);">Забыли пароль?</a>
+        </div>
+        <button class="btn-auth" onclick="doLogin()">Войти в кабинет</button>
+        <div class="auth-divider">или</div>
+        <div class="social-row">
+          <div class="social-btn" onclick="doLogin('vk')">🟦 ВКонтакте</div>
+          <div class="social-btn" onclick="doLogin('google')">🔵 Google</div>
+          <div class="social-btn" onclick="doLogin('yandex')">🟡 Яндекс</div>
+        </div>
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--light);">
+          Нет аккаунта? <a href="#" style="color:var(--red);font-weight:700;" onclick="showAuthPane('register');return false;">Зарегистрируйтесь</a>
+        </div>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-pane" id="authPaneRegister">
+        <div class="auth-err" id="regErr"></div>
+        <div style="font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Тип площадки</div>
+        <div class="venue-type-grid" id="venueTypeGrid">
+          <div class="vtype-card sel" data-type="theater" onclick="selectVenueType(this)">
+            <div class="vtype-icon">🎭</div>
+            <div class="vtype-name">Театр</div>
+            <div style="font-size:11px;color:var(--light);margin-top:3px;">Драматический, оперный, балет</div>
+          </div>
+          <div class="vtype-card" data-type="cinema" onclick="selectVenueType(this)">
+            <div class="vtype-icon">🎬</div>
+            <div class="vtype-name">Кинотеатр</div>
+            <div style="font-size:11px;color:var(--light);margin-top:3px;">Мультиплекс, арт-хаус, студия</div>
+          </div>
+          <div class="vtype-card" data-type="concert" onclick="selectVenueType(this)">
+            <div class="vtype-icon">🎸</div>
+            <div class="vtype-name">Концертная площадка</div>
+            <div style="font-size:11px;color:var(--light);margin-top:3px;">Клуб, зал, стадион</div>
+          </div>
+          <div class="vtype-card" data-type="museum" onclick="selectVenueType(this)">
+            <div class="vtype-icon">🖼️</div>
+            <div class="vtype-name">Музей / Галерея</div>
+            <div style="font-size:11px;color:var(--light);margin-top:3px;">Выставочные пространства</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="fld-row">
+            <div class="fld"><label>Название площадки *</label><input type="text" id="regVenueName" placeholder="МХТ им. Чехова"></div>
+            <div class="fld"><label>Город *</label>
+              <select id="regCity">
+                <option>Москва</option><option>Санкт-Петербург</option><option>Волгоград</option>
+                <option>Екатеринбург</option><option>Казань</option><option>Краснодар</option><option>Другой</option>
+              </select>
+            </div>
+          </div>
+          <div class="fld-row">
+            <div class="fld"><label>Имя представителя *</label><input type="text" id="regName" placeholder="Иван Петров"></div>
+            <div class="fld"><label>Должность</label><input type="text" id="regRole" placeholder="Директор по маркетингу"></div>
+          </div>
+          <div class="fld"><label>Рабочий Email *</label><input type="email" id="regEmail" placeholder="theatre@example.ru"></div>
+          <div class="fld-row">
+            <div class="fld"><label>Пароль *</label><input type="password" id="regPass" placeholder="Не менее 8 символов"></div>
+            <div class="fld"><label>Повторите пароль *</label><input type="password" id="regPass2" placeholder="••••••••"></div>
+          </div>
+          <div class="fld"><label>Телефон для связи</label><input type="tel" id="regPhone" placeholder="+7 (___) ___-__-__"></div>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;margin-bottom:14px;">
+            <input type="checkbox" id="regAgree" style="accent-color:var(--red);margin-top:2px;">
+            <span>Я согласен с <a href="#" style="color:var(--red);">условиями использования</a> и <a href="#" style="color:var(--red);">политикой конфиденциальности</a></span>
+          </label>
+        </div>
+        <button class="btn-auth" onclick="doRegister()">Создать аккаунт площадки</button>
+        <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--light);">
+          Уже есть аккаунт? <a href="#" style="color:var(--red);font-weight:700;" onclick="showAuthPane('login');return false;">Войти</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- NOT LOGGED IN STATE -->
+<div id="notLoggedState" style="max-width:600px;margin:60px auto;padding:0 16px;text-align:center;">
+  <div style="font-size:64px;margin-bottom:16px;">🎭</div>
+  <div style="font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;margin-bottom:10px;">Личный кабинет площадки</div>
+  <div style="font-size:15px;color:var(--mid);line-height:1.7;margin-bottom:28px;">Войдите или зарегистрируйте свою площадку, чтобы управлять анонсами, отвечать на отзывы зрителей и смотреть статистику.</div>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">
+    <button class="btn-primary" onclick="showAuth('login')" style="padding:13px 32px;font-size:15px;">👤 Войти</button>
+    <button class="btn-gold" onclick="showAuth('register')" style="padding:13px 32px;font-size:15px;">✚ Зарегистрировать площадку</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:left;">
+    <div style="background:#fff;border-radius:6px;padding:16px;box-shadow:var(--shadow);">
+      <div style="font-size:24px;margin-bottom:8px;">📣</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;margin-bottom:5px;">Анонсы</div>
+      <div style="font-size:12px;color:var(--light);">Публикуйте спектакли, фильмы и события прямо из кабинета</div>
+    </div>
+    <div style="background:#fff;border-radius:6px;padding:16px;box-shadow:var(--shadow);">
+      <div style="font-size:24px;margin-bottom:8px;">💬</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;margin-bottom:5px;">Отзывы</div>
+      <div style="font-size:12px;color:var(--light);">Читайте отзывы зрителей и отвечайте от имени площадки</div>
+    </div>
+    <div style="background:#fff;border-radius:6px;padding:16px;box-shadow:var(--shadow);">
+      <div style="font-size:24px;margin-bottom:8px;">📊</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;margin-bottom:5px;">Статистика</div>
+      <div style="font-size:12px;color:var(--light);">Просмотры, переходы, продажи билетов — всё в одном месте</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD (shown when logged in) -->
+<div class="dashboard" id="dashboardState" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <div class="dash-sidebar">
+    <div class="dash-venue-card" id="dashVenueCard">
+      <div class="dash-venue-emoji" id="dashEmoji">🎭</div>
+      <div class="dash-venue-name" id="dashVenueName">МХТ им. Чехова</div>
+      <div class="dash-venue-type" id="dashVenueType">Театр · Москва</div>
+      <div class="dash-venue-badge">✓ Верифицирована</div>
+    </div>
+    <div class="dash-nav">
+      <div class="dash-nav-item active" onclick="switchDash('overview')"><span class="nav-icon">📊</span> Обзор</div>
+      <div class="dash-nav-item" onclick="switchDash('announces')"><span class="nav-icon">📣</span> Анонсы <span class="dash-nav-badge" id="navBadgeAnn">3</span></div>
+      <div class="dash-nav-item" onclick="switchDash('reviews')"><span class="nav-icon">💬</span> Отзывы <span class="dash-nav-badge" id="navBadgeRev" style="background:#f57f17;">2</span></div>
+      <div class="dash-nav-item" onclick="switchDash('add')"><span class="nav-icon">✚</span> Добавить анонс</div>
+      <div class="dash-nav-sep"></div>
+      <div class="dash-nav-item" onclick="switchDash('stats')"><span class="nav-icon">📈</span> Статистика</div>
+      <div class="dash-nav-item" onclick="switchDash('notifications')"><span class="nav-icon">🔔</span> Уведомления <span class="dash-nav-badge">4</span></div>
+      <div class="dash-nav-sep"></div>
+      <div class="dash-nav-item" onclick="switchDash('profile')"><span class="nav-icon">⚙️</span> Профиль площадки</div>
+      <div class="dash-nav-item" onclick="doLogout()" style="color:var(--red);"><span class="nav-icon">🚪</span> Выйти</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="dash-main">
+
+    <!-- OVERVIEW -->
+    <div class="dash-pane active" id="dpane-overview">
+      <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">Добро пожаловать, <span id="dashWelcomeName" style="color:var(--red);"></span>! 👋</div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" style="color:var(--red);" id="statViews">0</div><div class="stat-label">Просмотров за месяц</div><div class="stat-trend up">↑ +12% к прошлому месяцу</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--blue);" id="statTickets">0</div><div class="stat-label">Продано билетов</div><div class="stat-trend up">↑ +8%</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="statRating">0</div><div class="stat-label">Рейтинг площадки</div><div class="stat-trend up">↑ +0.2</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--gold);" id="statRevs">0</div><div class="stat-label">Новых отзывов</div><div class="stat-trend down">⚠ 2 без ответа</div></div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-head"><div class="sec-title">🎭 Активные анонсы</div><button class="btn-secondary" onclick="switchDash('add')">+ Добавить</button></div>
+        <div class="sec-body" id="overviewAnns"></div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-head"><div class="sec-title">💬 Последние отзывы</div><button class="btn-secondary" onclick="switchDash('reviews')">Все отзывы</button></div>
+        <div class="sec-body" id="overviewRevs"></div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCES LIST -->
+    <div class="dash-pane" id="dpane-announces">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;">📣 Мои анонсы</div>
+        <button class="btn-primary" onclick="switchDash('add')">✚ Добавить анонс</button>
+      </div>
+      <div class="sec-card"><div class="sec-body" style="padding:0;"><div id="annTableWrap"></div></div></div>
+    </div>
+
+    <!-- ADD ANNOUNCE -->
+    <div class="dash-pane" id="dpane-add">
+      <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">✚ Новый анонс</div>
+      <div class="ann-form">
+        <div class="ann-form-title">📣 Информация о событии</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Название *</label><input type="text" id="na-title" placeholder="Гамлет, Чайка, Мастер и Маргарита..."></div>
+          <div class="form-field"><label>Жанр *</label>
+            <select id="na-genre">
+              <option value="">— выберите —</option>
+              <option>Драма</option><option>Комедия</option><option>Балет</option>
+              <option>Опера</option><option>Мюзикл</option><option>Классика</option>
+              <option>Современная</option><option>Детям</option><option>Боевик</option>
+              <option>Фэнтези</option><option>Рок</option><option>Джаз</option><option>Поп</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Режиссёр / Исполнитель</label><input type="text" id="na-director" placeholder="Имя режиссёра или исполнителя"></div>
+          <div class="form-field"><label>В главных ролях</label><input type="text" id="na-cast" placeholder="Актёры или состав"></div>
+          <div class="form-field"><label>Дата *</label><input type="text" id="na-date" placeholder="15 июля 2018"></div>
+          <div class="form-field"><label>Время *</label><input type="text" id="na-time" placeholder="19:00"></div>
+          <div class="form-field"><label>Продолжительность</label><input type="text" id="na-duration" placeholder="2 ч 30 мин"></div>
+          <div class="form-field"><label>Возрастной ценз</label>
+            <select id="na-age"><option>0+</option><option>6+</option><option>12+</option><option>16+</option><option>18+</option></select>
+          </div>
+          <div class="form-field"><label>Цена от (₽) *</label><input type="number" id="na-price" placeholder="800"></div>
+          <div class="form-field"><label>Цена до (₽)</label><input type="number" id="na-pricemax" placeholder="3000"></div>
+          <div class="form-field full"><label>Описание *</label><textarea id="na-desc" placeholder="Расскажите о событии — сюжет, особенности постановки, для кого рекомендуем..."></textarea></div>
+          <div class="form-field full"><label>Дополнительные даты показов</label><input type="text" id="na-dates-extra" placeholder="22 июля, 19:00; 29 июля, 18:00"></div>
+        </div>
+
+        <!-- POSTER UPLOAD BLOCK -->
+        <div style="margin-top:18px;background:#f9f7f4;border:1.5px solid var(--border);border-radius:6px;padding:18px;" id="posterUploadBlock">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#1a0533,#4a0e7a);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🖼️</div>
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Афиша / Постер</div>
+              <div style="font-size:12px;color:var(--light);">Загрузите изображение афиши — оно появится на странице анонса и в каталоге</div>
+            </div>
+          </div>
+
+          <!-- Drop zone -->
+          <div id="posterDropZone"
+            style="border:2.5px dashed #c9a84c;border-radius:8px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#fff;position:relative;"
+            onclick="document.getElementById('posterFileInput').click()"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)">
+            <input type="file" id="posterFileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+            <div id="posterDropContent">
+              <div style="font-size:40px;margin-bottom:10px;">🖼️</div>
+              <div style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;color:var(--mid);margin-bottom:6px;">Перетащите файл сюда или нажмите для выбора</div>
+              <div style="font-size:12px;color:var(--light);margin-bottom:12px;">JPG, PNG, WEBP — до 5 МБ · рекомендуемый размер 600×900 px (формат афиши 2:3)</div>
+              <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                <div style="background:#f0eeea;border:1px solid #ddd;border-radius:4px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--mid);">📁 Выбрать файл</div>
+                <div style="background:#f0eeea;border:1px solid #ddd;border-radius:4px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--mid);">📋 Вставить из буфера (Ctrl+V)</div>
+              </div>
+            </div>
+            <div id="posterDropHover" style="display:none;position:absolute;inset:0;background:rgba(201,168,76,.08);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+              <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--gold);">Отпустите файл</div>
+            </div>
+          </div>
+
+          <!-- Preview & crop area -->
+          <div id="posterPreviewArea" style="display:none;margin-top:14px;">
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;">
+              <!-- Preview card -->
+              <div style="text-align:center;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:8px;">Предпросмотр афиши</div>
+                <div style="position:relative;display:inline-block;">
+                  <img id="posterPreviewImg" src="" alt="Афиша"
+                    style="width:160px;height:240px;object-fit:cover;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.3);display:block;">
+                  <div style="position:absolute;top:-6px;right:-6px;background:var(--green);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.2);">✓</div>
+                </div>
+                <div style="font-size:11px;color:var(--light);margin-top:6px;">2:3 · как афиша в каталоге</div>
+              </div>
+              <!-- Info & actions -->
+              <div>
+                <div style="background:var(--green-bg);border:1px solid #a5d6a7;border-radius:4px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:16px;">✅</span>
+                  <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--green);">Афиша загружена!</div>
+                    <div style="font-size:12px;color:#4caf50;" id="posterFileName"></div>
+                  </div>
+                </div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:8px;">Объект отображения</div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                  <div class="poster-fit-btn active" data-fit="cover" onclick="setPosterFit(this,'cover')" style="padding:6px 12px;border:1.5px solid var(--red);border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;background:#fff8f8;color:var(--red);">Заполнить (cover)</div>
+                  <div class="poster-fit-btn" data-fit="contain" onclick="setPosterFit(this,'contain')" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--mid);">Вписать (contain)</div>
+                  <div class="poster-fit-btn" data-fit="fill" onclick="setPosterFit(this,'fill')" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--mid);">Растянуть (fill)</div>
+                </div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:8px;">Дополнительно</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="rotatePoster()" style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;border-radius:3px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Oswald',sans-serif;">↻ Повернуть</button>
+                  <button onclick="document.getElementById('posterFileInput').click()" style="background:#f0eeea;color:var(--mid);border:1px solid var(--border);border-radius:3px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Oswald',sans-serif;">🔄 Заменить</button>
+                  <button onclick="clearPoster()" style="background:#ffebee;color:#c62828;border:1px solid #ffcdd2;border-radius:3px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Oswald',sans-serif;">🗑️ Удалить</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card previews row -->
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:10px;">Так афиша будет выглядеть в каталоге</div>
+              <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
+                <!-- Grid card preview -->
+                <div style="width:140px;">
+                  <div style="font-size:10px;color:var(--light);margin-bottom:4px;text-align:center;">Карточка в сетке</div>
+                  <div style="border-radius:4px;overflow:hidden;box-shadow:var(--shadow);background:#fff;">
+                    <img id="previewGrid" src="" style="width:140px;height:105px;object-fit:cover;display:block;">
+                    <div style="padding:8px;">
+                      <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:2px;" id="previewGridGenre"></div>
+                      <div style="font-size:12px;font-weight:700;" id="previewGridTitle">Название спектакля</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- List item preview -->
+                <div style="flex:1;min-width:200px;">
+                  <div style="font-size:10px;color:var(--light);margin-bottom:4px;">Карточка в списке</div>
+                  <div style="background:#fff;border-radius:4px;box-shadow:var(--shadow);padding:10px;display:flex;gap:10px;align-items:center;">
+                    <img id="previewList" src="" style="width:44px;height:66px;object-fit:cover;border-radius:3px;flex-shrink:0;display:block;">
+                    <div>
+                      <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:2px;" id="previewListGenre"></div>
+                      <div style="font-size:13px;font-weight:700;" id="previewListTitle">Название спектакля</div>
+                      <div style="font-size:11px;color:var(--light);">Театр · Дата · Цена</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Announce card preview -->
+                <div style="width:200px;">
+                  <div style="font-size:10px;color:var(--light);margin-bottom:4px;">Карточка анонса</div>
+                  <div style="background:#fff;border-radius:4px;box-shadow:var(--shadow);overflow:hidden;">
+                    <img id="previewAnnounce" src="" style="width:100%;height:120px;object-fit:cover;display:block;">
+                    <div style="padding:8px;">
+                      <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:2px;" id="previewAnnGenre"></div>
+                      <div style="font-size:12px;font-weight:700;" id="previewAnnTitle">Название</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div id="posterErrMsg" style="display:none;background:#ffebee;border:1px solid #ffcdd2;color:#c62828;font-size:13px;padding:10px 12px;border-radius:4px;margin-top:8px;"></div>
+        </div>
+
+        <!-- YouTube Trailer Block -->
+        <div style="margin-top:18px;background:#f9f7f4;border:1.5px solid var(--border);border-radius:6px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="width:36px;height:36px;background:#ff0000;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">YouTube-трейлер</div>
+              <div style="font-size:12px;color:var(--light);">Прикрепите рекламный ролик или трейлер к спектаклю / фильму</div>
+            </div>
+          </div>
+          <div class="form-field" style="margin-bottom:10px;">
+            <label>Ссылка на YouTube</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="url" id="na-youtube" placeholder="https://www.youtube.com/watch?v=... или https://youtu.be/..." style="flex:1;" oninput="previewYoutube()">
+              <button type="button" onclick="previewYoutube()" style="background:var(--red);color:#fff;border:none;border-radius:4px;padding:10px 16px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">▶ Проверить</button>
+              <button type="button" onclick="clearYoutube()" style="background:#f0eeea;color:var(--mid);border:1px solid var(--border);border-radius:4px;padding:10px 14px;font-family:'Oswald',sans-serif;font-size:13px;cursor:pointer;">✕ Очистить</button>
+            </div>
+            <div style="font-size:11px;color:var(--light);margin-top:5px;">Поддерживаются форматы: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID</div>
+          </div>
+
+          <!-- Preview player -->
+          <div id="ytPreviewWrap" style="display:none;border-radius:6px;overflow:hidden;background:#000;position:relative;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#1a1a1a;">
+              <div style="font-size:12px;color:#aaa;display:flex;align-items:center;gap:6px;">
+                <div style="width:20px;height:20px;background:#ff0000;border-radius:3px;display:flex;align-items:center;justify-content:center;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
+                </div>
+                <span id="ytPreviewLabel">Предпросмотр трейлера</span>
+              </div>
+              <span style="font-size:11px;color:#4caf50;font-weight:700;">✓ Видео найдено</span>
+            </div>
+            <div style="position:relative;padding-bottom:56.25%;height:0;">
+              <iframe id="ytPreviewFrame" src="" frameborder="0" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"></iframe>
+            </div>
+            <div style="padding:8px 12px;background:#1a1a1a;font-size:11px;color:#666;">
+              💡 Ролик будет отображаться на странице анонса для зрителей
+            </div>
+          </div>
+
+          <div id="ytErrMsg" style="display:none;background:#ffebee;border:1px solid #ffcdd2;color:#c62828;font-size:13px;padding:10px 12px;border-radius:4px;margin-top:8px;">
+            ⚠️ Не удалось распознать ссылку. Проверьте формат: youtube.com/watch?v=XXXXX или youtu.be/XXXXX
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Статус публикации</div>
+          <div style="display:flex;gap:8px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;border:1.5px solid var(--border);border-radius:4px;padding:8px 14px;font-size:13px;font-weight:600;background:#fff;transition:all .15s;" id="statusPub">
+              <input type="radio" name="naStatus" value="published" checked style="accent-color:var(--green);"> ✅ Опубликовать сразу
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;border:1.5px solid var(--border);border-radius:4px;padding:8px 14px;font-size:13px;font-weight:600;background:#fff;transition:all .15s;" id="statusDraft">
+              <input type="radio" name="naStatus" value="draft" style="accent-color:#888;"> 📝 Сохранить как черновик
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-gold" onclick="saveAnnouncement()">✚ Сохранить анонс</button>
+          <button class="btn-secondary" onclick="switchDash('announces')">Отмена</button>
+          <div class="form-success" id="naSuccess">✓ Анонс сохранён и появится на странице вашей площадки!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="dash-pane" id="dpane-reviews">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;">💬 Отзывы зрителей</div>
+        <div style="display:flex;gap:8px;">
+          <select id="revFilterShow" onchange="renderReviewPanel()" style="border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;">
+            <option value="">Все спектакли</option>
+          </select>
+          <select id="revFilterStatus" onchange="renderReviewPanel()" style="border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;">
+            <option value="">Все отзывы</option>
+            <option value="pending">Без ответа</option>
+            <option value="replied">С ответом</option>
+          </select>
+        </div>
+      </div>
+      <div id="reviewPanel"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="dash-pane" id="dpane-stats">
+      <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">📈 Статистика</div>
+      <div class="stats-row" id="statsFullRow"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+        <div class="sec-card"><div class="sec-head"><div class="sec-title">🎭 Популярность анонсов</div></div><div class="sec-body" id="statsAnnsChart"></div></div>
+        <div class="sec-card"><div class="sec-head"><div class="sec-title">⭐ Динамика рейтинга</div></div><div class="sec-body" id="statsRatingChart"></div></div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="dash-pane" id="dpane-notifications">
+      <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">🔔 Уведомления</div>
+      <div id="notifList"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="dash-pane" id="dpane-profile">
+      <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">⚙️ Профиль площадки</div>
+      <div class="sec-card">
+        <div class="sec-body">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div class="profile-avatar-big" id="profileAvatarBig" style="background:linear-gradient(135deg,#0d0812,#2d1454);"></div>
+            <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;" id="profileTitle"></div>
+            <div style="font-size:13px;color:var(--light);" id="profileSubtitle"></div>
+          </div>
+          <div class="profile-grid">
+            <div class="form-field"><label>Название площадки</label><input type="text" id="pf-name"></div>
+            <div class="form-field"><label>Город</label><input type="text" id="pf-city"></div>
+            <div class="form-field"><label>Адрес</label><input type="text" id="pf-addr" placeholder="ул. Пример, 1"></div>
+            <div class="form-field"><label>Телефон</label><input type="tel" id="pf-phone" placeholder="+7 (___) ___-__-__"></div>
+            <div class="form-field"><label>Email</label><input type="email" id="pf-email"></div>
+            <div class="form-field"><label>Сайт</label><input type="text" id="pf-site" placeholder="example.ru"></div>
+            <div class="form-field" style="grid-column:1/-1;"><label>Описание площадки</label><textarea id="pf-desc" placeholder="Расскажите о вашем театре или кинотеатре..." style="min-height:80px;"></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn-primary" onclick="saveProfile()">💾 Сохранить изменения</button>
+            <div id="profileSaved" style="display:none;background:var(--green-bg);border:1px solid #a5d6a7;color:var(--green);font-size:13px;padding:10px 14px;border-radius:4px;font-weight:600;">✓ Сохранено!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+    </div>
+  </div>
+
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Колонка 1: Логотип + описание + соцсети -->
+      <div>
+        <div class="footer-logo">Афиши<span>.ру</span></div>
+        <div class="footer-desc">
+          Крупнейший агрегатор событий и мероприятий в России.
+          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
+          Основан в 2002 году.
+        </div>
+        <div class="footer-socials">
+          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
+          </a>
+          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
+          </a>
+          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
+          </a>
+          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Колонка 2: Разделы -->
+      <div>
+        <div class="footer-col-title">Разделы</div>
+        <div class="footer-links">
+          <a href="concerts.html">🎸 Концерты</a>
+          <a href="theater.html">🎭 Театр и балет</a>
+          <a href="cinema.html">🎬 Кино</a>
+          <a href="exhibits.html">🖼️ Выставки</a>
+          <a href="kids.html">🧸 Детям</a>
+          <a href="articles.html">📝 Статьи</a>
+          <a href="film-database.html">📽️ База фильмов</a>
+          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
+            🏛 Пушкинская карта
+          </a>
+        </div>
+      </div>
+
+      <!-- Колонка 3: Площадки Волгограда -->
+      <div>
+        <div class="footer-col-title">Площадки</div>
+        <div class="footer-links" id="footerVenuesList">
+          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
+          <a href="venue-arena.html">Стадион Волгоград Арена</a>
+          <a href="venue-dom-ofitserov-volgograd.html">Дом Офицеров</a>
+          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
+          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
+          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
+          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
+        </div>
+      </div>
+
+      <!-- Города перенесены в шапку сайта -->
+
+      <!-- Колонка 5: Компания -->
+      <div>
+        <div class="footer-col-title">Компания</div>
+        <div class="footer-links">
+          <a href="about.html">О проекте</a>
+          <a href="advertise.html">Реклама на сайте</a>
+          <a href="event-add.html">Добавить событие</a>
+          <a href="venue-add.html">Добавить площадку</a>
+          <a href="loyalty.html">АфишиПлюс ⭐</a>
+          <a href="partners.html">Партнёрам</a>
+          <a href="jobs.html">Вакансии</a>
+          <a href="admin-info.html">Администраторам</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="footer-divider">
+
+  <div class="footer-bottom">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span>© 2002–2026 afishi.ru</span>
+      <span class="footer-badge">🌆 Волгоград</span>
+      <span class="footer-badge">🔒 18+</span>
+    </div>
+    <div class="footer-bottom-links">
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="sitemap.html">Карта сайта</a>
+      <a href="admin-info.html">Администраторам</a>
+    </div>
+  </div>
+
+
+<!-- ── Кнопка «Поделиться» ─────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto 28px;padding:0 20px;">
+  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;">
+    <div style="margin-bottom:14px;">
+      <div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;">📢 Поделитесь афишей с друзьями</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);">Расскажите о событиях своего города</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="shareToVK()" style="display:flex;align-items:center;gap:6px;background:#4a76a8;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504C19.224 13.376 19 12.763 20.014 11.276c1.109-1.613 3.244-4.145 1.256-4.145h-3.983c-.61 0-.859.407-.859.407s-1.19 2.516-2.86 4.152c-.699.699-1.012.922-1.394.922-.194 0-.437-.223-.437-.931V7.547c0-.593-.166-.933-.644-.933H7.999c-.374 0-.594.271-.594.531 0 .533.821.677.906 2.183v3.089c0 .75-.136.886-.432.886-.79 0-2.712-2.448-3.855-5.25-.22-.601-.443-.836-1.054-.836H.987C.421 7.117 0 7.366 0 7.986c0 .624 1.812 5.109 5.686 8.984 2.979 2.979 6.951 4.024 9.476 4.024z"/></svg>
+        ВКонтакте
+      </button>
+      <button onclick="shareToOK()" style="display:flex;align-items:center;gap:6px;background:#ee8208;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 6a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm5.8 11.2c-.4.5-1.2.7-1.8.3l-2.1-1.3c-.6.2-1.2.3-1.9.3s-1.3-.1-1.9-.3l-2.1 1.3c-.6.4-1.4.2-1.8-.3-.4-.5-.2-1.3.4-1.6l1.8-1.1c-.7-.6-1.2-1.4-1.5-2.3-.2-.6.2-1.3.9-1.4.6-.1 1.2.2 1.4.8.3.9 1.3 1.6 2.8 1.6s2.5-.7 2.8-1.6c.2-.6.8-.9 1.4-.8.6.1 1.1.7.9 1.4-.3.9-.8 1.7-1.5 2.3l1.8 1.1c.6.3.8 1.1.4 1.6z"/></svg>
+        ОК
+      </button>
+      <button onclick="shareToTelegram()" style="display:flex;align-items:center;gap:6px;background:#0088cc;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+        Telegram
+      </button>
+      <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:6px;background:#25d366;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button onclick="shareToDzen()" style="display:flex;align-items:center;gap:6px;background:#ff6600;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor"><path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm23.3 53.3c-10.1 0-18.3 3.4-23.3 9.7-5-6.3-13.2-9.7-23.3-9.7-1.7 0-3.3.1-3.3-3.3 0-3.4 1.6-3.3 3.3-3.3 10.1 0 18.3-3.4 23.3-9.7 5 6.3 13.2 9.7 23.3 9.7 1.7 0 3.3-.1 3.3 3.3 0 3.4-1.6 3.3-3.3 3.3z"/></svg>
+        Дзен
+      </button>
+      <button onclick="shareToRutube()" style="display:flex;align-items:center;gap:6px;background:#060a11;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4.8 13.2l-6 3.6c-.2.1-.4.2-.6.2-.2 0-.4-.1-.6-.2-.4-.2-.6-.6-.6-1V8.4c0-.4.2-.8.6-1 .2-.1.4-.1.6-.2.2 0 .4.1.6.2l6 3.6c.4.2.6.6.6 1s-.2.8-.6 1.2z"/></svg>
+        Rutube
+      </button>
+      <button onclick="shareToYandex()" style="display:flex;align-items:center;gap:6px;background:#fc3f1d;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm-1.65 18.923h-2.113V9.596H9.587C9.1 11.42 8.625 13.007 8.225 14.08c-.722 1.927-1.517 2.594-2.816 2.594-.45 0-.857-.077-1.036-.174l.18-1.71c.167.064.386.115.578.115.5 0 .87-.424 1.25-1.58.6-1.778 1.35-4.665 2.08-7.93h6.573v13.528z"/></svg>
+        Яндекс
+      </button>
+      <button onclick="shareToMAX()" style="display:flex;align-items:center;gap:6px;background:#6c17c9;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
+        MAX
+      </button>
+      <button onclick="copyPageLink(this)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Скопировать</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- ── Партнёры: билетные операторы ─────────────────────── -->
+  <div style="border-top:1px solid rgba(255,255,255,.08);padding:20px 24px 0;margin-top:4px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;">Билеты</span>
+      <a href="https://vlg.kassir.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner" 
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassir.ru
+      </a>
+      <a href="https://kassy.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassy.ru
+      </a>
+      <a href="https://qtickets.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        qtickets.ru
+      </a>
+    </div>
+  </div>
+<!-- share functions see below -->
+
+</footer>
+
+<script>
+// ================================================
+// DEMO ACCOUNTS (in real app — backend)
+// ================================================
+const DEMO_ACCOUNTS = [
+  { email:'mkhat@theatre.ru',    pass:'mkhat2018',    venueName:'МХТ им. Чехова',      venueType:'theater', city:'Москва',    emoji:'🎭', role:'Директор по PR',        rating:4.9, verified:true  },
+  { email:'bolshoi@theatre.ru',  pass:'bolshoi2018',  venueName:'Большой театр',        venueType:'theater', city:'Москва',    emoji:'🎼', role:'PR-менеджер',           rating:4.9, verified:true  },
+  { email:'lenkom@theatre.ru',   pass:'lenkom2018',   venueName:'Ленком',               venueType:'theater', city:'Москва',    emoji:'🌟', role:'Администратор',         rating:4.8, verified:true  },
+  { email:'cinepark@cinema.ru',  pass:'cine2018',     venueName:'Синема Парк',          venueType:'cinema',  city:'Москва',    emoji:'🎬', role:'Управляющий',           rating:4.7, verified:true  },
+  { email:'net@volgograd.ru',    pass:'net2018',      venueName:'НЭТ Волгоград',        venueType:'theater', city:'Волгоград', emoji:'💡', role:'Директор',              rating:4.5, verified:false },
+  { email:'test@test.ru',        pass:'test',         venueName:'Тестовый театр',       venueType:'theater', city:'Москва',    emoji:'🎪', role:'Тест-аккаунт',          rating:0,   verified:false },
+];
+
+// DEMO ANNOUNCES per venue
+const DEMO_ANNOUNCES = {
+  'МХТ им. Чехова': [
+    { id:1, title:'Мастер и Маргарита',  genre:'Драма',    date:'1 июля',  time:'19:00', price:1200, status:'published', views:4821, tickets:234, icon:'📖', color:'#0d1b3e' },
+    { id:2, title:'Три сестры',          genre:'Классика', date:'2 июля',  time:'19:00', price:1000, status:'published', views:3102, tickets:187, icon:'🎭', color:'#1a0a00' },
+    { id:3, title:'Вишнёвый сад',        genre:'Классика', date:'10 июля', time:'19:00', price:900,  status:'draft',     views:0,    tickets:0,   icon:'🌸', color:'#1a0010' },
+  ],
+  'Большой театр': [
+    { id:4, title:'Лебединое озеро',     genre:'Балет',    date:'1 июля',  time:'19:00', price:2500, status:'published', views:9840, tickets:521, icon:'🩰', color:'#001a3a' },
+    { id:5, title:'Евгений Онегин',      genre:'Опера',    date:'2 июля',  time:'19:00', price:2000, status:'published', views:7214, tickets:398, icon:'🎼', color:'#001a1a' },
+  ],
+  'Ленком': [
+    { id:6, title:'Призрак оперы',       genre:'Мюзикл',   date:'1 июля',  time:'19:30', price:1500, status:'published', views:6103, tickets:312, icon:'🎶', color:'#0a0020' },
+    { id:7, title:'Юнона и Авось',       genre:'Мюзикл',   date:'5 июля',  time:'19:00', price:2000, status:'published', views:5480, tickets:289, icon:'⚓', color:'#00001a' },
+  ],
+  'Синема Парк': [
+    { id:8, title:'Миссия невыполнима 6',genre:'Боевик',   date:'1 июля',  time:'19:45', price:450,  status:'published', views:12300, tickets:842, icon:'🕵️', color:'#1a1a3e' },
+    { id:9, title:'Мстители: Война',     genre:'Фэнтези',  date:'3 июля',  time:'18:00', price:550,  status:'published', views:9800,  tickets:654, icon:'⚡', color:'#1a001a' },
+  ],
+  'НЭТ Волгоград': [
+    { id:10,title:'Горе от ума',         genre:'Классика', date:'1 июля',  time:'19:00', price:500,  status:'published', views:1240, tickets:98,  icon:'📚', color:'#001a0a' },
+  ],
+  'Тестовый театр': [],
+};
+
+// DEMO REVIEWS per venue
+const DEMO_REVIEWS = {
+  'МХТ им. Чехова': [
+    { id:1, show:'Мастер и Маргарита', user:'Марина К.', score:5, text:'Богомолов переосмыслил роман невероятно. Спектакль длится 3 часа, но не замечаешь времени.', date:'28 июня 2018', reply:null },
+    { id:2, show:'Три сестры',         user:'Игорь С.', score:4, text:'Немного провисает второй акт, но финал потрясает. Рекомендую!', date:'25 июня 2018', reply:'Спасибо за ваш отзыв! Мы работаем над темпом спектакля.' },
+    { id:3, show:'Мастер и Маргарита', user:'Анна Д.',  score:3, text:'Ожидала большего. Слишком авангардно для меня. Интерьер красивый.', date:'20 июня 2018', reply:null },
+    { id:4, show:'Три сестры',         user:'Пётр В.',  score:5, text:'Лучший спектакль сезона. Смотрел три раза — каждый раз новые детали.', date:'15 июня 2018', reply:'Благодарим! Приходите ещё — вас всегда рады видеть в МХТ.' },
+  ],
+  'Большой театр': [
+    { id:5, show:'Лебединое озеро', user:'Светлана П.', score:5, text:'Смотрю уже четвёртый раз — каждый раз мурашки. Смирнова бесподобна.', date:'30 июня 2018', reply:null },
+    { id:6, show:'Евгений Онегин',  user:'Виктор Н.',  score:5, text:'Черняков — гений. Перенос в современность получился блестяще.', date:'26 июня 2018', reply:'Спасибо! Дмитрий Черняков — наша гордость. Ждём вас на следующем показе!' },
+  ],
+  'Ленком': [
+    { id:7, show:'Призрак оперы', user:'Ольга Т.',  score:5, text:'Видела оригинал на Бродвее — российская версия не уступает. Авдеев невероятен.', date:'29 июня 2018', reply:null },
+    { id:8, show:'Юнона и Авось', user:'Кирилл М.', score:5, text:'Смотрел уже в пятый раз. Каждый раз — как первый. Бессмертный спектакль.', date:'22 июня 2018', reply:'Спасибо, Кирилл! «Юнона и Авось» — наша легенда уже 30 лет. Ждём снова!' },
+  ],
+  'Синема Парк': [
+    { id:9,  show:'Миссия невыполнима 6', user:'Алексей К.', score:5, text:'IMAX просто невероятный! Трюки без CGI — это что-то. Лучший зал в Москве.', date:'1 июля 2018', reply:null },
+    { id:10, show:'Мстители: Война',      user:'Юля М.',     score:4, text:'Звук в 4DX слишком громкий. Хотелось бы регулировку. Но в целом круто!', date:'30 июня 2018', reply:null },
+  ],
+  'НЭТ Волгоград': [
+    { id:11, show:'Горе от ума', user:'Наташа Ф.', score:4, text:'Современная трактовка классики — освежает. Режиссёр молодец!', date:'1 июля 2018', reply:null },
+  ],
+  'Тестовый театр': [],
+};
+
+// ================================================
+// STATE
+// ================================================
+let currentUser = null;
+let selectedVenueType = 'theater';
+let myAnnounces = [];
+let editingAnnId = null;
+let posterDataUrl  = null;   // base64 of loaded poster
+let posterRotation = 0;      // current rotation in degrees
+let posterFit      = 'cover';
+
+// ================================================
+// AUTH
+// ================================================
+function showAuth(tab) {
+  document.getElementById('authOverlay').classList.add('open');
+  showAuthPane(tab);
+  document.body.style.overflow = 'hidden';
+}
+function closeAuth() {
+  document.getElementById('authOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function showAuthPane(pane) {
+  document.querySelectorAll('.auth-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('authPane'+pane.charAt(0).toUpperCase()+pane.slice(1)).classList.add('active');
+  document.getElementById('authTab'+pane.charAt(0).toUpperCase()+pane.slice(1)).classList.add('active');
+}
+function selectVenueType(el) {
+  document.querySelectorAll('.vtype-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedVenueType = el.dataset.type;
+}
+
+function doLogin(via) {
+  const email = via ? 'test@test.ru' : document.getElementById('loginEmail').value.trim();
+  const pass  = via ? 'test'          : document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+
+  // Demo: find account
+  let account = DEMO_ACCOUNTS.find(a => a.email === email && a.pass === pass);
+  if (!account && via) account = DEMO_ACCOUNTS[5]; // test account for social login
+  if (!account) {
+    // For demo: auto-create if email looks like theatre
+    if (email.includes('@') && pass.length >= 4) {
+      account = {
+        email, pass, venueName:'Моя площадка', venueType:'theater',
+        city:'Москва', emoji:'🎭', role:'Администратор', rating:0, verified:false,
+        name: email.split('@')[0],
+      };
+      DEMO_ACCOUNTS.push(account);
+    } else {
+      err.textContent = '⚠️ Неверный email или пароль. Попробуйте: mkhat@theatre.ru / mkhat2018';
+      err.style.display = 'block';
+      return;
+    }
+  }
+  err.style.display = 'none';
+  currentUser = { ...account, name: account.name || account.email.split('@')[0] };
+  closeAuth();
+  renderDashboard();
+}
+
+function doRegister() {
+  const name      = document.getElementById('regVenueName').value.trim();
+  const city      = document.getElementById('regCity').value;
+  const repName   = document.getElementById('regName').value.trim();
+  const email     = document.getElementById('regEmail').value.trim();
+  const pass      = document.getElementById('regPass').value;
+  const pass2     = document.getElementById('regPass2').value;
+  const agree     = document.getElementById('regAgree').checked;
+  const err = document.getElementById('regErr');
+
+  if (!name || !repName || !email || !pass) { err.textContent='⚠️ Заполните все обязательные поля'; err.style.display='block'; return; }
+  if (pass !== pass2) { err.textContent='⚠️ Пароли не совпадают'; err.style.display='block'; return; }
+  if (!agree) { err.textContent='⚠️ Необходимо согласие с условиями использования'; err.style.display='block'; return; }
+
+  const icons = { theater:'🎭', cinema:'🎬', concert:'🎸', museum:'🖼️' };
+  const newAccount = {
+    email, pass, venueName:name, venueType:selectedVenueType,
+    city, emoji:icons[selectedVenueType]||'🎭',
+    role: document.getElementById('regRole').value.trim() || 'Администратор',
+    name: repName, rating:0, verified:false,
+  };
+  DEMO_ACCOUNTS.push(newAccount);
+  currentUser = { ...newAccount };
+  closeAuth();
+  renderDashboard();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('dashboardState').style.display = 'none';
+  document.getElementById('notLoggedState').style.display = 'block';
+  document.getElementById('loginBtn').style.display = 'flex';
+  document.getElementById('loggedBtn').style.display = 'none';
+}
+
+// ================================================
+// DASHBOARD
+// ================================================
+function renderDashboard() {
+  document.getElementById('notLoggedState').style.display = 'none';
+  document.getElementById('dashboardState').style.display = 'grid';
+  document.getElementById('loginBtn').style.display = 'none';
+  document.getElementById('loggedBtn').style.display = 'flex';
+
+  const u = currentUser;
+
+  // Header button
+  document.getElementById('loggedAvatar').textContent = u.emoji;
+  document.getElementById('loggedName').textContent = u.venueName;
+
+  // Sidebar
+  document.getElementById('dashEmoji').textContent = u.emoji;
+  document.getElementById('dashVenueName').textContent = u.venueName;
+  document.getElementById('dashVenueType').textContent = ({theater:'Театр',cinema:'Кинотеатр',concert:'Концертная площадка',museum:'Музей/Галерея'}[u.venueType]||'Площадка') + ' · ' + u.city;
+
+  // Init announcements
+  myAnnounces = JSON.parse(JSON.stringify(DEMO_ANNOUNCES[u.venueName] || []));
+
+  // Stats
+  const totalViews   = myAnnounces.reduce((s,a)=>s+(a.views||0), 0);
+  const totalTickets = myAnnounces.reduce((s,a)=>s+(a.tickets||0), 0);
+  const revList = DEMO_REVIEWS[u.venueName] || [];
+  const avgRating = revList.length ? (revList.reduce((s,r)=>s+r.score,0)/revList.length).toFixed(1) : '—';
+  const pendingRevs = revList.filter(r=>!r.reply).length;
+
+  document.getElementById('statViews').textContent   = totalViews.toLocaleString('ru');
+  document.getElementById('statTickets').textContent = totalTickets.toLocaleString('ru');
+  document.getElementById('statRating').textContent  = u.rating || avgRating;
+  document.getElementById('statRevs').textContent    = revList.length;
+  document.getElementById('dashWelcomeName').textContent = u.name || u.venueName;
+
+  // Badges
+  document.getElementById('navBadgeAnn').textContent = myAnnounces.filter(a=>a.status==='published').length;
+  document.getElementById('navBadgeRev').textContent = pendingRevs;
+  document.getElementById('navBadgeRev').style.display = pendingRevs ? 'inline' : 'none';
+
+  // Overview
+  renderOverviewAnns();
+  renderOverviewRevs();
+
+  // Reviews filter
+  const rf = document.getElementById('revFilterShow');
+  rf.innerHTML = '<option value="">Все спектакли</option>';
+  [...new Set(revList.map(r=>r.show))].forEach(s => {
+    const o = document.createElement('option'); o.value=s; o.textContent=s; rf.appendChild(o);
+  });
+
+  // Profile
+  document.getElementById('pf-name').value  = u.venueName;
+  document.getElementById('pf-city').value  = u.city;
+  document.getElementById('pf-email').value = u.email;
+  document.getElementById('profileAvatarBig').textContent = u.emoji;
+  document.getElementById('profileTitle').textContent = u.venueName;
+  document.getElementById('profileSubtitle').textContent = u.role + ' · ' + u.city;
+
+  // Stats charts
+  renderStatsCharts();
+  renderNotifications();
+  renderAnnTable();
+  renderReviewPanel();
+
+  switchDash('overview');
+}
+
+function switchDash(pane) {
+  document.querySelectorAll('.dash-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.dash-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('dpane-'+pane).classList.add('active');
+  const idx = ['overview','announces','reviews','add','stats','notifications','profile'].indexOf(pane);
+  if (idx>=0) document.querySelectorAll('.dash-nav-item')[idx]?.classList.add('active');
+  // Refresh
+  if (pane==='announces') renderAnnTable();
+  if (pane==='reviews')   renderReviewPanel();
+}
+
+// ================================================
+// OVERVIEW
+// ================================================
+function renderOverviewAnns() {
+  const el = document.getElementById('overviewAnns');
+  const list = myAnnounces.slice(0,3);
+  if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📣</div><div class="empty-title">Нет анонсов</div><div class="empty-sub">Добавьте первый спектакль или показ</div></div>'; return; }
+  el.innerHTML = list.map(a => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+      ${a.posterUrl
+        ? `<img src="${a.posterUrl}" style="width:40px;height:58px;object-fit:cover;border-radius:3px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.2);">`
+        : `<div style="width:40px;height:58px;background:${a.color};border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${a.icon}</div>`}
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;">${a.title}</div>
+        <div style="font-size:12px;color:var(--light);">${a.date}, ${a.time} · от ${a.price?.toLocaleString('ru')} ₽</div>
+        <div style="display:flex;gap:4px;margin-top:3px;">
+          ${a.posterUrl?'<span style="font-size:10px;font-weight:700;background:#e8f5e9;color:#2e7d32;padding:1px 5px;border-radius:3px;">🖼️ Афиша</span>':''}
+          ${a.youtubeId?'<span style="font-size:10px;font-weight:700;background:#ffebee;color:#c00;padding:1px 5px;border-radius:3px;">▶ Трейлер</span>':''}
+        </div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--mid);">
+        <div>${a.views?.toLocaleString('ru')||0} просм.</div>
+        <div>${a.tickets||0} билетов</div>
+      </div>
+      <div class="status-badge ${a.status==='published'?'pub':'draft'}">${a.status==='published'?'✓ Опубликован':'📝 Черновик'}</div>
+    </div>`).join('');
+}
+
+function renderOverviewRevs() {
+  const u = currentUser;
+  const revs = (DEMO_REVIEWS[u.venueName]||[]).slice(0,3);
+  const el = document.getElementById('overviewRevs');
+  if (!revs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет отзывов</div></div>'; return; }
+  el.innerHTML = revs.map(r => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:#1e88e5;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${r.user[0]}</div>
+        <div><div style="font-size:13px;font-weight:700;">${r.user}</div><div style="font-size:11px;color:var(--light);">${r.show} · ★ ${r.score}/5</div></div>
+        ${!r.reply?'<div style="margin-left:auto;background:#fff8e1;color:#f57f17;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">Без ответа</div>':'<div style="margin-left:auto;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">Ответ дан</div>'}
+      </div>
+      <div style="font-size:13px;color:var(--mid);">${r.text.substring(0,100)}${r.text.length>100?'…':''}</div>
+    </div>`).join('');
+}
+
+// ================================================
+// ANNOUNCE TABLE
+// ================================================
+function renderAnnTable() {
+  const el = document.getElementById('annTableWrap');
+  if (!myAnnounces.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📣</div><div class="empty-title">Анонсов пока нет</div><div class="empty-sub">Добавьте первый спектакль</div></div>';
+    return;
+  }
+  el.innerHTML = `<table class="announce-table">
+    <thead><tr>
+      <th>Название</th><th>Жанр</th><th>Дата</th><th>Цена</th><th>Просмотры</th><th>Билеты</th><th>Статус</th><th>Действия</th>
+    </tr></thead>
+    <tbody>
+      ${myAnnounces.map(a=>`
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:10px;">
+            ${a.posterUrl
+              ? `<img src="${a.posterUrl}" style="width:34px;height:50px;object-fit:cover;border-radius:3px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.25);" title="Афиша загружена">`
+              : `<div style="width:34px;height:50px;background:${a.color};border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${a.icon}</div>`}
+            <div>
+              <strong>${a.title}</strong>
+              <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;">
+                ${a.posterUrl ? '<span style="font-size:10px;font-weight:700;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:3px;">🖼️ Афиша</span>' : ''}
+                ${a.youtubeId ? '<span style="font-size:10px;font-weight:700;background:#ffebee;color:#c00;padding:1px 6px;border-radius:3px;">▶ Трейлер</span>' : ''}
+              </div>
+            </div>
+          </div></td>
+          <td>${a.genre}</td>
+          <td>${a.date}, ${a.time}</td>
+          <td>${a.price?.toLocaleString('ru')} ₽</td>
+          <td>${(a.views||0).toLocaleString('ru')}</td>
+          <td>${a.tickets||0}</td>
+          <td><span class="status-badge ${a.status==='published'?'pub':'draft'}">${a.status==='published'?'✓ Опубликован':'📝 Черновик'}</span></td>
+          <td><div class="tbl-actions">
+            <button class="tbl-btn edit" onclick="editAnn(${a.id})">✏️ Ред.</button>
+            <button class="tbl-btn ${a.status==='published'?'view':'edit'}" onclick="toggleAnnStatus(${a.id})">${a.status==='published'?'📝 В черновик':'✅ Опубл.'}</button>
+            <button class="tbl-btn del" onclick="deleteAnn(${a.id})">🗑️</button>
+          </div></td>
+        </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function editAnn(id) {
+  const a = myAnnounces.find(x=>x.id===id);
+  if (!a) return;
+  editingAnnId = id;
+  document.getElementById('na-title').value    = a.title;
+  document.getElementById('na-genre').value    = a.genre;
+  document.getElementById('na-date').value     = a.date;
+  document.getElementById('na-time').value     = a.time;
+  document.getElementById('na-price').value    = a.price;
+  document.getElementById('na-director').value = a.director||'';
+  document.getElementById('na-cast').value     = a.cast||'';
+  document.getElementById('na-duration').value = a.duration||'';
+  document.getElementById('na-desc').value     = a.desc||'';
+  // Restore YouTube
+  if (a.youtubeId) {
+    document.getElementById('na-youtube').value = `https://www.youtube.com/watch?v=${a.youtubeId}`;
+    document.getElementById('ytPreviewFrame').src = `https://www.youtube.com/embed/${a.youtubeId}?rel=0&modestbranding=1`;
+    document.getElementById('ytPreviewLabel').textContent = a.title + ' — трейлер';
+    document.getElementById('ytPreviewWrap').style.display = 'block';
+    document.getElementById('ytErrMsg').style.display = 'none';
+  } else {
+    document.getElementById('na-youtube').value = '';
+    document.getElementById('ytPreviewWrap').style.display = 'none';
+  }
+  // Restore poster
+  if (a.posterUrl) {
+    posterDataUrl = a.posterUrl;
+    applyPosterToUI(a.posterUrl, '(сохранённая афиша)', null);
+  } else {
+    resetPosterForm();
+  }
+  switchDash('add');
+  document.querySelector('.ann-form-title').textContent = '✏️ Редактировать анонс';
+}
+
+function toggleAnnStatus(id) {
+  const a = myAnnounces.find(x=>x.id===id);
+  if (a) { a.status = a.status==='published'?'draft':'published'; renderAnnTable(); renderOverviewAnns(); }
+}
+
+function deleteAnn(id) {
+  if (!confirm('Удалить анонс?')) return;
+  myAnnounces = myAnnounces.filter(x=>x.id!==id);
+  renderAnnTable(); renderOverviewAnns();
+  document.getElementById('navBadgeAnn').textContent = myAnnounces.filter(a=>a.status==='published').length;
+}
+
+function saveAnnouncement() {
+  const title    = document.getElementById('na-title').value.trim();
+  const genre    = document.getElementById('na-genre').value;
+  const director = document.getElementById('na-director').value.trim();
+  const cast     = document.getElementById('na-cast').value.trim();
+  const date     = document.getElementById('na-date').value.trim();
+  const time     = document.getElementById('na-time').value.trim();
+  const duration = document.getElementById('na-duration').value.trim();
+  const age      = document.getElementById('na-age').value;
+  const price    = parseInt(document.getElementById('na-price').value)||0;
+  const pricemax = parseInt(document.getElementById('na-pricemax').value)||0;
+  const desc     = document.getElementById('na-desc').value.trim();
+  const youtubeRaw = document.getElementById('na-youtube').value.trim();
+  const youtubeId  = extractYoutubeId(youtubeRaw);
+  const status   = document.querySelector('input[name="naStatus"]:checked')?.value || 'published';
+
+  if (!title || !genre || !date || !price) { alert('Заполните обязательные поля: название, жанр, дата, цена'); return; }
+
+  const ICONS  = {'Драма':'🎭','Комедия':'😂','Балет':'🩰','Опера':'🎼','Мюзикл':'🎶','Классика':'📖','Современная':'💡','Детям':'🪆','Боевик':'💥','Фэнтezi':'⚡','Рок':'🎸','Джаз':'🎷','Поп':'🎤'};
+  const COLORS = {'Драма':'#1a0a00','Комедия':'#2a1500','Балет':'#001a3a','Опера':'#001a1a','Мюзикл':'#0a0020','Классика':'#0d1b3e','Современная':'#0a0a1a','Детям':'#1a1500','Боевик':'#1a1a3e','Рок':'#1a0533','Джаз':'#001a0a','Поп':'#0a1a3e'};
+
+  const posterUrl = posterDataUrl || null;
+
+  if (editingAnnId) {
+    const a = myAnnounces.find(x=>x.id===editingAnnId);
+    if (a) { Object.assign(a, {title,genre,director,cast,date,time,duration,age,price,pricemax,desc,status,youtubeId,posterUrl,icon:ICONS[genre]||'🎭',color:COLORS[genre]||'#1a1a1a'}); }
+    editingAnnId = null;
+  } else {
+    const newId = Date.now();
+    myAnnounces.unshift({ id:newId,title,genre,director,cast,date,time,duration,age,price,pricemax:pricemax||price*2,desc,status,youtubeId,posterUrl,views:0,tickets:0,icon:ICONS[genre]||'🎭',color:COLORS[genre]||'#1a1a1a' });
+    document.getElementById('navBadgeAnn').textContent = myAnnounces.filter(a=>a.status==='published').length;
+  }
+
+  // Reset form
+  ['na-title','na-director','na-cast','na-date','na-time','na-duration','na-price','na-pricemax','na-desc','na-dates-extra','na-youtube'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('na-genre').value = '';
+  document.getElementById('ytPreviewWrap').style.display = 'none';
+  document.getElementById('ytErrMsg').style.display = 'none';
+  resetPosterForm();
+  document.querySelector('.ann-form-title').textContent = '📣 Информация о событии';
+
+  const ok = document.getElementById('naSuccess');
+  ok.style.display = 'block';
+  setTimeout(()=>ok.style.display='none',3500);
+
+  renderAnnTable(); renderOverviewAnns();
+  setTimeout(()=>switchDash('announces'),1200);
+}
+
+// ================================================
+// POSTER UPLOAD
+// ================================================
+function handleDragOver(e) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('posterDropZone').style.borderColor = 'var(--red)';
+  document.getElementById('posterDropZone').style.background = '#fff8f8';
+  document.getElementById('posterDropHover').style.display = 'flex';
+}
+function handleDragLeave(e) {
+  e.preventDefault();
+  document.getElementById('posterDropZone').style.borderColor = '#c9a84c';
+  document.getElementById('posterDropZone').style.background = '#fff';
+  document.getElementById('posterDropHover').style.display = 'none';
+}
+function handleDrop(e) {
+  e.preventDefault(); e.stopPropagation();
+  handleDragLeave(e);
+  const file = e.dataTransfer.files[0];
+  if (file) processPosterFile(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processPosterFile(file);
+}
+
+// Paste from clipboard
+document.addEventListener('paste', function(e) {
+  if (!document.getElementById('dpane-add').classList.contains('active')) return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      processPosterFile(item.getAsFile());
+      break;
+    }
+  }
+});
+
+function processPosterFile(file) {
+  const errEl = document.getElementById('posterErrMsg');
+  errEl.style.display = 'none';
+
+  if (!file.type.startsWith('image/')) {
+    errEl.textContent = '⚠️ Пожалуйста, выберите файл изображения (JPG, PNG, WEBP, GIF)';
+    errEl.style.display = 'block'; return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    errEl.textContent = `⚠️ Файл слишком большой: ${(file.size/1024/1024).toFixed(1)} МБ. Максимум — 5 МБ.`;
+    errEl.style.display = 'block'; return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    posterDataUrl  = ev.target.result;
+    posterRotation = 0;
+    applyPosterToUI(posterDataUrl, file.name, file.size);
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyPosterToUI(dataUrl, fileName, fileSize) {
+  const drop    = document.getElementById('posterDropZone');
+  const preview = document.getElementById('posterPreviewArea');
+  const img     = document.getElementById('posterPreviewImg');
+
+  // Apply rotation
+  img.style.transform = `rotate(${posterRotation}deg)`;
+  img.style.objectFit = posterFit;
+  img.src = dataUrl;
+
+  // Sync all preview thumbnails
+  ['previewGrid','previewList','previewAnnounce'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.src = dataUrl; el.style.objectFit = posterFit; }
+  });
+
+  // Update title labels in preview
+  const t = document.getElementById('na-title').value || 'Название спектакля';
+  const g = document.getElementById('na-genre').value || 'Жанр';
+  ['previewGridGenre','previewListGenre','previewAnnGenre'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=g; });
+  ['previewGridTitle','previewListTitle','previewAnnTitle'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=t; });
+
+  // Filename label
+  if (fileName) {
+    const sizeStr = fileSize ? ` · ${(fileSize/1024).toFixed(0)} КБ` : '';
+    document.getElementById('posterFileName').textContent = fileName + sizeStr;
+  }
+
+  // Show preview, shrink drop zone
+  drop.style.display    = 'none';
+  preview.style.display = 'block';
+}
+
+function setPosterFit(el, fit) {
+  posterFit = fit;
+  document.querySelectorAll('.poster-fit-btn').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background  = '#fff';
+    b.style.color       = 'var(--mid)';
+  });
+  el.style.borderColor = 'var(--red)';
+  el.style.background  = '#fff8f8';
+  el.style.color       = 'var(--red)';
+  ['posterPreviewImg','previewGrid','previewList','previewAnnounce'].forEach(id => {
+    const img = document.getElementById(id); if (img) img.style.objectFit = fit;
+  });
+}
+
+function rotatePoster() {
+  posterRotation = (posterRotation + 90) % 360;
+  const img = document.getElementById('posterPreviewImg');
+  img.style.transform = `rotate(${posterRotation}deg)`;
+  // For thumbs, recreate rotated canvas
+  if (!posterDataUrl) return;
+  const canvas = document.createElement('canvas');
+  const image  = new Image();
+  image.onload = () => {
+    const swapped = posterRotation % 180 !== 0;
+    canvas.width  = swapped ? image.height : image.width;
+    canvas.height = swapped ? image.width  : image.height;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.rotate(posterRotation * Math.PI / 180);
+    ctx.drawImage(image, -image.width/2, -image.height/2);
+    const rotated = canvas.toDataURL();
+    posterDataUrl = rotated;
+    img.src = rotated; img.style.transform = '';
+    ['previewGrid','previewList','previewAnnounce'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.src = rotated;
+    });
+  };
+  image.src = posterDataUrl;
+}
+
+function clearPoster() {
+  posterDataUrl  = null;
+  posterRotation = 0;
+  document.getElementById('posterPreviewArea').style.display = 'none';
+  document.getElementById('posterDropZone').style.display    = 'block';
+  document.getElementById('posterFileInput').value = '';
+  document.getElementById('posterErrMsg').style.display = 'none';
+}
+
+function resetPosterForm() {
+  clearPoster();
+  document.getElementById('posterDropZone').style.borderColor = '#c9a84c';
+  document.getElementById('posterDropZone').style.background  = '#fff';
+}
+
+// Update preview labels when title/genre change
+document.addEventListener('input', function(e) {
+  if (!posterDataUrl) return;
+  if (e.target.id === 'na-title') {
+    const t = e.target.value || 'Название';
+    ['previewGridTitle','previewListTitle','previewAnnTitle'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=t; });
+  }
+  if (e.target.id === 'na-genre') {
+    const g = e.target.value || 'Жанр';
+    ['previewGridGenre','previewListGenre','previewAnnGenre'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=g; });
+  }
+});
+
+// ================================================
+function extractYoutubeId(url) {
+  if (!url) return null;
+  // Handle various YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?.*v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  // If raw 11-char ID passed directly
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim();
+  return null;
+}
+
+function previewYoutube() {
+  const raw  = document.getElementById('na-youtube').value.trim();
+  const wrap = document.getElementById('ytPreviewWrap');
+  const err  = document.getElementById('ytErrMsg');
+  const frame= document.getElementById('ytPreviewFrame');
+  const lbl  = document.getElementById('ytPreviewLabel');
+
+  if (!raw) { wrap.style.display='none'; err.style.display='none'; return; }
+
+  const ytId = extractYoutubeId(raw);
+  if (!ytId) {
+    wrap.style.display = 'none';
+    err.style.display  = 'block';
+    return;
+  }
+
+  err.style.display  = 'none';
+  frame.src = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0`;
+  const title = document.getElementById('na-title').value.trim();
+  lbl.textContent = title ? title + ' — трейлер' : 'Предпросмотр трейлера';
+  wrap.style.display = 'block';
+
+  // Smooth scroll to preview
+  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth',block:'nearest'}), 100);
+}
+
+function clearYoutube() {
+  document.getElementById('na-youtube').value = '';
+  document.getElementById('ytPreviewWrap').style.display = 'none';
+  document.getElementById('ytErrMsg').style.display = 'none';
+  document.getElementById('ytPreviewFrame').src = '';
+}
+
+// ================================================
+// REVIEWS
+// ================================================
+function renderReviewPanel() {
+  const u = currentUser;
+  const allRevs  = DEMO_REVIEWS[u.venueName] || [];
+  const showF    = document.getElementById('revFilterShow')?.value || '';
+  const statusF  = document.getElementById('revFilterStatus')?.value || '';
+  let revs = allRevs;
+  if (showF)   revs = revs.filter(r=>r.show===showF);
+  if (statusF==='pending') revs = revs.filter(r=>!r.reply);
+  if (statusF==='replied') revs = revs.filter(r=>!!r.reply);
+
+  const el = document.getElementById('reviewPanel');
+  if (!revs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Отзывов нет</div><div class="empty-sub">Здесь будут отображаться отзывы зрителей на ваши спектакли</div></div>';
+    return;
+  }
+
+  const ACOLORS = ['#e53935','#1e88e5','#43a047','#8e24aa','#f4511e','#00897b'];
+  el.innerHTML = '';
+  revs.forEach(r => {
+    const hasPending = !r.reply;
+    const scoreCol = r.score>=4?'#2e7d32':r.score>=3?'#f57f17':'#c62828';
+    const scoreBg  = r.score>=4?'#e8f5e9':r.score>=3?'#fff8e1':'#fce4ec';
+    const col = ACOLORS[r.user.charCodeAt(0)%ACOLORS.length];
+    const div = document.createElement('div');
+    div.className = `review-item ${hasPending?'pending':r.reply?'has-reply':''}`;
+    div.id = `rev-${r.id}`;
+    div.innerHTML = `
+      <div class="ri-header">
+        <div class="ri-user">
+          <div class="ri-avatar" style="background:${col};">${r.user[0]}</div>
+          <div><div class="ri-name">${r.user}</div><div class="ri-meta">${r.date}</div></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="ri-score" style="background:${scoreBg};color:${scoreCol};">${r.score}/5</div>
+          ${hasPending?'<div style="font-size:10px;font-weight:700;color:#f57f17;margin-top:3px;">⚠️ Нет ответа</div>':'<div style="font-size:10px;color:var(--green);margin-top:3px;">✓ Ответ дан</div>'}
+        </div>
+      </div>
+      <div class="ri-show">📌 ${r.show}</div>
+      <div class="ri-stars">${'★'.repeat(r.score)}${'☆'.repeat(5-r.score)}</div>
+      <div class="ri-text">${r.text}</div>
+      ${r.reply ? `
+        <div class="reply-block">
+          <div class="reply-label">🎭 Официальный ответ площадки</div>
+          <div class="reply-text" id="replyText-${r.id}">${r.reply}</div>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <button class="btn-reply" onclick="editReply(${r.id})">✏️ Редактировать</button>
+          </div>
+        </div>` : `
+        <div class="reply-form" id="replyForm-${r.id}">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:6px;">Ответить от имени площадки</div>
+          <textarea id="replyInput-${r.id}" placeholder="Напишите официальный ответ от имени ${u.venueName}..."></textarea>
+          <div class="reply-actions">
+            <button class="btn-reply" onclick="submitReply(${r.id})">💬 Опубликовать ответ</button>
+            <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('replyForm-${r.id}').style.display='none'">Скрыть</button>
+          </div>
+        </div>`}`;
+    el.appendChild(div);
+  });
+}
+
+function submitReply(revId) {
+  const u = currentUser;
+  const text = document.getElementById(`replyInput-${revId}`)?.value.trim();
+  if (!text) { alert('Напишите текст ответа'); return; }
+  const revs = DEMO_REVIEWS[u.venueName];
+  const r = revs?.find(x=>x.id===revId);
+  if (r) {
+    r.reply = text;
+    const badge = document.getElementById('navBadgeRev');
+    const pending = revs.filter(x=>!x.reply).length;
+    badge.textContent = pending;
+    badge.style.display = pending ? 'inline' : 'none';
+    renderReviewPanel();
+    renderOverviewRevs();
+  }
+}
+
+function editReply(revId) {
+  const u = currentUser;
+  const r = (DEMO_REVIEWS[u.venueName]||[]).find(x=>x.id===revId);
+  if (!r) return;
+  const div = document.getElementById(`rev-${revId}`);
+  const rb = div.querySelector('.reply-block');
+  if (!rb) return;
+  rb.innerHTML = `
+    <div class="reply-label">✏️ Редактировать ответ</div>
+    <textarea style="width:100%;border:1.5px solid var(--border);border-radius:4px;padding:10px;font-family:'PT Sans',sans-serif;font-size:13px;resize:vertical;min-height:72px;outline:none;transition:border-color .15s;" id="replyEditInput-${revId}">${r.reply}</textarea>
+    <div class="reply-actions">
+      <button class="btn-reply" onclick="saveEditReply(${revId})">💾 Сохранить</button>
+      <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="renderReviewPanel()">Отмена</button>
+    </div>`;
+}
+
+function saveEditReply(revId) {
+  const u = currentUser;
+  const text = document.getElementById(`replyEditInput-${revId}`)?.value.trim();
+  if (!text) return;
+  const r = (DEMO_REVIEWS[u.venueName]||[]).find(x=>x.id===revId);
+  if (r) { r.reply = text; renderReviewPanel(); }
+}
+
+// ================================================
+// STATS CHARTS (Simple visual)
+// ================================================
+function renderStatsCharts() {
+  const u = currentUser;
+  const anns = myAnnounces;
+
+  // Stats full row
+  const totalViews = anns.reduce((s,a)=>s+(a.views||0),0);
+  const totalTix   = anns.reduce((s,a)=>s+(a.tickets||0),0);
+  const revs = DEMO_REVIEWS[u.venueName]||[];
+  const avgR = revs.length?(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(1):0;
+  document.getElementById('statsFullRow').innerHTML = [
+    {num:totalViews.toLocaleString('ru'), label:'Просмотров страницы', color:'var(--red)', trend:'↑ +12%'},
+    {num:totalTix.toLocaleString('ru'),   label:'Продано билетов',      color:'var(--blue)', trend:'↑ +8%'},
+    {num:avgR||'—',                        label:'Средний рейтинг',      color:'var(--gold)', trend:'↑ +0.2'},
+    {num:revs.length,                      label:'Всего отзывов',         color:'var(--green)',trend:'+'+revs.length+' за месяц'},
+  ].map(s=>`<div class="stat-card"><div class="stat-num" style="color:${s.color};">${s.num}</div><div class="stat-label">${s.label}</div><div class="stat-trend up">${s.trend}</div></div>`).join('');
+
+  // Announces chart
+  const ac = document.getElementById('statsAnnsChart');
+  const maxV = Math.max(...anns.map(a=>a.views||0), 1);
+  ac.innerHTML = anns.map(a=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="font-size:16px;width:24px;text-align:center;flex-shrink:0;">${a.icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:3px;">${a.title}</div>
+        <div style="height:8px;background:#eee;border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${Math.round((a.views||0)/maxV*100)}%;background:var(--red);border-radius:4px;transition:width .4s;"></div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--mid);width:60px;text-align:right;">${(a.views||0).toLocaleString('ru')}</div>
+    </div>`).join('') || '<div style="color:var(--light);font-size:13px;">Нет данных</div>';
+
+  // Rating chart
+  const rc = document.getElementById('statsRatingChart');
+  const months = ['Март','Апрель','Май','Июнь','Июль'];
+  const ratings = [4.2,4.4,4.5,4.6,parseFloat(avgR)||4.7];
+  const maxR = 5, minR = 3;
+  rc.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:12px;height:100px;padding:0 10px;">
+      ${months.map((m,i)=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="font-size:11px;font-weight:700;color:${i===months.length-1?'var(--gold)':'var(--mid)'};">${ratings[i]}</div>
+          <div style="width:100%;background:${i===months.length-1?'var(--gold)':'#c8102e'};border-radius:3px 3px 0 0;height:${Math.round((ratings[i]-minR)/(maxR-minR)*80)+10}px;opacity:${i===months.length-1?1:.7};transition:all .3s;"></div>
+          <div style="font-size:10px;color:var(--light);">${m}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ================================================
+// NOTIFICATIONS
+// ================================================
+function renderNotifications() {
+  const u = currentUser;
+  const revs = (DEMO_REVIEWS[u.venueName]||[]).filter(r=>!r.reply);
+  const notifs = [
+    ...revs.map(r=>({ type:'warn', icon:'⚠️', text:`Новый отзыв без ответа от <strong>${r.user}</strong> на спектакль «${r.show}» — ⭐ ${r.score}/5`, time:'Сегодня' })),
+    { type:'new',   icon:'🎟️', text:`За сегодня продано <strong>${myAnnounces.reduce((s,a)=>s+(a.tickets||0),0)}</strong> билетов на ваши мероприятия`, time:'Сегодня' },
+    { type:'reply', icon:'📣', text:'Ваш анонс прошёл модерацию и <strong>опубликован</strong> на сайте', time:'Вчера' },
+    { type:'new',   icon:'👁️', text:`Ваша страница просмотрена <strong>${myAnnounces.reduce((s,a)=>s+(a.views||0),0).toLocaleString('ru')}</strong> раз в этом месяце`, time:'Вчера' },
+  ];
+  const el = document.getElementById('notifList');
+  el.innerHTML = notifs.map(n=>`
+    <div class="notif-item ${n.type}">
+      <div class="notif-icon">${n.icon}</div>
+      <div class="notif-text">${n.text}</div>
+      <div class="notif-time">${n.time}</div>
+    </div>`).join('');
+}
+
+function saveProfile() {
+  const el = document.getElementById('profileSaved');
+  currentUser.venueName = document.getElementById('pf-name').value;
+  currentUser.city = document.getElementById('pf-city').value;
+  document.getElementById('dashVenueName').textContent = currentUser.venueName;
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',2500);
+}
+
+// ================================================
+// INIT
+// ================================================
+function toggleUserMenu() {
+  // Simple toggle - in real app would show dropdown
+  if (confirm('Выйти из личного кабинета?')) doLogout();
+}
+
+// Show the "not logged in" state by default
+document.getElementById('notLoggedState').style.display = 'block';
+document.getElementById('dashboardState').style.display = 'none';
+
+// Quick demo hint
+setTimeout(()=>{
+  const hint = document.createElement('div');
+  hint.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1a1a1a;color:#fff;padding:14px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:280px;line-height:1.5;';
+  hint.innerHTML = `<div style="font-weight:700;margin-bottom:6px;color:var(--gold-light);">💡 Демо-аккаунты для входа:</div>
+    <div>🎭 <b>mkhat@theatre.ru</b> / mkhat2018</div>
+    <div>🎼 <b>bolshoi@theatre.ru</b> / bolshoi2018</div>
+    <div>🌟 <b>lenkom@theatre.ru</b> / lenkom2018</div>
+    <div>🎬 <b>cinepark@cinema.ru</b> / cine2018</div>
+    <button onclick="this.parentElement.remove()" style="margin-top:8px;background:none;border:1px solid #555;color:#aaa;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:12px;">Закрыть</button>`;
+  document.body.appendChild(hint);
+},800);
+</script>
+<!-- ═══════════════════════════ AFISHI SHARED MODULE ═══════════════════════════ -->
+<script>
+// ================================================================
+//  AFISHI.RU — SHARED MODULE v2
+//  Auth + Reviews + Trailer  (injected into every page)
+//  Fixed: no containerId/pageId/itemId in onclick attrs
+// ================================================================
+(function () {
+  'use strict';
+
+  // ── CONFIG ────────────────────────────────────────────────────
+  const LS_USER    = 'afishi_user';
+  const LS_REVIEWS = 'afishi_reviews';
+
+  // ── AUTH STATE ────────────────────────────────────────────────
+  let _user = null;
+  try { _user = JSON.parse(localStorage.getItem(LS_USER)); } catch(e){}
+
+  // ── REVIEW STORE ──────────────────────────────────────────────
+  function rvLoad()  { try { return JSON.parse(localStorage.getItem(LS_REVIEWS)) || {}; } catch(e) { return {}; } }
+  function rvSave(db){ try { localStorage.setItem(LS_REVIEWS, JSON.stringify(db)); } catch(e){} }
+  function rvKey(pid, iid) { return pid + '::' + iid; }
+  function rvGet(pid, iid) { return rvLoad()[rvKey(pid, iid)] || []; }
+  function rvAdd(pid, iid, rev) {
+    const db = rvLoad(), k = rvKey(pid, iid);
+    if (!db[k]) db[k] = [];
+    db[k].unshift(rev);
+    rvSave(db);
+    return db[k];
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────
+  const SCORE_LABELS = ['','Провал','Ужасно','Плохо','Слабо','Нормально','Хорошо','Очень хорошо','Отлично','Великолепно','Шедевр!'];
+  const SCORE_EMOJI  = ['','💀','😤','👎','😐','😶','🙂','😊','😍','🤩','🏆'];
+  const AVT_COLORS   = ['#e53935','#1e88e5','#43a047','#8e24aa','#f4511e','#00897b','#3949ab','#d81b60','#00838f','#558b2f'];
+  function avColor(n) { return AVT_COLORS[(n||'A').charCodeAt(0) % AVT_COLORS.length]; }
+  function plural(n, f) {
+    if (n%10===1 && n%100!==11) return f[0];
+    if ([2,3,4].includes(n%10) && ![12,13,14].includes(n%100)) return f[1];
+    return f[2];
+  }
+  function fmtD(d) { return new Date(d||Date.now()).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}); }
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── CURRENT REVIEW CONTEXT (no onclick params needed) ─────────
+  // We store context in the container element itself via data-* attrs
+  // All event handlers read context from closest ancestor with data-rv-*
+
+  // ── CSS ───────────────────────────────────────────────────────
+  const css = `
+/* == AFISHI SHARED MODULE STYLES == */
+#afishiAuthModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9000;align-items:center;justify-content:center;padding:20px;}
+#afishiAuthModal.open{display:flex;}
+.am-box{background:#fff;width:100%;max-width:440px;border-radius:10px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5);position:relative;}
+.am-head{background:linear-gradient(135deg,#1a0a2e,#0a1a2e);padding:24px 28px 20px;color:#fff;}
+.am-title{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+.am-sub{font-size:13px;color:rgba(255,255,255,.5);}
+.am-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#aaa;font-size:20px;cursor:pointer;}
+.am-body{padding:22px 28px 28px;}
+.am-tabs{display:flex;border-bottom:2px solid #f0eeea;margin-bottom:20px;}
+.am-tab{padding:8px 20px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.am-tab.active{color:#c8102e;border-bottom-color:#c8102e;}
+.am-pane{display:none;}.am-pane.active{display:block;}
+.am-field{margin-bottom:14px;}
+.am-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:5px;}
+.am-input{width:100%;border:1.5px solid #e0e0e0;border-radius:5px;padding:10px 13px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+.am-input:focus{border-color:#c8102e;}
+.am-btn{width:100%;background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border:none;padding:12px;border-radius:5px;cursor:pointer;margin-top:4px;}
+.am-btn:hover{background:#9e0c24;}
+.am-err{background:#ffebee;border:1px solid #ffcdd2;color:#c62828;font-size:13px;padding:8px 12px;border-radius:4px;margin-bottom:12px;display:none;}
+.am-ok {background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;font-size:13px;padding:8px 12px;border-radius:4px;margin-bottom:12px;display:none;}
+.am-switch{text-align:center;font-size:13px;color:#888;margin-top:16px;}
+.am-switch a{color:#c8102e;cursor:pointer;font-weight:700;}
+.am-social{display:flex;gap:8px;margin-bottom:18px;}
+.am-soc-btn{flex:1;border:1.5px solid #e0e0e0;border-radius:5px;padding:9px 8px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.am-soc-btn:hover{border-color:#c8102e;color:#c8102e;}
+.am-divider{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:12px;color:#aaa;}
+.am-divider::before,.am-divider::after{content:'';flex:1;height:1px;background:#e0e0e0;}
+.user-btn{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 8px 2px 4px;border-radius:3px;transition:background .15s;font-size:12px;color:#bbb;}
+.user-btn:hover{background:rgba(255,255,255,.08);}
+.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+/* Review pane */
+.rv-panel{padding:20px 24px;}
+.rv-summary{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:18px 20px;margin-bottom:18px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.rv-avg-num{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;line-height:1;}
+.rv-bars{flex:1;min-width:140px;}
+.rv-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.rv-bar-track{flex:1;height:6px;background:#f0eeea;border-radius:3px;overflow:hidden;}
+.rv-bar-fill{height:100%;border-radius:3px;}
+.rv-gate{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:13px;}
+.rv-gate-btn{margin-left:auto;background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.rv-form-box{background:#fff;border:2px solid #f5c518;border-radius:8px;padding:16px 18px;margin-bottom:16px;}
+.rv-form-title{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px;}
+.rv-star-row{display:flex;gap:2px;cursor:pointer;}
+.rv-star{font-size:28px;color:#ddd;transition:color .1s,transform .1s;user-select:none;}
+.rv-star.lit{color:#f5c518;transform:scale(1.1);}
+.rv-star-lbl{font-size:13px;font-weight:700;color:#444;margin-left:8px;min-width:160px;display:inline-block;}
+.rv-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.rv-field-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:4px;}
+.rv-input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:8px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+.rv-input:focus{border-color:#c8102e;}
+.rv-textarea{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:9px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;resize:vertical;line-height:1.6;transition:border-color .15s;}
+.rv-textarea:focus{border-color:#c8102e;}
+.rv-submit-btn{background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:none;padding:10px 22px;border-radius:4px;cursor:pointer;}
+.rv-submit-btn:hover{background:#9e0c24;}
+.rv-msg{font-size:13px;font-weight:600;padding:8px 13px;border-radius:4px;display:none;}
+.rv-sort-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.rv-sort-title{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;}
+.rv-sort-sel{border:1px solid #e0e0e0;border-radius:4px;padding:5px 9px;font-family:'PT Sans',sans-serif;font-size:12px;outline:none;color:#444;}
+.rv-card{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px;transition:box-shadow .2s;}
+.rv-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.rv-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.rv-avt{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.rv-card-stars{color:#f5c518;font-size:12px;letter-spacing:1px;margin-bottom:8px;}
+.rv-card-text{font-size:13px;color:#444;line-height:1.7;margin-bottom:10px;}
+.rv-card-foot{display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid #f5f3f0;}
+.rv-helpful-btn{display:inline-flex;align-items:center;gap:4px;background:#f9f7f4;border:1px solid #ddd;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.rv-helpful-btn.voted{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;}
+.rv-empty{text-align:center;padding:28px 20px;color:#aaa;}
+/* Trailer pane */
+.yt-pane{padding:20px 24px;}
+.yt-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;background:#000;cursor:pointer;}
+.yt-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.yt-thumb{position:absolute;inset:0;}
+.yt-thumb img{width:100%;height:100%;object-fit:cover;}
+.yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.yt-play-btn{width:66px;height:66px;background:rgba(200,16,46,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .2s;}
+.yt-wrap:hover .yt-play-btn{transform:scale(1.1);}
+.yt-info-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;background:#f9f7f4;border-radius:4px;font-size:13px;color:#444;}
+.yt-yt-logo{width:30px;height:30px;background:#ff0000;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+`;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  // ── AUTH MODAL ────────────────────────────────────────────────
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="afishiAuthModal">
+    <div class="am-box">
+      <button class="am-close" id="amClose">✕</button>
+      <div class="am-head">
+        <div class="am-title">Войти на Афиши.ру</div>
+        <div class="am-sub">Чтобы оставлять отзывы и сохранять избранное</div>
+      </div>
+      <div class="am-body">
+        <div class="am-tabs">
+          <div class="am-tab active" id="amTabLogin">Войти</div>
+          <div class="am-tab"        id="amTabReg">Регистрация</div>
+        </div>
+        <div id="amErr" class="am-err"></div>
+        <div id="amOk"  class="am-ok"></div>
+        <div class="am-pane active" id="amPaneLogin">
+          <div class="am-social">
+            <button class="am-soc-btn" id="amSocVk">🔵 ВКонтакте</button>
+            <button class="am-soc-btn" id="amSocGoogle">🔴 Google</button>
+            <button class="am-soc-btn" id="amSocYandex">🟡 Яндекс</button>
+          </div>
+          <div class="am-divider">или через email</div>
+          <div class="am-field"><div class="am-label">Email</div>
+            <input class="am-input" id="amLoginEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div class="am-field"><div class="am-label">Пароль</div>
+            <input class="am-input" id="amLoginPass" type="password" placeholder="••••••••">
+          </div>
+          <button class="am-btn" id="amBtnLogin">Войти</button>
+          <div class="am-switch">Нет аккаунта? <a id="amToReg">Зарегистрируйтесь</a></div>
+        </div>
+        <div class="am-pane" id="amPaneReg">
+          <div class="am-field"><div class="am-label">Имя</div>
+            <input class="am-input" id="amRegName" type="text" placeholder="Иван Петров">
+          </div>
+          <div class="am-field"><div class="am-label">Email</div>
+            <input class="am-input" id="amRegEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div class="am-field"><div class="am-label">Пароль</div>
+            <input class="am-input" id="amRegPass" type="password" placeholder="Минимум 6 символов">
+          </div>
+          <div class="am-field"><div class="am-label">Город</div>
+            <input class="am-input" id="amRegCity" type="text" placeholder="Москва" value="Москва">
+          </div>
+          <button class="am-btn" id="amBtnReg">Создать аккаунт</button>
+          <div class="am-switch">Уже зарегистрированы? <a id="amToLogin">Войти</a></div>
+        </div>
+      </div>
+    </div>
+  </div>`);
+
+  // ── AUTH EVENT LISTENERS (no inline onclick) ──────────────────
+  function $(id) { return document.getElementById(id); }
+  $('amClose').onclick   = () => closeAuth();
+  $('amTabLogin').onclick = () => showTab('login');
+  $('amTabReg').onclick   = () => showTab('reg');
+  $('amToReg').onclick    = () => showTab('reg');
+  $('amToLogin').onclick  = () => showTab('login');
+  $('amBtnLogin').onclick = () => doLogin();
+  $('amBtnReg').onclick   = () => doRegister();
+  $('amSocVk').onclick    = () => socialLogin('vk');
+  $('amSocGoogle').onclick= () => socialLogin('google');
+  $('amSocYandex').onclick= () => socialLogin('yandex');
+  $('amLoginPass').onkeydown = e => { if (e.key==='Enter') doLogin(); };
+  $('afishiAuthModal').onclick = e => { if (e.target === $('afishiAuthModal')) closeAuth(); };
+
+  // ── AUTH LOGIC ────────────────────────────────────────────────
+  function getAccounts() { try { return JSON.parse(localStorage.getItem('afishi_accounts')||'[]'); } catch(e){return[];} }
+  function saveAccounts(a){ try { localStorage.setItem('afishi_accounts',JSON.stringify(a)); } catch(e){} }
+
+  function showMsg(type, msg) {
+    const err = $('amErr'), ok = $('amOk');
+    if (type==='err'){ err.textContent=msg; err.style.display='block'; ok.style.display='none'; }
+    else             { ok.textContent=msg;  ok.style.display='block'; err.style.display='none'; }
+    setTimeout(()=>{ err.style.display='none'; ok.style.display='none'; }, 4000);
+  }
+
+  let _afterLoginCb = null;
+  function closeAuth() {
+    $('afishiAuthModal').classList.remove('open');
+    _afterLoginCb = null;
+  }
+  function showTab(tab) {
+    ['Login','Reg'].forEach(t => {
+      $('amTab'+t).classList.toggle('active', t.toLowerCase()===tab);
+      $('amPane'+t).classList.toggle('active', t.toLowerCase()===tab);
+    });
+    $('amErr').style.display='none'; $('amOk').style.display='none';
+  }
+  function _login(user) {
+    _user = user;
+    try { localStorage.setItem(LS_USER, JSON.stringify(user)); } catch(e){}
+    closeAuth();
+    renderUserBtn();
+    showToast('👋 Добро пожаловать, ' + user.name + '!');
+    if (typeof _afterLoginCb === 'function') { _afterLoginCb(); _afterLoginCb = null; }
+  }
+  function doLogin() {
+    const email = $('amLoginEmail').value.trim().toLowerCase();
+    const pass  = $('amLoginPass').value;
+    if (!email||!pass) return showMsg('err','Введите email и пароль');
+    const found = getAccounts().find(a => a.email===email && a.pass===pass);
+    if (!found) return showMsg('err','Неверный email или пароль');
+    _login(found);
+  }
+  function doRegister() {
+    const name  = $('amRegName').value.trim();
+    const email = $('amRegEmail').value.trim().toLowerCase();
+    const pass  = $('amRegPass').value;
+    const city  = $('amRegCity').value.trim() || 'Москва';
+    if (!name)  return showMsg('err','Укажите имя');
+    if (!email) return showMsg('err','Укажите email');
+    if (!pass||pass.length<6) return showMsg('err','Пароль — минимум 6 символов');
+    const accounts = getAccounts();
+    if (accounts.find(a=>a.email===email)) return showMsg('err','Email уже зарегистрирован');
+    const user = { name, email, pass, city, joined: new Date().toISOString() };
+    accounts.push(user); saveAccounts(accounts);
+    showMsg('ok','Аккаунт создан! Добро пожаловать, '+name+'!');
+    setTimeout(()=>_login(user), 800);
+  }
+  function socialLogin(provider) {
+    const map = { vk:['ВК Пользователь','vk@demo.ru'], google:['Google Пользователь','google@demo.ru'], yandex:['Яндекс Пользователь','yandex@demo.ru'] };
+    const [name,email] = map[provider];
+    const accounts = getAccounts();
+    let user = accounts.find(a=>a.email===email);
+    if (!user) { user={name,email,pass:'',city:'Москва',provider,joined:new Date().toISOString()}; accounts.push(user); saveAccounts(accounts); }
+    _login(user);
+  }
+
+  // ── USER BUTTON ───────────────────────────────────────────────
+  function renderUserBtn() {
+    const topbar = document.querySelector('.topbar-inner > div:first-child') ||
+                   document.querySelector('.topbar-inner');
+    if (!topbar) return;
+    let ub = document.getElementById('afishiUserBtn');
+    if (!ub) {
+      ub = document.createElement('div');
+      ub.id = 'afishiUserBtn';
+      ub.style.cssText = 'margin-left:12px;display:inline-block;';
+      topbar.appendChild(ub);
+    }
+    if (_user) {
+      const initials = _user.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+      ub.innerHTML = `<div class="user-btn" id="afishiUBInner" title="${esc(_user.name)}">
+        <div class="user-avatar" style="background:${avColor(_user.name)};">${initials}</div>
+        <span style="color:#fff;">${esc(_user.name.split(' ')[0])}</span>
+        <span style="color:#666;font-size:9px;">▾</span></div>`;
+      document.getElementById('afishiUBInner').onclick = openUserMenu;
+    } else {
+      ub.innerHTML = `<div class="user-btn" id="afishiUBInner">
+        <span style="font-size:14px;">👤</span><span>Войти</span></div>`;
+      document.getElementById('afishiUBInner').onclick = () => openAuth();
+    }
+  }
+  function openUserMenu() {
+    if (!_user) return openAuth();
+    if (confirm(`Аккаунт: ${_user.name}\nEmail: ${_user.email}\n\nВыйти?`)) {
+      _user=null; localStorage.removeItem(LS_USER); renderUserBtn();
+      showToast('👋 Вы вышли из аккаунта');
+    }
+  }
+
+  // ── TRAILER RENDERER ──────────────────────────────────────────
+  function renderTrailerPane(containerId, ytId, title) {
+    const el = document.getElementById(containerId);
+    if (!el || !ytId) return;
+    el.innerHTML = `
+      <div class="yt-pane">
+        <div style="font-size:13px;color:#888;margin-bottom:12px;">
+          Официальный трейлер — <strong>${esc(title)}</strong>
+        </div>
+        <div class="yt-wrap" data-ytid="${esc(ytId)}">
+          <div class="yt-thumb"><img src="https://img.youtube.com/vi/${esc(ytId)}/maxresdefault.jpg"
+            onerror="this.src='https://img.youtube.com/vi/${esc(ytId)}/hqdefault.jpg'" alt="Трейлер"></div>
+          <div class="yt-play"><div class="yt-play-btn">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white" style="margin-left:4px"><path d="M8 5v14l11-7z"/></svg>
+          </div></div>
+        </div>
+        <div class="yt-info-row">
+          <div class="yt-yt-logo">
+            <svg viewBox="0 0 20 14" width="16" height="11" fill="white"><path d="M19.5 2.2C19.3 1.4 18.6.7 17.8.5 16.2 0 10 0 10 0S3.8 0 2.2.5C1.4.7.7 1.4.5 2.2 0 3.8 0 7 0 7s0 3.2.5 4.8c.2.8.9 1.5 1.7 1.7C3.8 14 10 14 10 14s6.2 0 7.8-.5c.8-.2 1.5-.9 1.7-1.7C20 10.2 20 7 20 7s0-3.2-.5-4.8z"/>
+            <polygon fill="white" points="8,10 13,7 8,4"/></svg>
+          </div>
+          <span>Трейлер загружается с YouTube. Нажмите ▶ для просмотра.</span>
+          <a href="https://www.youtube.com/watch?v=${esc(ytId)}" target="_blank"
+             style="margin-left:auto;color:#c8102e;font-weight:700;font-size:12px;white-space:nowrap;">YouTube →</a>
+        </div>
+      </div>`;
+    // Click on wrapper plays iframe
+    el.querySelector('.yt-wrap').addEventListener('click', function() {
+      const id = this.dataset.ytid;
+      this.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1"
+        frameborder="0" allowfullscreen allow="autoplay; encrypted-media"
+        style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+      this.style.cursor = 'default';
+    });
+  }
+
+  // ── REVIEW PANE ───────────────────────────────────────────────
+  // Context stored in DOM element, events delegated — no containerId in onclick
+  function renderReviewPane(containerId, pageId, itemId, itemTitle) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    // Store context as data attrs on container
+    el.dataset.rvPage  = pageId;
+    el.dataset.rvItem  = itemId;
+    el.dataset.rvTitle = itemTitle || '';
+    _buildReviewPane(el, 'new');
+  }
+
+  function _buildReviewPane(el, sort) {
+    const pageId   = el.dataset.rvPage;
+    const itemId   = el.dataset.rvItem;
+    const itemTitle= el.dataset.rvTitle;
+    const revs     = rvGet(pageId, itemId).map(function(r, idx) {
+      // Normalize old reviews that may lack .id
+      if (!r.id) r.id = 'r_legacy_' + idx + '_' + (r.date || idx);
+      return r;
+    });
+    sort = sort || 'new';
+
+    // ── Summary block ────────────────────────────────────────────
+    let summaryHtml = '';
+    if (revs.length) {
+      const avg    = revs.reduce((s,r)=>s+r.score,0) / revs.length;
+      const maxCnt = Math.max(...Array.from({length:10},(_,i)=>revs.filter(r=>r.score===10-i).length), 1);
+      const col    = avg>=8?'#2e7d32':avg>=6?'#f57f17':'#c62828';
+      const lbl    = avg>=9?'Шедевр':avg>=8?'Отлично':avg>=7?'Хорошо':avg>=6?'Нормально':'Неоднозначно';
+      const recPct = Math.round(revs.filter(r=>r.score>=8).length/revs.length*100);
+      summaryHtml = `
+        <div class="rv-summary">
+          <div style="text-align:center;min-width:88px;flex-shrink:0;">
+            <div class="rv-avg-num" style="color:${col};">${avg.toFixed(1)}</div>
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">из 10</div>
+            <div style="color:#f5c518;font-size:14px;margin-bottom:4px;">${'★'.repeat(Math.round(avg/2))}${'☆'.repeat(5-Math.round(avg/2))}</div>
+            <div style="font-size:12px;font-weight:700;color:${col};">${lbl}</div>
+            <div style="font-size:11px;color:#aaa;margin-top:3px;">${revs.length} ${plural(revs.length,['отзыв','отзыва','отзывов'])}</div>
+          </div>
+          <div class="rv-bars">
+            ${Array.from({length:10},(_,i)=>{const n=10-i,cnt=revs.filter(r=>r.score===n).length;return`
+              <div class="rv-bar-row">
+                <span style="font-size:11px;font-weight:700;color:#666;width:12px;text-align:right;">${n}</span>
+                <span style="font-size:10px;color:#f5c518;">★</span>
+                <div class="rv-bar-track"><div class="rv-bar-fill" style="width:${Math.round(cnt/maxCnt*100)}%;background:${n>=8?'#f5c518':n>=6?'#ff9800':'#c8102e'};"></div></div>
+                <span style="font-size:11px;color:#aaa;width:14px;text-align:right;">${cnt}</span>
+              </div>`;}).join('')}
+          </div>
+          <div style="min-width:110px;">
+            <div style="background:#e8f5e9;border-radius:6px;padding:10px;text-align:center;margin-bottom:8px;">
+              <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:#2e7d32;">${recPct}%</div>
+              <div style="font-size:11px;color:#4caf50;">рекомендуют</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Auth gate or form ────────────────────────────────────────
+    let formHtml = '';
+    if (!_user) {
+      formHtml = `
+        <div class="rv-gate">
+          <span style="font-size:22px;">🔒</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Войдите, чтобы оставить отзыв</div>
+            <div style="font-size:12px;color:#666;">Только для зарегистрированных пользователей</div>
+          </div>
+          <button class="rv-gate-btn rv-open-auth">Войти / Регистрация</button>
+        </div>`;
+    } else {
+      formHtml = `
+        <div class="rv-form-box">
+          <div class="rv-form-title">✍️ Ваш отзыв
+            <span style="font-family:'PT Sans',sans-serif;font-size:12px;font-weight:400;text-transform:none;color:#aaa;margin-left:6px;">
+              — вы вошли как <strong style="color:#333;">${esc(_user.name)}</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <div class="rv-star-row rv-stars" data-val="0">
+              ${Array.from({length:10},(_,i)=>`<span class="rv-star" data-v="${i+1}">★</span>`).join('')}
+            </div>
+            <span class="rv-star-lbl"></span>
+          </div>
+          <div class="rv-fields">
+            <div>
+              <div class="rv-field-lbl">Заголовок</div>
+              <input class="rv-input rv-title-inp" type="text" placeholder="Кратко о впечатлении">
+            </div>
+            <div>
+              <div class="rv-field-lbl">Автор</div>
+              <input class="rv-input" type="text" value="${esc(_user.name)}" readonly style="background:#fafafa;color:#666;">
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <div class="rv-field-lbl">Текст отзыва <span style="color:#c8102e;">*</span></div>
+              <span class="rv-char-count" style="font-size:11px;color:#aaa;">0 / 2000</span>
+            </div>
+            <textarea class="rv-textarea rv-text-inp" maxlength="2000" rows="4"
+              placeholder="Поделитесь впечатлениями..."></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+            <button class="rv-submit-btn rv-do-submit">Опубликовать</button>
+            <div class="rv-msg"></div>
+          </div>
+        </div>`;
+    }
+
+    // ── Reviews list ─────────────────────────────────────────────
+    let listHtml = '';
+    if (revs.length) {
+      let sorted = [...revs];
+      if (sort==='top')     sorted.sort((a,b)=>b.score-a.score);
+      else if (sort==='helpful') sorted.sort((a,b)=>(b.helpful||0)-(a.helpful||0));
+      listHtml = `
+        <div class="rv-sort-row">
+          <div class="rv-sort-title">Отзывы <span style="font-weight:400;font-size:12px;text-transform:none;color:#aaa;">(${revs.length})</span></div>
+          <select class="rv-sort-sel rv-sort-change">
+            <option value="new"${sort==='new'?' selected':''}>Сначала новые</option>
+            <option value="top"${sort==='top'?' selected':''}>По оценке</option>
+            <option value="helpful"${sort==='helpful'?' selected':''}>Полезные</option>
+          </select>
+        </div>
+        ${sorted.map(r => {
+          const initials=(r.name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+          const sBg=r.score>=8?'#e8f5e9':r.score>=6?'#fff8e1':'#fce4ec';
+          const sCol=r.score>=8?'#2e7d32':r.score>=6?'#f57f17':'#c62828';
+          return `<div class="rv-card">
+            <div class="rv-card-head">
+              <div class="rv-avt" style="background:${avColor(r.name)};">${initials}</div>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <strong style="font-size:13px;">${esc(r.name)}</strong>
+                  ${r.title?`<em style="font-size:12px;color:#666;">"${esc(r.title)}"</em>`:''}
+                  <span style="background:${sBg};color:${sCol};font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">${SCORE_LABELS[r.score]} ${SCORE_EMOJI[r.score]}</span>
+                </div>
+                <div style="font-size:11px;color:#aaa;margin-top:1px;">${fmtD(r.date)}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:${sCol};line-height:1;">${r.score}</div>
+                <div style="font-size:9px;color:#aaa;">из 10</div>
+              </div>
+            </div>
+            <div class="rv-card-stars">${'★'.repeat(r.score)}${'☆'.repeat(10-r.score)}</div>
+            <div class="rv-card-text">${esc(r.text)}</div>
+            <div class="rv-card-foot">
+              <span style="font-size:12px;color:#aaa;">Полезный?</span>
+              <button class="rv-helpful-btn${r._voted?' voted':''}" data-rid="${r.id||''}">
+                👍 <span class="rv-hlp-cnt">${r.helpful||0}</span>
+              </button>
+              <button class="rv-report-btn" data-rid="${r.id||''}" 
+                style="margin-left:auto;background:none;border:none;font-size:11px;color:#ccc;cursor:pointer;">⚑ Жалоба</button>
+            </div>
+          </div>`;
+        }).join('')}`;
+    } else {
+      listHtml = `<div class="rv-empty">
+        <div style="font-size:36px;margin-bottom:8px;">💬</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:15px;margin-bottom:5px;">Отзывов пока нет</div>
+        <div style="font-size:12px;">Станьте первым!</div>
+      </div>`;
+    }
+
+    el.innerHTML = `<div class="rv-panel">${summaryHtml}${formHtml}${listHtml}</div>`;
+
+    // ── Event delegation on the container ────────────────────────
+    el.addEventListener('click', function handler(ev) {
+      const t = ev.target;
+      // Auth gate button
+      if (t.classList.contains('rv-open-auth')) {
+        openAuth(() => _buildReviewPane(el, sort));
+        return;
+      }
+      // Submit button
+      if (t.classList.contains('rv-do-submit') || t.closest('.rv-do-submit')) {
+        _doSubmit(el); return;
+      }
+      // Helpful button
+      const hlp = t.closest('.rv-helpful-btn');
+      if (hlp) { _voteHelpful(el, hlp); return; }
+      // Report
+      if (t.classList.contains('rv-report-btn')) {
+        alert('Жалоба отправлена. Модераторы рассмотрят её.'); return;
+      }
+      // Star click
+      if (t.classList.contains('rv-star') && t.closest('.rv-stars')) {
+        const n = parseInt(t.dataset.v);
+        const row = t.closest('.rv-stars');
+        row.dataset.val = n;
+        row.querySelectorAll('.rv-star').forEach((s,i)=>{
+          s.classList.toggle('lit', i<n);
+        });
+        const lbl = row.nextElementSibling;
+        if (lbl&&lbl.classList.contains('rv-star-lbl')) {
+          lbl.textContent = n+'/10 — '+SCORE_LABELS[n]+' '+SCORE_EMOJI[n];
+          lbl.style.color = n>=8?'#2e7d32':n>=6?'#f57f17':'#c62828';
+        }
+        return;
+      }
+    }, {once:false});
+
+    // Star hover
+    el.querySelectorAll('.rv-star').forEach(s => {
+      s.addEventListener('mouseover', function() {
+        const n = parseInt(this.dataset.v);
+        this.closest('.rv-stars').querySelectorAll('.rv-star').forEach((x,i)=>x.classList.toggle('lit',i<n));
+      });
+      s.addEventListener('mouseleave', function() {
+        const row = this.closest('.rv-stars');
+        const cur = parseInt(row.dataset.val||0);
+        row.querySelectorAll('.rv-star').forEach((x,i)=>x.classList.toggle('lit',i<cur));
+      });
+    });
+
+    // Sort change
+    const sortSel = el.querySelector('.rv-sort-change');
+    if (sortSel) sortSel.addEventListener('change', function() {
+      _buildReviewPane(el, this.value);
+    });
+
+    // Char counter
+    const textarea = el.querySelector('.rv-text-inp');
+    const counter  = el.querySelector('.rv-char-count');
+    if (textarea && counter) {
+      textarea.addEventListener('input', function() {
+        counter.textContent = this.value.length + ' / 2000';
+      });
+    }
+
+    // Update badge
+    _updateBadge(pageId, itemId, revs.length);
+  }
+
+  function _doSubmit(el) {
+    if (!_user) return openAuth(() => _buildReviewPane(el));
+    const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
+    const row    = el.querySelector('.rv-stars');
+    const score  = parseInt(row?.dataset.val || '0');
+    const title  = el.querySelector('.rv-title-inp')?.value.trim() || '';
+    const text   = el.querySelector('.rv-text-inp')?.value.trim()  || '';
+    const msgEl  = el.querySelector('.rv-msg');
+
+    function showMsg(t, ok) {
+      if (!msgEl) return;
+      msgEl.textContent = t;
+      msgEl.style.cssText = `display:block;background:${ok?'#e8f5e9':'#ffebee'};border:1px solid ${ok?'#a5d6a7':'#ffcdd2'};color:${ok?'#2e7d32':'#c62828'};font-size:13px;font-weight:600;padding:8px 13px;border-radius:4px;`;
+      if (ok) setTimeout(()=>{ msgEl.style.display='none'; }, 4000);
+    }
+
+    if (!score)           return showMsg('⚠️ Поставьте оценку от 1 до 10', false);
+    if (text.length < 15) return showMsg('⚠️ Напишите хотя бы пару предложений', false);
+
+    rvAdd(pageId, itemId, {
+      id: 'r_' + Date.now(),
+      name: _user.name, score, title, text,
+      date: new Date().toISOString(),
+      helpful: 0, _voted: false,
+    });
+    _buildReviewPane(el, 'new');
+    showToast('✓ Отзыв опубликован!');
+  }
+
+  function _voteHelpful(el, btn) {
+    const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
+    const rid    = btn.dataset.rid;
+    const db     = rvLoad(), k = rvKey(pageId, itemId);
+    if (!db[k]) return;
+    const r = db[k].find(x=>x.id===rid); if (!r) return;
+    r._voted ? r.helpful-- : r.helpful++;
+    r._voted = !r._voted;
+    rvSave(db);
+    btn.classList.toggle('voted', r._voted);
+    const cnt = btn.querySelector('.rv-hlp-cnt');
+    if (cnt) cnt.textContent = r.helpful;
+  }
+
+  function _updateBadge(pageId, itemId, count) {
+    // Try multiple badge ID conventions used across pages
+    const ids = [
+      `rvBadge_${pageId}_${itemId}`,
+      `exRevBadge`,
+      `revBadge`,
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = count || '';
+      if (count > 0) { el.style.background='#c8102e'; el.style.color='#fff'; }
+    });
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────
+  let _tt = null;
+  function showToast(msg) {
+    let el = document.getElementById('afishiToast');
+    if (!el) {
+      el = document.createElement('div'); el.id='afishiToast';
+      el.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    requestAnimationFrame(()=>{ el.style.opacity='1'; el.style.transform='translateX(-50%) translateY(0)'; });
+    clearTimeout(_tt);
+    _tt = setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }, 3000);
+  }
+
+  function openAuth(cb) {
+    _afterLoginCb = cb || null;
+    $('afishiAuthModal').classList.add('open');
+    showTab('login');
+  }
+
+  // ── PUBLIC API ────────────────────────────────────────────────
+  window.Afishi = {
+    openAuth,
+    closeAuth,
+    isLoggedIn: () => !!_user,
+    getUser:    () => _user,
+    renderTrailerPane,
+    renderReviewPane,
+    rvGet,
+    // legacy compat
+    loadYt(ytId, cid) {
+      const wrap = document.querySelector(`#${cid} .yt-wrap`);
+      if (!wrap) return;
+      wrap.innerHTML=`<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+    },
+    // expose for pages that need old submitReview guard
+    requireLogin(cb) { if (!_user) { openAuth(cb); return false; } return true; },
+  };
+
+  document.addEventListener('DOMContentLoaded', renderUserBtn);
+})();
+
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     GeoCity System v2 — afishi.ru
+     ═══════════════════════════════════════════════════ -->
+<script>
+(function(){'use strict';
+  var LS_SESSION='afishi_geo_session',LS_DB='afishi_geo_db',LS_CITY='afishi_city',LS_TTL='afishi_geo_ttl';
+  var KNOWN=['Москва','Санкт-Петербург','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Самара','Омск','Ростов-на-Дону','Уфа','Красноярск','Воронеж','Пермь','Волгоград','Краснодар','Саратов','Тюмень','Ижевск','Барнаул','Иркутск','Хабаровск','Ярославль','Владивосток','Томск','Оренбург','Кемерово','Астрахань','Набережные Челны','Пенза','Рязань','Липецк','Киров','Чебоксары','Калининград','Тула','Белгород','Сочи','Мурманск','Ставрополь'];
+  var GEN={'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Новосибирск':'Новосибирске','Казань':'Казани','Нижний Новгород':'Нижнем Новгороде','Краснодар':'Краснодаре','Волгоград':'Волгограде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке','Томск':'Томске','Барнаул':'Барнауле','Сочи':'Сочи','Тула':'Туле','Ставрополь':'Ставрополе','Калининград':'Калининграде'};
+
+  // AbortController helper — compatible with all browsers
+  
+
+  function norm(r){if(!r)return null;var l=r.toLowerCase();return KNOWN.find(function(c){return c.toLowerCase()===l;})||KNOWN.find(function(c){return l.includes(c.toLowerCase());})||(r.charAt(0).toUpperCase()+r.slice(1));}
+  function gen(city){return GEN[city]||city;}
+  function lsG(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+  function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function lsD(k){try{localStorage.removeItem(k);}catch(e){}}
+  function dbLoad(){return lsG(LS_DB)||{};}
+  function dbSave(db){lsS(LS_DB,db);}
+  function dbAdd(ip,d){if(!ip||!d.city)return;var db=dbLoad(),e=db[ip]||{ip:ip,visits:0};e.city=d.city;e.region=d.region||'';e.country=d.country||'';e.isp=d.isp||'';e.source=d.source;e.lastSeen=new Date().toISOString();e.visits=(e.visits||0)+1;db[ip]=e;dbSave(db);}
+  function dbLookup(ip){return ip?(dbLoad()[ip]||null):null;}
+  function cacheGet(){var d=lsG(LS_SESSION),t=localStorage.getItem(LS_TTL);if(!d)return null;if(t&&(Date.now()-parseInt(t))/86400000>7){lsD(LS_SESSION);return null;}return d;}
+  function cacheSet(d){lsS(LS_SESSION,d);localStorage.setItem(LS_TTL,String(Date.now()));}
+  function cacheClear(){lsD(LS_SESSION);lsD(LS_TTL);}
+
+  var _tt=null;
+  function toast(msg){
+    var el=document.getElementById('geoToast');
+    if(!el){el=document.createElement('div');el.id='geoToast';el.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';document.body.appendChild(el);}
+    el.textContent=msg;
+    requestAnimationFrame(function(){el.style.opacity='1';el.style.transform='translateX(-50%) translateY(0)';});
+    clearTimeout(_tt);
+    _tt=setTimeout(function(){el.style.opacity='0';el.style.transform='translateX(-50%) translateY(20px)';},3000);
+  }
+
+  function applyUI(city,source){
+    var g=gen(city);
+    var lbl=document.getElementById('cityLabel');
+    if(lbl){lbl.textContent=city;lbl.style.color='#f5c518';setTimeout(function(){lbl.style.color='';},600);}
+    var dot=document.getElementById('cityDot');
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    document.querySelectorAll('.city-pill,[data-city]').forEach(function(p){
+      var v=p.dataset.city||p.textContent.trim();p.classList.toggle('active',v===city);
+    });
+    var hint=document.getElementById('cityHint');if(hint)hint.textContent=g;
+    if(typeof currentCity!=='undefined')window.currentCity=city;
+    localStorage.setItem(LS_CITY,city);
+    if(typeof window._onGeoCity==='function')window._onGeoCity(city,source);
+    if(typeof applyFilters==='function')setTimeout(applyFilters,0);
+    toast('\uD83D\uDCCD Ваш город: '+city);
+  }
+
+  function setCity(city,source){
+    source=source||'manual';
+    var ip=localStorage.getItem('_afishi_ip')||'manual';
+    var data={ip:ip,city:city,region:'',country:'Россия',isp:'',source:source};
+    cacheSet(data);
+    if(source==='manual')dbAdd(ip,data);
+    applyUI(city,source);
+  }
+
+  async function detect(){
+    if(window._pendingCity){var pc=window._pendingCity;window._pendingCity=null;setCity(pc,'manual');return;}
+    var dot=document.getElementById('cityDot');
+
+    // 1. Use cached geo data
+    var cached=cacheGet();
+    if(cached&&cached.city){applyUI(cached.city,'cache');return;}
+
+    // 2. Use last manually picked city
+    var last=localStorage.getItem(LS_CITY);
+    if(last){applyUI(last,'last-manual');if(dot){dot.style.background='#4caf50';dot.style.animation='';}return;}
+
+    // 3. Try geo APIs silently (blocked in some environments — OK)
+    if(dot){dot.style.background='#f5c518';dot.style.animation='pulse 1s infinite';}
+    var found=false;
+
+    try{
+      var r1=await Promise.race([fetch('https://ip-api.com/json/?fields=status,city,regionName,country,query,isp,timezone&lang=ru'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d1=await r1.json();
+      if(d1.status==='success'&&d1.city){var c1=norm(d1.city);if(c1){cacheSave({ip:d1.query,city:c1,region:d1.regionName,country:d1.country,isp:d1.isp,timezone:d1.timezone,source:'ip-api'});applyUI(c1,'ip-api');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    try{
+      var r2=await Promise.race([fetch('https://ipinfo.io/json'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d2=await r2.json();
+      if(d2.city){var c2=norm(d2.city);if(c2){cacheSave({ip:d2.ip,city:c2,region:d2.region,country:d2.country,isp:d2.org,timezone:d2.timezone,source:'ipinfo'});applyUI(c2,'ipinfo');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    // 4. Silent default — no warning toast
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    applyUI('Волгоград','default');
+  }
+
+  window.GeoCity={detect:detect,setCity:setCity,getCity:function(){return localStorage.getItem(LS_CITY)||null;},clearCache:cacheClear,getDB:dbLoad,clearDB:function(){dbSave({});},removeFromDB:function(ip){var db=dbLoad();delete db[ip];dbSave(db);}};
+  window.switchCity=function(city,btn){setCity(city,'manual');document.querySelectorAll('.city-pill').forEach(function(p){p.classList.remove('active');});if(btn)btn.classList.add('active');};
+  window.detectCity=function(){cacheClear();detect();};
+  window.toggleCityDropdown=function(){var dd=document.getElementById('cityDropdown');if(!dd)return;var open=dd.classList.toggle('open');var sb=document.getElementById('citySelectBtn');if(sb)sb.classList.toggle('open',open);};
+  window.filterManualCities=function(q){var list=document.getElementById('manualCityList');if(!list)return;var f=q?KNOWN.filter(function(c){return c.toLowerCase().includes(q.toLowerCase());}):KNOWN;list.innerHTML=f.map(function(c){return'<div onclick="switchCity(\''+c+'\');var m=document.getElementById(\'manualModal\');if(m)m.style.display=\'none\'" style="padding:7px 10px;border-radius:3px;cursor:pointer;font-size:13px;" onmouseover="this.style.background=\'#fdf0f0\';this.style.color=\'var(--red)\'" onmouseout="this.style.background=\'\';this.style.color=\'\'">'+c+'</div>';}).join('');};
+  window.closeManualModal=function(){var m=document.getElementById('manualModal');if(m)m.style.display='none';};
+
+  document.addEventListener('click',function(e){
+    var dd=document.getElementById('cityDropdown'),btn=document.getElementById('citySelectBtn');
+    if(dd&&btn&&!btn.contains(e.target)&&!dd.contains(e.target)){dd.classList.remove('open');btn.classList.remove('open');}
+  });
+  document.addEventListener('DOMContentLoaded',detect);
+})();
+</script>
+
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+</body>
+</html>

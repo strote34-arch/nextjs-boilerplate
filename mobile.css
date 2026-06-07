@@ -1,0 +1,220 @@
+/* ════════════════════════════════════════════════════════════════
+   afishi.ru — Mobile CSS v1.0
+   Адаптация для экранов 320px–768px
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Base ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Topbar */
+  .topbar-inner { padding: 0 12px; flex-wrap: wrap; gap: 6px; }
+  .topbar-links { display: none; }
+
+  /* Header */
+  header { position: sticky; top: 0; z-index: 100; }
+  .header-inner, .hi {
+    padding: 0 12px !important;
+    height: 52px !important;
+    gap: 10px !important;
+  }
+  .logo { font-size: 20px !important; }
+  header nav { display: none !important; }
+  header .search-box { flex: 1; }
+  header .search-box input { font-size: 13px; }
+  .burger { display: flex !important; }
+
+  /* Main layout */
+  .page-main, .main-layout {
+    grid-template-columns: 1fr !important;
+    padding: 12px !important;
+    gap: 16px !important;
+  }
+  aside, .sidebar { display: none !important; }
+
+  /* Concert cards grid */
+  #concertGrid,
+  .concerts-grid,
+  .concert-grid,
+  .events-grid,
+  .film-grid,
+  .af-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 !important;
+  }
+  .concert-card { font-size: 12px !important; }
+  .c-poster { aspect-ratio: 2/3 !important; }
+  .c-title { font-size: 12px !important; line-height: 1.3 !important; }
+  .c-price { font-size: 12px !important; }
+  .c-buy { font-size: 11px !important; padding: 6px 8px !important; }
+  .c-genre { font-size: 10px !important; }
+
+  /* Filters */
+  .filter-bar, .filter-inner {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-group { min-width: 110px !important; }
+  .filter-select { font-size: 12px !important; padding: 6px 8px !important; }
+
+  /* Date tabs */
+  .date-tabs-wrap { overflow-x: auto; scrollbar-width: none; }
+  .date-tabs-wrap::-webkit-scrollbar { display: none; }
+  #dateTabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: none !important;
+  }
+  #dateTabs::-webkit-scrollbar { display: none; }
+  .dtab { flex-shrink: 0 !important; padding: 6px 12px !important; }
+
+  /* City pills */
+  .city-strip-inner {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .city-strip-inner::-webkit-scrollbar { display: none; }
+  .city-pill { flex-shrink: 0 !important; font-size: 11px !important; padding: 5px 12px !important; }
+
+  /* Hero */
+  .page-hero, .hero-inner { padding: 16px 12px !important; }
+  .page-title { font-size: 22px !important; }
+  .hero-stats { gap: 16px !important; }
+  .stat-n { font-size: 24px !important; }
+
+  /* Results bar */
+  .results-bar, .filter-results-bar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+  .results-info { font-size: 12px !important; }
+
+  /* Modal */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  .modal-box, .concert-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+  }
+  .mposter, #mposter {
+    height: 200px !important;
+    width: 100% !important;
+    aspect-ratio: auto !important;
+  }
+  .modal-tabs { overflow-x: auto; scrollbar-width: none; }
+  .modal-tabs::-webkit-scrollbar { display: none; }
+  .mtab { font-size: 12px !important; padding: 10px 14px !important; white-space: nowrap; }
+
+  /* Admin panel */
+  .admin-layout {
+    grid-template-columns: 1fr !important;
+    padding: 0 !important;
+  }
+  .admin-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding: 8px !important;
+    gap: 6px !important;
+    scrollbar-width: none !important;
+  }
+  .admin-nav::-webkit-scrollbar { display: none; }
+  .nav-item {
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+  }
+  .ni-icon { font-size: 14px !important; }
+  .panel { padding: 12px !important; }
+  .panel-head { font-size: 18px !important; }
+
+  /* Past events */
+  .past-layout { grid-template-columns: 1fr !important; }
+  .past-sidebar { display: none !important; }
+  .past-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .past-card .past-poster { aspect-ratio: 2/3 !important; }
+
+  /* Artist page */
+  .artist-layout { grid-template-columns: 1fr !important; }
+  .artist-sidebar { display: none !important; }
+  .artist-hero-inner { flex-direction: column !important; gap: 16px !important; padding: 20px 12px !important; }
+  .artist-photo { width: 120px !important; height: 120px !important; font-size: 48px !important; }
+  .artist-name { font-size: 28px !important; }
+  .concert-row {
+    grid-template-columns: 70px 1fr auto !important;
+    gap: 8px !important;
+    padding: 12px !important;
+  }
+  .cr-city, .cr-venue { display: none !important; }
+
+  /* Reviews page */
+  .rv-layout { grid-template-columns: 1fr !important; }
+  .rv-sidebar { display: none !important; }
+  .rv-card { flex-direction: column !important; }
+  .rv-card-poster { width: 100% !important; height: 120px !important; }
+
+  /* Profile */
+  .profile-hero { min-height: auto !important; padding: 24px 16px !important; }
+  .ph-inner { flex-direction: column !important; gap: 16px !important; text-align: center !important; }
+  .ph-avatar { width: 100px !important; height: 100px !important; font-size: 48px !important; }
+  .ph-stats { justify-content: center !important; gap: 20px !important; }
+  .profile-tabs { overflow-x: auto; scrollbar-width: none; }
+  .profile-tabs::-webkit-scrollbar { display: none; }
+  .ptab { font-size: 12px !important; padding: 10px 14px !important; white-space: nowrap; }
+  .profile-layout { grid-template-columns: 1fr !important; }
+
+  /* Footer */
+  .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 20px !important; }
+  .footer-inner { padding: 24px 16px !important; }
+  .footer-bottom { flex-direction: column !important; gap: 12px !important; text-align: center !important; }
+
+  /* Loyalty page */
+  .loyalty-hero { padding: 32px 16px !important; }
+  .plans-grid { grid-template-columns: 1fr !important; }
+
+  /* Банеры */
+  .bnr-card {
+    grid-template-columns: 40px 1fr auto !important;
+    gap: 10px !important;
+  }
+
+  /* Venue pages */
+  .venue-layout, .venue-main { grid-template-columns: 1fr !important; }
+  .venue-sidebar { display: none !important; }
+}
+
+/* ── Small phones (< 400px) ─────────────────────────────────── */
+@media (max-width: 400px) {
+  #concertGrid,
+  .concerts-grid,
+  .past-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .artist-name { font-size: 22px !important; }
+  .page-title { font-size: 18px !important; }
+}
+
+/* ── Touch improvements ──────────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  .concert-card, .past-card, .film-card, .nav-item, .city-pill {
+    -webkit-tap-highlight-color: rgba(200, 16, 46, 0.1);
+  }
+  .c-buy, .btn-red, button {
+    min-height: 44px; /* iOS tap target */
+  }
+}

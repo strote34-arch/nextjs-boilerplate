@@ -1,0 +1,2429 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
+
+// switchCity global stub — available immediately for onclick handlers
+window.switchCity = function(city, btn) {
+  // Update pills immediately (visual feedback)
+  document.querySelectorAll('.city-pill').forEach(function(p) {
+    p.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+  // Update city label immediately
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = city;
+  var hint = document.getElementById('cityHint');
+  if (hint) {
+    var gen = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Казань':'Казани','Новосибирск':'Новосибирске','Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке'};
+    hint.textContent = gen[city] || city;
+  }
+  // Delegate to GeoCity when ready, or queue
+  if (window.GeoCity && window.GeoCity.setCity) {
+    window.GeoCity.setCity(city, 'manual');
+  } else {
+    window._pendingCity = city;
+  }
+  // Also update currentCity if defined on the page
+  if (typeof currentCity !== 'undefined') window.currentCity = city;
+  if (typeof applyFilters === 'function') setTimeout(applyFilters, 0);
+  // Save to localStorage immediately
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+};
+
+
+
+
+// ── Инициализация города из localStorage ───────────────────────
+(function() {
+  var savedCity = null;
+  try { savedCity = localStorage.getItem('afishi_city'); } catch(e) {}
+  if (savedCity) {
+    // Обновить все cityLabel элементы
+    document.addEventListener('DOMContentLoaded', function() {
+      var lbl = document.getElementById('cityLabel');
+      if (lbl && lbl.textContent.trim() === 'Москва') lbl.textContent = savedCity;
+      var topLbl = document.getElementById('cityTopLabel');
+      if (topLbl && topLbl.textContent.trim() === 'Москва') topLbl.textContent = savedCity;
+    });
+  }
+})();
+</script>
+
+
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Концерты — архив Афиши.ру</title>
+<link rel="canonical" href="https://afishi.ru/afishi_ru_concerts.html">
+<meta name="description" content="Архивная афиша концертов Волгограда.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>/* ── Header ──────────────────────────────── */
+header {
+  background: var(--white);
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 28px; height: 64px;
+}
+.header-inner { gap: 12px; }
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.logo { font-size: 24px; }
+.logo{font-size:18px !important;}
+nav { display: flex; gap: 0; flex: 1; }
+nav a {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 0 13px; height: 64px;
+  display: flex; align-items: center;
+  color: var(--mid);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
+nav a { padding: 0 8px; font-size: 12px; }
+.city-strip-inner{gap:6px !important;}
+.city-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.city-strip-inner::-webkit-scrollbar { display: none; }
+.city-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-pill {
+  padding: 6px 16px; border: 1.5px solid var(--border);
+  border-radius: 20px; font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--white); color: var(--mid); transition: all .15s;
+}
+.city-pill:hover { border-color: var(--red); color: var(--red); }
+.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
+.city-pill{font-size:11px !important;padding:4px 10px !important;}
+
+:root{
+  --red:#c8102e; --red-dark:#9e0c24;
+  --black:#111; --dark:#1a1a1a; --mid:#444; --light:#888;
+  --border:#e0e0e0; --bg:#f4f2ee; --white:#fff; --yellow:#f5c518;
+  --shadow:0 2px 10px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PT Sans',Arial,sans-serif;background:var(--bg);color:var(--black);font-size:14px;line-height:1.5;}
+a{color:inherit;text-decoration:none;}
+
+/* TOPBAR */
+.topbar{background:var(--dark);color:#ccc;font-size:12px;padding:5px 0;}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
+.topbar a{color:#bbb;}.topbar a:hover{color:#fff;}
+.topbar-links{display:flex;gap:18px;}
+
+/* HEADER */
+
+.logo span{color:var(--black);}
+
+.search-box{display:flex;align-items:center;background:#f0eeea;border:1px solid var(--border);border-radius:4px;padding:0 10px;gap:6px;}
+.search-box input{border:none;background:transparent;font-family:'PT Sans',sans-serif;font-size:13px;width:160px;padding:7px 0;outline:none;}
+
+/* HERO BANNER */
+.hero-banner{background:linear-gradient(135deg,#0d0221 0%,#1a0533 40%,#2d0856 70%,#4a0e7a 100%);padding:40px 0 32px;position:relative;overflow:hidden;}
+.hero-banner::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.hero-inner{max-width:1200px;margin:0 auto;padding:0 16px;position:relative;}
+.hero-title{font-family:'Oswald',sans-serif;font-size:42px;font-weight:700;color:#fff;letter-spacing:-1px;text-transform:uppercase;margin-bottom:6px;}
+.hero-title span{color:#c084fc;}
+.hero-sub{font-size:15px;color:rgba(255,255,255,0.7);margin-bottom:20px;}
+.hero-stats{display:flex;gap:28px;}
+.hstat{text-align:center;}
+.hstat-num{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:#c084fc;line-height:1;}
+.hstat-label{font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.5px;}
+
+/* CITY STRIP */
+
+/* FILTER BAR */
+.filter-bar{background:#f9f7f4;border-bottom:1px solid var(--border);}
+.filter-inner{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filter-group{display:flex;flex-direction:column;gap:3px;}
+.filter-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--light);}
+.filter-select{border:1px solid var(--border);border-radius:3px;padding:7px 10px;font-family:'PT Sans',sans-serif;font-size:13px;color:var(--mid);background:#fff;cursor:pointer;outline:none;min-width:120px;}
+.filter-sep{width:1px;height:34px;background:var(--border);margin:0 4px;align-self:center;}
+.ftag{padding:5px 13px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:var(--mid);background:#fff;transition:all .15s;white-space:nowrap;}
+.ftag:hover{border-color:var(--red);color:var(--red);}
+.ftag.active{background:var(--red);color:#fff;border-color:var(--red);}
+.results-info{font-size:13px;color:var(--light);margin-left:auto;white-space:nowrap;}
+
+/* MAIN LAYOUT */
+.page-main{max-width:1200px;margin:20px auto 40px;padding:0 16px;display:grid;grid-template-columns:1fr 290px;gap:24px;}
+
+/* VIEW TOGGLE */
+.view-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.view-title{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.vbtn{padding:7px 14px;border:none;background:#fff;cursor:pointer;font-size:13px;color:var(--mid);transition:all .15s;}
+.vbtn:hover{background:#f8f0f0;color:var(--red);}
+.vbtn.active{background:var(--red);color:#fff;}
+
+/* CONCERT GRID */
+.concert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.concert-card{background:#fff;border-radius:4px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .2s,transform .2s;position:relative;}
+.concert-card:hover{box-shadow:0 8px 28px rgba(0,0,0,0.16);transform:translateY(-3px);}
+.c-poster{width:100%;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;}
+.c-age{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:3px;}
+.c-new{position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;letter-spacing:.5px;}
+.c-hot{position:absolute;top:8px;left:8px;background:#ff6b00;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;letter-spacing:.5px;}
+.c-body{padding:12px 14px 14px;}
+.c-genre{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--red);margin-bottom:4px;}
+.c-title{font-family:'PT Serif',serif;font-size:15px;font-weight:700;line-height:1.3;margin-bottom:5px;}
+.c-meta{font-size:12px;color:var(--light);margin-bottom:3px;}
+.c-venue{font-size:12px;color:var(--mid);font-weight:600;margin-bottom:8px;}
+.c-bottom{display:flex;align-items:center;justify-content:space-between;}
+.c-price{font-size:13px;color:var(--mid);}
+.c-price strong{color:var(--black);font-size:14px;}
+.c-buy{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border:none;padding:6px 12px;border-radius:2px;cursor:pointer;transition:background .15s;}
+.c-buy:hover{background:var(--red-dark);}
+.c-stars{color:var(--yellow);font-size:12px;}
+.c-score{font-size:12px;font-weight:700;color:var(--mid);}
+
+/* LIST VIEW */
+.concert-list{display:flex;flex-direction:column;gap:12px;margin-bottom:24px;}
+.concert-list-item{background:#fff;border-radius:4px;box-shadow:var(--shadow);padding:14px;display:flex;gap:16px;cursor:pointer;transition:box-shadow .2s;}
+.concert-list-item:hover{box-shadow:0 6px 20px rgba(0,0,0,0.14);}
+.cli-poster{width:90px;flex-shrink:0;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:34px;aspect-ratio:3/2;}
+.cli-body{flex:1;}
+.cli-right{width:160px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+
+/* DATE TABS */
+.date-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:2px solid var(--border);margin-bottom:16px;}
+.dtab{display:flex;flex-direction:column;align-items:center;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;flex-shrink:0;transition:all .15s;}
+.dtab .dname{font-size:11px;font-weight:700;color:var(--light);}
+.dtab .dnum{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;color:var(--mid);line-height:1;}
+.dtab .dmonth{font-size:10px;color:var(--light);}
+.dtab.active .dname{color:var(--red);}
+.dtab.active .dnum{color:var(--red);}
+.dtab.active{border-bottom-color:var(--red);}
+.dtab:hover .dnum{color:var(--red);}
+
+/* SIDEBAR */
+.sw{background:#fff;border-radius:4px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;}
+.sw-head{background:var(--dark);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;padding:10px 14px;}
+.sw-body{padding:14px;}
+
+.venue-item{padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.venue-item:last-child{border-bottom:none;}
+.venue-item:hover .venue-name{color:var(--red);}
+.venue-name{font-size:13px;font-weight:700;transition:color .15s;}
+.venue-addr{font-size:11px;color:var(--light);}
+.venue-cap{font-size:11px;color:var(--red);font-weight:700;margin-top:2px;}
+
+.top-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.top-item:last-child{border-bottom:none;}
+.top-num{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;width:22px;text-align:center;}
+.top-info{flex:1;}
+.top-title{font-size:13px;font-weight:700;line-height:1.3;}
+.top-meta{font-size:11px;color:var(--light);}
+
+.promo-card{background:linear-gradient(135deg,#4a0e7a,#0d0221);border-radius:4px;padding:18px 16px;color:#fff;margin-bottom:18px;text-align:center;}
+.promo-title{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;}
+.promo-text{font-size:13px;opacity:.85;line-height:1.5;margin-bottom:12px;}
+.promo-btn{display:block;background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;padding:9px;border-radius:3px;cursor:pointer;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:5000;overflow-y:auto;padding:28px 16px;}
+.modal-overlay.open{display:flex;align-items:flex-start;justify-content:center;}
+.modal-box{background:#fff;width:100%;max-width:820px;border-radius:6px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+
+/* Modal head */
+.mhead{padding:22px 24px 18px;display:flex;gap:18px;align-items:flex-start;}
+.mhead-poster{width:100px;aspect-ratio:3/2;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;}
+.mhead-info{flex:1;}
+.mhead-genre{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:5px;}
+.mhead-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;}
+.mhead-meta{font-size:13px;color:var(--mid);line-height:1.8;}
+.mclose{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
+
+/* Modal tabs */
+.mtabs{display:flex;border-bottom:2px solid var(--border);background:#f9f7f4;}
+.mtab{padding:11px 20px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;color:var(--light);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.mtab.active{color:var(--red);border-bottom-color:var(--red);}
+.mpane{display:none;padding:22px 24px;}
+.mpane.active{display:block;}
+
+/* Venue list in modal */
+.m-venue-row{border:1.5px solid var(--border);border-radius:4px;margin-bottom:10px;overflow:hidden;transition:border-color .15s;}
+.m-venue-row:hover{border-color:#aaa;}
+.m-venue-row.selected{border-color:var(--red);}
+.m-venue-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:#fff;}
+.m-venue-name{font-size:14px;font-weight:700;}
+.m-venue-addr{font-size:12px;color:var(--light);}
+.m-venue-times{padding:10px 14px;background:#fafafa;border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap;}
+.stime{padding:7px 14px;border:1.5px solid var(--border);border-radius:3px;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:var(--mid);transition:all .15s;}
+.stime:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.stime.active{background:var(--red);color:#fff;border-color:var(--red);}
+.stime.few{border-color:#ff9800;color:#e65100;}
+.stime.sold{color:#ccc;border-color:#eee;cursor:not-allowed;}
+
+/* Seat map */
+.seat-section{display:grid;grid-template-columns:1fr 220px;gap:18px;}
+.screen-bar{background:#e8e0d0;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;padding:6px;border-radius:3px;margin-bottom:12px;}
+.smap-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.smap-row{display:flex;align-items:center;gap:3px;}
+.slbl{font-size:10px;font-weight:700;color:#999;width:16px;text-align:right;flex-shrink:0;}
+.seat{width:22px;height:22px;border-radius:3px;border:none;cursor:pointer;transition:transform .1s,background .1s;}
+.seat:hover:not(.taken){transform:scale(1.2);}
+.seat.taken{background:#ddd!important;cursor:not-allowed;}
+.smap-legend{display:flex;gap:14px;margin-top:10px;font-size:11px;color:#666;justify-content:center;}
+.leg-dot{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:3px;}
+
+/* Zone legend */
+.zone-legend{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.zone-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:3px;cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
+.zone-row.sel{border-color:var(--red);}
+.zone-dot{width:14px;height:14px;border-radius:2px;flex-shrink:0;}
+.zone-name{font-size:13px;font-weight:700;flex:1;margin-left:8px;}
+.zone-price{font-size:14px;font-weight:700;color:var(--red);}
+
+/* Checkout summary */
+.ck-summary{background:#f4f2ee;border-radius:4px;padding:14px;font-size:13px;line-height:2;}
+.ck-total{font-size:18px;font-weight:700;margin-top:8px;}
+
+/* Checkout form */
+.ck-field label{font-size:12px;color:#888;display:block;margin-bottom:4px;}
+.ck-field input{width:100%;border:1px solid #ddd;border-radius:3px;padding:9px 11px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;margin-bottom:10px;}
+.ck-field input:focus{border-color:var(--red);}
+.pay-opt{display:flex;align-items:center;gap:9px;border:1px solid #ddd;border-radius:3px;padding:10px 13px;cursor:pointer;font-size:14px;margin-bottom:7px;transition:border-color .15s;}
+.pay-opt:hover,.pay-opt input:checked+span{color:var(--red);}
+.pay-opt input{accent-color:var(--red);}
+.btn-red{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border:none;padding:12px 28px;border-radius:3px;cursor:pointer;transition:background .15s;}
+.btn-red:hover{background:var(--red-dark);}
+.btn-out{background:#fff;color:var(--mid);border:1px solid #ddd;font-family:'Oswald',sans-serif;font-size:13px;padding:10px 18px;border-radius:3px;cursor:pointer;}
+.success-block{text-align:center;padding:20px 0;}
+</style>
+
+<!-- Яндекс.Метрика -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+   ym(2234293, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Яндекс.Метрика -->
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-links">
+      <a href="about.html">О сайте</a><a href="event-add.html">Добавить событие</a><a href="advertise.html">Реклама</a><a href="help.html">Помощь</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+      📍 Ваш город: <strong style="color:#fff;" id="cityTopLabel">Волгоград</strong> ▾
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Афиши<span>.ру</span></a>
+      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+<div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
+  <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
+    <span style="font-size:16px;">🍷</span> <span>Ресторан «Волгоград»</span>
+  </a>
+  <div style="border-top:1px solid #f0ede8;margin:6px 0;"></div>
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Ближайшие мероприятия</div>
+  <div id="restDropdownEvents" style="padding:0 8px;">
+    <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
+  </div>
+  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
+</div></nav>
+      <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
+      <div class="search-box">
+        🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
+      </div>
+    </div>
+  </header>
+
+<!-- HERO -->
+<div class="hero-banner">
+  <div class="hero-inner">
+    <div style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;">
+      <div>
+        <div class="hero-title">🎸 <span>Концерты</span> и живая музыка</div>
+        <div class="hero-sub">Лучшие выступления в вашем городе — от рок-звёзд до джазовых вечеров</div>
+        <div class="hero-stats">
+          <div class="hstat"><div class="hstat-num" id="statCount">42</div><div class="hstat-label">Концертов</div></div>
+          <div class="hstat"><div class="hstat-num">18</div><div class="hstat-label">Площадок</div></div>
+          <div class="hstat"><div class="hstat-num">2</div><div class="hstat-label">Города</div></div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Горячие билеты</div>
+        <div id="hotTicket" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:14px 18px;cursor:pointer;max-width:280px;text-align:left;" onclick="openConcertModal(0)">
+          <div style="font-size:10px;color:#c084fc;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">🔥 Раскупают!</div>
+          <div style="font-family:'PT Serif',serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">Scorpions — 50th Anniversary</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);">1 июля · Олимпийский · от 3 500 ₽</div>
+          <div style="margin-top:10px;background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;padding:6px 14px;border-radius:2px;display:inline-block;">Купить билет</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CITY STRIP -->
+<div class="city-strip">
+  <div class="city-strip-inner">
+    <span class="city-label">Город:</span>
+    <div class="city-pill active" onclick="switchCity('Москва',this)">Москва</div>
+    <div class="city-pill" onclick="switchCity('Волгоград',this)">Волгоград</div>
+    <div class="city-pill" onclick="switchCity('Санкт-Петербург',this)">Санкт-Петербург</div>
+    <div class="city-pill" onclick="switchCity('Екатеринбург',this)">Екатеринбург</div>
+    <div class="city-pill" onclick="switchCity('Казань',this)">Казань</div>
+    <div class="city-pill" onclick="switchCity('Краснодар',this)">Краснодар</div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <div class="filter-group">
+      <div class="filter-label">Дата</div>
+      <select class="filter-select" id="dateFilter" onchange="applyFilters()">
+        <option value="">Любая дата</option>
+        <option value="today">Сегодня, 1 июля</option>
+        <option value="tomorrow">Завтра, 2 июля</option>
+        <option value="week">Эта неделя</option>
+        <option value="month">Этот месяц</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Площадка</div>
+      <select class="filter-select" id="venueFilter" onchange="applyFilters()">
+        <option value="">Все площадки</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Цена</div>
+      <select class="filter-select" id="priceFilter" onchange="applyFilters()">
+        <option value="">Любая цена</option>
+        <option value="low">До 1 000 ₽</option>
+        <option value="mid">1 000–3 000 ₽</option>
+        <option value="high">Свыше 3 000 ₽</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Сортировка</div>
+      <select class="filter-select" id="sortFilter" onchange="applyFilters()">
+        <option value="date">По дате</option>
+        <option value="rating">По рейтингу</option>
+        <option value="price">По цене</option>
+        <option value="pop">По популярности</option>
+      </select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <div class="filter-label">Жанр</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="genreTags">
+        <div class="ftag active" data-genre="" onclick="toggleGenre(this)">Все</div>
+        <div class="ftag" data-genre="Рок" onclick="toggleGenre(this)">Рок</div>
+        <div class="ftag" data-genre="Поп" onclick="toggleGenre(this)">Поп</div>
+        <div class="ftag" data-genre="Классика" onclick="toggleGenre(this)">Классика</div>
+        <div class="ftag" data-genre="Джаз" onclick="toggleGenre(this)">Джаз</div>
+        <div class="ftag" data-genre="Электронная" onclick="toggleGenre(this)">Электронная</div>
+        <div class="ftag" data-genre="Хип-хоп" onclick="toggleGenre(this)">Хип-хоп</div>
+        <div class="ftag" data-genre="Фолк" onclick="toggleGenre(this)">Фолк</div>
+      </div>
+    </div>
+    <div class="results-info" id="resultsInfo">Найдено: 42</div>
+  </div>
+</div>
+
+<!-- PAGE MAIN -->
+<div class="page-main">
+  <div>
+    <!-- Date tabs -->
+    <div class="date-tabs" id="dateTabs"></div>
+
+    <div class="view-head">
+      <div class="view-title" id="sectionTitle">Концерты в Москве</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="view-toggle">
+          <button class="vbtn active" id="btnGrid" onclick="setView('grid')">⊞ Сетка</button>
+          <button class="vbtn" id="btnList" onclick="setView('list')">☰ Список</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="concertGrid" class="concert-grid"></div>
+    <div id="concertList" class="concert-list" style="display:none;"></div>
+    <div id="emptyState" style="display:none;text-align:center;padding:60px 20px;color:var(--light);">
+      <div style="font-size:40px;margin-bottom:12px;">🎸</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:20px;margin-bottom:8px;">Концерты не найдены</div>
+      <div style="font-size:14px;">Попробуйте изменить фильтры или выбрать другую дату</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sw">
+      <div class="sw-head">🏟️ Площадки города</div>
+      <div class="sw-body" id="venuesSidebar"></div>
+    </div>
+
+    <div class="promo-card">
+      <div class="promo-title">📧 Анонсы концертов</div>
+      <div class="promo-text">Подпишитесь и первыми узнавайте о новых концертах и эксклюзивных пресейлах</div>
+      <div class="promo-btn">Подписаться</div>
+    </div>
+
+    <div class="sw">
+      <div class="sw-head">🔥 Хиты — скоро раскупят</div>
+      <div class="sw-body" id="hotSidebar"></div>
+    </div>
+
+    <div class="sw">
+      <div class="sw-head">🏆 Скоро в продаже</div>
+      <div class="sw-body" id="comingSidebar"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- CONCERT MODAL -->
+<div class="modal-overlay" id="concertModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="mhead">
+      <div class="mhead-poster" id="mposter"></div>
+      <div class="mhead-info">
+        <div class="mhead-genre" id="mgenre"></div>
+        <div class="mhead-title" id="mtitle"></div>
+        <div class="mhead-meta" id="mmeta"></div>
+      </div>
+      <button class="mclose" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mtabs">
+      <div class="mtab active" onclick="switchMTab('info')">О концерте</div>
+      <div class="mtab" onclick="switchMTab('venues')">Площадки и даты</div>
+      <div class="mtab" onclick="switchMTab('tickets')">Купить билет</div>
+    </div>
+
+    <!-- INFO -->
+    <div class="mpane active" id="mpane-info">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div style="font-size:14px;color:var(--mid);line-height:1.75;margin-bottom:14px;" id="mdesc"></div>
+          <div id="msetlist"></div>
+        </div>
+        <div>
+          <table style="font-size:13px;width:100%;border-collapse:collapse;" id="mdetails"></table>
+          <div style="margin-top:16px;"><button class="btn-red" onclick="switchMTab('tickets')" style="width:100%;padding:12px;">🎟️ Купить билет</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENUES -->
+    <div class="mpane" id="mpane-venues">
+      <div style="font-size:13px;color:var(--mid);margin-bottom:14px;" id="mvenueNote"></div>
+      <div id="mvenueList"></div>
+    </div>
+
+    <!-- TICKETS -->
+    <div class="mpane" id="mpane-tickets">
+      <!-- Step 1: venue+time -->
+      <div id="ck1">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px;margin-bottom:10px;">Выберите площадку и время</div>
+        <div id="ck-venues" style="margin-bottom:18px;"></div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px;margin-bottom:10px;">Выберите зону</div>
+        <div class="zone-legend" id="ck-zones"></div>
+        <button class="btn-red" onclick="ckStep(2)">Выбрать место →</button>
+      </div>
+      <!-- Step 2: seats -->
+      <div id="ck2" style="display:none;">
+        <div class="seat-section">
+          <div>
+            <div class="screen-bar">🎤 Сцена</div>
+            <div class="smap-wrap" id="ck-seatmap"></div>
+            <div class="smap-legend">
+              <span><span class="leg-dot" style="background:#4caf50;"></span>Свободно</span>
+              <span><span class="leg-dot" style="background:#c8102e;"></span>Выбрано</span>
+              <span><span class="leg-dot" style="background:#ddd;"></span>Занято</span>
+            </div>
+          </div>
+          <div>
+            <div class="ck-summary" style="margin-bottom:12px;">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px;">Выбрано</div>
+              <div>Мест: <strong id="ck-cnt">0</strong></div>
+              <div class="ck-total">Итого: <span id="ck-total">0 ₽</span></div>
+            </div>
+            <button class="btn-red" onclick="ckStep(3)" style="width:100%;padding:10px;margin-bottom:8px;">Оформить →</button>
+            <button class="btn-out" onclick="ckStep(1)" style="width:100%;padding:8px;">← Назад</button>
+          </div>
+        </div>
+      </div>
+      <!-- Step 3: checkout -->
+      <div id="ck3" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 220px;gap:18px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:10px;">Данные покупателя</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="ck-field"><label>Имя</label><input type="text" placeholder="Иван"></div>
+              <div class="ck-field"><label>Фамилия</label><input type="text" placeholder="Петров"></div>
+            </div>
+            <div class="ck-field"><label>Email (для билетов)</label><input type="email" placeholder="ivan@mail.ru"></div>
+            <div class="ck-field"><label>Телефон</label><input type="tel" placeholder="+7 (___) ___-__-__"></div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin:12px 0 8px;">Оплата</div>
+            <label class="pay-opt"><input type="radio" name="mpay" checked> <span>💳 Банковская карта</span></label>
+            <label class="pay-opt"><input type="radio" name="mpay"> <span>🟢 СберПэй</span></label>
+            <label class="pay-opt"><input type="radio" name="mpay"> <span>🟡 ЮMoney</span></label>
+            <div style="display:flex;gap:10px;margin-top:14px;">
+              <button class="btn-red" onclick="ckBuy()" style="flex:1;padding:12px;">Оплатить</button>
+              <button class="btn-out" onclick="ckStep(2)" style="padding:12px 16px;">← Назад</button>
+            </div>
+          </div>
+          <div>
+            <div class="ck-summary" id="ck-order"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Step 4: success -->
+      <div id="ck4" style="display:none;" class="success-block">
+        <div style="font-size:52px;margin-bottom:14px;">🎉</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin-bottom:8px;">Билеты куплены!</div>
+        <div style="font-size:14px;color:#666;margin-bottom:20px;">Билеты отправлены на вашу почту. Не забудьте взять документ!</div>
+        <div id="ck-success" style="display:inline-block;background:#f4f2ee;border-radius:4px;padding:16px;font-size:13px;line-height:2;text-align:left;min-width:280px;margin-bottom:20px;"></div><br>
+        <button class="btn-red" onclick="closeModal()">Закрыть</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ====================================================
+// DATA
+// ====================================================
+const CONCERTS = [
+  {
+    id:0, title:'Scorpions — 50th Anniversary World Tour', artist:'Scorpions',
+    genre:'Рок', icon:'🎸', color:'#1a0533',
+    date:'1 июля 2018', dateShort:'1 июл', dayLabel:'Вс',
+    age:'12+', duration:'2 ч 30 мин', rating:9.4, votes:8200,
+    price:3500, priceMax:12000, hot:true, newShow:false,
+    city:'Москва',
+    desc:'Легендарная немецкая рок-группа отмечает 50-летие грандиозным мировым туром. Московский концерт обещает стать незабываемым шоу с классическими хитами Wind of Change, Rock You Like a Hurricane и Still Loving You.',
+    setlist:['Wind of Change','Rock You Like a Hurricane','Send Me an Angel','Still Loving You','No One Like You','Blackout'],
+    venues:[
+      {name:'Стадион «Олимпийский»', addr:'Олимпийский пр-т, 16', cap:'78 000 мест', times:['19:00'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Партер (стоячий)',  color:'#e53935', price:6500},
+      {name:'Трибуна A (секции 1–10)', color:'#1e88e5', price:4500},
+      {name:'Трибуна B (секции 11–20)',color:'#43a047', price:3500},
+      {name:'Трибуна C (галёрка)',     color:'#8e24aa', price:2200},
+      {name:'VIP-ложа',               color:'#f4511e', price:12000},
+    ],
+  },
+  {
+    id:1, title:'Дима Билан — «Один» — большое шоу', artist:'Дима Билан',
+    genre:'Поп', icon:'🎤', color:'#0a1a3e',
+    date:'1 июля 2018', dateShort:'1 июл', dayLabel:'Вс',
+    age:'6+', duration:'2 ч', rating:8.1, votes:5600,
+    price:1800, priceMax:7500, hot:false, newShow:true,
+    city:'Москва',
+    desc:'Долгожданное сольное шоу Димы Билана с новой программой. Грандиозные декорации, световое шоу и полная коллекция главных хитов за 15 лет карьеры.',
+    setlist:['Believe','Я ночной хулиган','Never Let You Go','Задыхаюсь','Держи'],
+    venues:[
+      {name:'Крокус Сити Холл', addr:'65-66 км МКАД, Красногорск', cap:'6 200 мест', times:['19:00','21:30'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Партер',      color:'#e53935', price:4500},
+      {name:'Амфитеатр',   color:'#1e88e5', price:2800},
+      {name:'Балкон',      color:'#43a047', price:1800},
+      {name:'VIP',         color:'#f4511e', price:7500},
+    ],
+  },
+  {
+    id:2, title:'Ночи Чайковского — Гала-концерт', artist:'Московский симфонический оркестр',
+    genre:'Классика', icon:'🎻', color:'#1a0a00',
+    date:'1 июля 2018', dateShort:'1 июл', dayLabel:'Вс',
+    age:'0+', duration:'2 ч', rating:9.7, votes:3200,
+    price:900, priceMax:4500, hot:false, newShow:false,
+    city:'Москва',
+    desc:'Торжественный гала-концерт в честь 178-летия Чайковского. Московский симфонический оркестр под управлением Владимира Спивакова исполнит лучшие произведения великого композитора.',
+    setlist:['Лебединое озеро (сюита)','Концерт №1 для фортепиано','1812 год (торжественная увертюра)','Щелкунчик (сюита)'],
+    venues:[
+      {name:'Большой зал Консерватории', addr:'ул. Б. Никитская, 13', cap:'1 737 мест', times:['19:30'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Партер',     color:'#e53935', price:4500},
+      {name:'Бельэтаж',   color:'#1e88e5', price:2800},
+      {name:'Балкон 1',   color:'#43a047', price:1800},
+      {name:'Балкон 2',   color:'#8e24aa', price:900},
+    ],
+  },
+  {
+    id:3, title:'Jazz in the Park — Летний фестиваль', artist:'Разные исполнители',
+    genre:'Джаз', icon:'🎷', color:'#001a0a',
+    date:'2 июля 2018', dateShort:'2 июл', dayLabel:'Пн',
+    age:'0+', duration:'5 ч', rating:8.8, votes:1900,
+    price:500, priceMax:2000, hot:false, newShow:true,
+    city:'Москва',
+    desc:'Летний джазовый фестиваль под открытым небом в Парке Горького. Семь коллективов, два сцены, еда и напитки от лучших ресторанов города. Вход — только по билетам.',
+    setlist:['Igor Butman Quartet','St. Petersburg Jazz Philharmonic','Jazzist (Норвегия)','Нино Катамадзе & Insight'],
+    venues:[
+      {name:'Парк Горького — Зелёный театр', addr:'ул. Крымский Вал, 9', cap:'4 000 мест', times:['15:00'], city:'Москва'},
+    ],
+    zones:[
+      {name:'VIP-зона (кресла)',  color:'#e53935', price:2000},
+      {name:'Зрительская зона',   color:'#43a047', price:800},
+      {name:'Газон (без мест)',    color:'#8e24aa', price:500},
+    ],
+  },
+  {
+    id:4, title:'Imagine Dragons — Origins World Tour', artist:'Imagine Dragons',
+    genre:'Рок', icon:'🎵', color:'#000a1a',
+    date:'3 июля 2018', dateShort:'3 июл', dayLabel:'Вт',
+    age:'12+', duration:'2 ч 15 мин', rating:9.2, votes:14000,
+    price:2500, priceMax:9000, hot:true, newShow:false,
+    city:'Москва',
+    desc:'Американская рок-группа с мировым турне в поддержку нового альбома Origins. Thunder, Believer, Natural и десятки хитов — в грандиозном шоу с пиротехникой и LED-экранами.',
+    setlist:['Thunder','Believer','Natural','Radioactive','Whatever It Takes','Demons','Enemy'],
+    venues:[
+      {name:'ВТБ Арена', addr:'Ленинградское ш., 36', cap:'26 000 мест', times:['20:00'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Партер A (золото)', color:'#f4511e', price:9000},
+      {name:'Партер B',          color:'#e53935', price:5500},
+      {name:'Трибуна нижняя',    color:'#1e88e5', price:3500},
+      {name:'Трибуна верхняя',   color:'#43a047', price:2500},
+    ],
+  },
+  {
+    id:5, title:'Metallica — WorldWired Tour', artist:'Metallica',
+    genre:'Рок', icon:'⚡', color:'#0a0a0a',
+    date:'4 июля 2018', dateShort:'4 июл', dayLabel:'Ср',
+    age:'16+', duration:'3 ч', rating:9.6, votes:22000,
+    price:4000, priceMax:15000, hot:true, newShow:false,
+    city:'Москва',
+    desc:'Металлисты со всего мира стекаются на главное событие года! Metallica представит программу WorldWired с новыми треками из альбома Hardwired и классическими хитами с лазерным шоу и 360° экраном.',
+    setlist:['Hardwired','Enter Sandman','Master of Puppets','One','Nothing Else Matters','Fade to Black','Seek & Destroy'],
+    venues:[
+      {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000 мест', times:['19:30'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Партер фронт (GA)',   color:'#b71c1c', price:15000},
+      {name:'Партер (стоячий)',     color:'#e53935', price:8000},
+      {name:'Трибуна 1-й ярус',    color:'#1e88e5', price:5500},
+      {name:'Трибуна 2-й ярус',    color:'#43a047', price:4000},
+      {name:'Бэк (дальние места)',  color:'#8e24aa', price:2500},
+    ],
+  },
+  {
+    id:6, title:'Найк Борзов — Acoustic Session', artist:'Найк Борзов',
+    genre:'Рок', icon:'🎶', color:'#0a0a2a',
+    date:'5 июля 2018', dateShort:'5 июл', dayLabel:'Чт',
+    age:'16+', duration:'1 ч 30 мин', rating:8.3, votes:1200,
+    price:600, priceMax:1500, hot:false, newShow:false,
+    city:'Москва',
+    desc:'Камерный акустический концерт легенды российского рока. Борзов исполнит хиты «Солнце», «Ковёр-вертолёт», «Темнота» и другие в минималистичной аранжировке.',
+    setlist:['Солнце','Ковёр-вертолёт','Темнота','22','Летели облака'],
+    venues:[
+      {name:'Клуб 16 Tons', addr:'ул. Прesnенский вал, 6', cap:'450 мест', times:['20:00'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Первый ряд (кресла)', color:'#e53935', price:1500},
+      {name:'Партер (стоячий)',    color:'#43a047', price:800},
+      {name:'Балкон',              color:'#8e24aa', price:600},
+    ],
+  },
+  {
+    id:7, title:'Rammstein — Revolution Tour', artist:'Rammstein',
+    genre:'Рок', icon:'🔥', color:'#2a0000',
+    date:'6 июля 2018', dateShort:'6 июл', dayLabel:'Пт',
+    age:'16+', duration:'2 ч 30 мин', rating:9.5, votes:18700,
+    price:3000, priceMax:11000, hot:true, newShow:false,
+    city:'Москва',
+    desc:'Самое огненное шоу в истории рок-музыки! Немецкие индустриальные металлисты устраивают грандиозное пиротехническое представление с тоннами огня, дыма и невероятной энергетикой.',
+    setlist:['Rammstein','Du hast','Sonne','Feuer Frei','Mutter','Amerika','Ich Will'],
+    venues:[
+      {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000 мест', times:['20:00'], city:'Москва'},
+    ],
+    zones:[
+      {name:'Партер фронт (GA)',   color:'#b71c1c', price:11000},
+      {name:'Партер основной',     color:'#e53935', price:6500},
+      {name:'Сектор A',            color:'#1e88e5', price:4500},
+      {name:'Сектор B',            color:'#43a047', price:3000},
+    ],
+  },
+  {
+    id:8, title:'Soda Machine — Electronic Night', artist:'Soda Machine',
+    genre:'Электронная', icon:'🎧', color:'#001a2a',
+    date:'7 июля 2018', dateShort:'7 июл', dayLabel:'Сб',
+    age:'18+', duration:'4 ч', rating:8.0, votes:900,
+    price:800, priceMax:2500, hot:false, newShow:true,
+    city:'Москва',
+    desc:'Ночь электронной музыки в главном клубе Москвы. Лайв-сет московского электронного проекта Soda Machine вместе с приглашёнными диджеями из Берлина и Амстердама.',
+    setlist:['Live set 2 ч','DJ Sven Helbig (Berlin)','DJ Mo (Amsterdam)','After party до утра'],
+    venues:[
+      {name:'Клуб Gazgolder', addr:'ул. Белозерская, 11', cap:'1 800 мест', times:['23:00'], city:'Москва'},
+    ],
+    zones:[
+      {name:'VIP-зона',           color:'#f4511e', price:2500},
+      {name:'Основной зал',        color:'#1e88e5', price:1200},
+      {name:'Стандарт (вход)',     color:'#43a047', price:800},
+    ],
+  },
+  // ВОЛГОГРАД
+  {
+    id:9, title:'Звуки Му — Гастроли 2018', artist:'Звуки Му',
+    genre:'Рок', icon:'🎸', color:'#1a1a00',
+    date:'1 июля 2018', dateShort:'1 июл', dayLabel:'Вс',
+    age:'16+', duration:'1 ч 45 мин', rating:8.5, votes:780,
+    price:700, priceMax:1800, hot:false, newShow:false,
+    city:'Волгоград',
+    desc:'Легендарная московская рок-группа приезжает в Волгоград. Программа включает классические хиты из золотого периода группы и несколько новых треков.',
+    setlist:['Крейсер Аврора','Лёд','Серёжа','Кандидат'],
+    venues:[
+      {name:'ЦКЗ Волгоградская Филармония', addr:'наб. 62-й Армии, 4, Волгоград', cap:'1 200 мест', times:['19:00'], city:'Волгоград'},
+    ],
+    zones:[
+      {name:'Партер',   color:'#e53935', price:1800},
+      {name:'Балкон 1', color:'#1e88e5', price:1100},
+      {name:'Балкон 2', color:'#43a047', price:700},
+    ],
+  },
+  {
+    id:10, title:'Волгоградский джаз-фест 2018', artist:'Разные исполнители',
+    genre:'Джаз', icon:'🎷', color:'#001a0a',
+    date:'2 июля 2018', dateShort:'2 июл', dayLabel:'Пн',
+    age:'0+', duration:'6 ч', rating:8.6, votes:520,
+    price:400, priceMax:1200, hot:false, newShow:true,
+    city:'Волгоград',
+    desc:'Ежегодный джазовый фестиваль на набережной Волги. Восемь коллективов, два дня, незабываемый вид на Волгу и лучшая музыка.',
+    setlist:['Волгоградский биг-бэнд','Квартет Буйко','Камышинский джаз-клуб','Гости из Ростова'],
+    venues:[
+      {name:'Набережная 62-й Армии', addr:'Набережная 62-й Армии, Волгоград', cap:'Открытая площадка', times:['14:00','18:00'], city:'Волгоград'},
+    ],
+    zones:[
+      {name:'VIP-зона (шезлонги)', color:'#e53935', price:1200},
+      {name:'Зрительская зона',    color:'#43a047', price:600},
+      {name:'Свободный вход',       color:'#8e24aa', price:400},
+    ],
+  },
+  {
+    id:11, title:'Каста — Живой концерт', artist:'Каста',
+    genre:'Хип-хоп', icon:'🎤', color:'#0a0a2a',
+    date:'5 июля 2018', dateShort:'5 июл', dayLabel:'Чт',
+    age:'16+', duration:'2 ч', rating:8.9, votes:3100,
+    price:900, priceMax:2500, hot:false, newShow:false,
+    city:'Волгоград',
+    desc:'Ростовская хип-хоп-группа с большим живым концертом в Волгограде. Хуго, Шим, Влади и Змей в классическом составе исполнят треки из всех альбомов.',
+    setlist:['Ай-лэйбл','Солдат','Буду рядом','Хулиганы','С небес на землю'],
+    venues:[
+      {name:'Стадион Волгоград Арена', addr:'ул. им. Маршала Чуйкова, 5а', cap:'3 500 мест', times:['19:00'], city:'Волгоград'},
+    ],
+    zones:[
+      {name:'Партер (фан-зона)',   color:'#e53935', price:2500},
+      {name:'Трибуна A',           color:'#1e88e5', price:1500},
+      {name:'Трибуна B',           color:'#43a047', price:900},
+    ],
+  },
+];
+
+const VENUES = {
+  'Москва': [
+    {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000'},
+    {name:'Стадион «Олимпийский»', addr:'Олимпийский пр-т, 16', cap:'78 000'},
+    {name:'ВТБ Арена', addr:'Ленинградское ш., 36', cap:'26 000'},
+    {name:'Крокус Сити Холл', addr:'65-66 км МКАД', cap:'6 200'},
+    {name:'Большой зал Консерватории', addr:'ул. Б. Никитская, 13', cap:'1 737'},
+    {name:'Клуб 16 Tons', addr:'ул. Пресненский вал, 6', cap:'450'},
+    {name:'Клуб Gazgolder', addr:'ул. Белозерская, 11', cap:'1 800'},
+    {name:'Парк Горького — Зелёный театр', addr:'Крымский вал, 9', cap:'4 000'},
+  ],
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', addr:'наб. 62-й Армии, 4, Волгоград', cap:'1 200'},
+    {name:'Стадион Волгоград Арена', addr:'ул. им. Маршала Чуйкова, 5а', cap:'3 500'},
+    {name:'Набережная 62-й Армии', addr:'Набережная 62-й Армии', cap:'Открытая'},
+    {name:'КЗ «Октябрёнок»', addr:'пр. Ленина, 20', cap:'800'},
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК «Петербургский»', addr:'пр. Юрия Гагарина, 8', cap:'25 000'},
+    {name:'БКЗ «Октябрьский»', addr:'Лиговский пр-т, 6', cap:'3 800'},
+    {name:'Клуб «Зал Ожидания»', addr:'наб. Обводного кан., 154', cap:'1 200'},
+  ],
+  'Екатеринбург': [
+    {name:'Ледовый дворец «Уктус»', addr:'ул. Щербакова, 4', cap:'12 000'},
+    {name:'Клуб «Подземка»', addr:'пр-т Ленина, 50', cap:'600'},
+  ],
+  'Казань': [
+    {name:'КЗ им. С. Сайдашева', addr:'пл. Свободы, 3', cap:'1 200'},
+  ],
+  'Краснодар': [
+    {name:'Олимп Холл', addr:'ул. Стадионная, 1', cap:'5 000'},
+  ],
+};
+
+const DATES_LIST = [
+  {day:'Вс', num:'1', month:'июля'},
+  {day:'Пн', num:'2', month:'июля'},
+  {day:'Вт', num:'3', month:'июля'},
+  {day:'Ср', num:'4', month:'июля'},
+  {day:'Чт', num:'5', month:'июля'},
+  {day:'Пт', num:'6', month:'июля'},
+  {day:'Сб', num:'7', month:'июля'},
+  {day:'Вс', num:'8', month:'июля'},
+];
+
+// ====================================================
+// STATE
+// ====================================================
+let currentCity = 'Москва';
+let activeGenre = '';
+let activeDate = 0; // index in DATES_LIST
+let currentView = 'grid';
+let currentConcert = null;
+let ckState = { venue:'', time:'', zone:null, seats:[] };
+
+// ====================================================
+// INIT
+// ====================================================
+function init() {
+  renderDateTabs();
+  switchCity('Москва', null);
+}
+
+// ====================================================
+// CITY
+// ====================================================
+// ====================================================
+// DATE TABS
+// ====================================================
+function renderDateTabs() {
+  const el = document.getElementById('dateTabs');
+  el.innerHTML = '';
+  DATES_LIST.forEach((d,i) => {
+    const t = document.createElement('div');
+    t.className = 'dtab' + (i===activeDate?' active':'');
+    t.innerHTML = `<div class="dname">${i===0?'Сегодня':d.day}</div><div class="dnum">${d.num}</div><div class="dmonth">${d.month}</div>`;
+    t.onclick = () => { activeDate=i; renderDateTabs(); applyFilters(); };
+    el.appendChild(t);
+  });
+}
+
+// ====================================================
+// FILTERS & RENDER
+// ====================================================
+function toggleGenre(el) {
+  document.querySelectorAll('#genreTags .ftag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeGenre = el.dataset.genre;
+  applyFilters();
+}
+
+function applyFilters() {
+  let concerts = CONCERTS.filter(c => c.city === currentCity);
+  if (activeGenre) concerts = concerts.filter(c => c.genre === activeGenre);
+
+  const vf = document.getElementById('venueFilter').value;
+  if (vf) concerts = concerts.filter(c => c.venues.some(v => v.name === vf));
+
+  const pf = document.getElementById('priceFilter').value;
+  if (pf==='low')  concerts = concerts.filter(c => c.price < 1000);
+  if (pf==='mid')  concerts = concerts.filter(c => c.price >= 1000 && c.price <= 3000);
+  if (pf==='high') concerts = concerts.filter(c => c.price > 3000);
+
+  const sort = document.getElementById('sortFilter').value;
+  if (sort==='rating') concerts.sort((a,b)=>b.rating-a.rating);
+  else if (sort==='price') concerts.sort((a,b)=>a.price-b.price);
+  else if (sort==='pop') concerts.sort((a,b)=>b.votes-a.votes);
+
+  document.getElementById('resultsInfo').textContent = `Найдено: ${concerts.length}`;
+  document.getElementById('statCount').textContent = concerts.length;
+
+  const grid = document.getElementById('concertGrid');
+  const list = document.getElementById('concertList');
+  const empty = document.getElementById('emptyState');
+  grid.innerHTML=''; list.innerHTML='';
+
+  if (!concerts.length) { empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  concerts.forEach(c => {
+    if (currentView==='grid') grid.appendChild(makeGridCard(c));
+    else list.appendChild(makeListCard(c));
+  });
+
+  renderHotSidebar(concerts);
+}
+
+function makeGridCard(c) {
+  const el = document.createElement('div');
+  el.className='concert-card';
+  const stars='★'.repeat(Math.round(c.rating/2))+'☆'.repeat(5-Math.round(c.rating/2));
+  el.innerHTML=`
+    <div class="c-poster" style="background:${c.color};">
+      <span style="font-size:52px;">${c.icon}</span>
+      <div class="c-age">${c.age}</div>
+      ${c.hot?'<div class="c-hot">🔥 Hot</div>':c.newShow?'<div class="c-new">Новинка</div>':''}
+    </div>
+    <div class="c-body">
+      <div class="c-genre">${c.genre}</div>
+      <div class="c-title">${c.title}</div>
+      <div class="c-meta">📅 ${c.date} · ${c.duration}</div>
+      <div class="c-venue">📍 ${c.venues[0]?.name||''}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <span class="c-stars">${stars}</span>
+        <span class="c-score">${c.rating}</span>
+        <span style="font-size:11px;color:var(--light);">(${(c.votes/1000).toFixed(1)}K)</span>
+      </div>
+      <div class="c-bottom">
+        <div class="c-price">от <strong>${c.price.toLocaleString('ru')} ₽</strong></div>
+        <button class="c-buy" onclick="event.stopPropagation();openModal(${c.id},true)">Билеты</button>
+      </div>
+    </div>`;
+  el.onclick=()=>openModal(c.id);
+  return el;
+}
+
+function makeListCard(c) {
+  const el=document.createElement('div');
+  el.className='concert-list-item';
+  const stars='★'.repeat(Math.round(c.rating/2))+'☆'.repeat(5-Math.round(c.rating/2));
+  el.innerHTML=`
+    <div class="cli-poster" style="background:${c.color};">${c.icon}</div>
+    <div class="cli-body">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--red);margin-bottom:3px;">${c.genre} · ${c.age}</div>
+      <div style="font-family:'PT Serif',serif;font-size:16px;font-weight:700;margin-bottom:4px;">${c.title}</div>
+      <div style="font-size:13px;color:var(--mid);margin-bottom:4px;">📅 ${c.date} · ⏱ ${c.duration}</div>
+      <div style="font-size:13px;color:var(--mid);">📍 ${c.venues[0]?.name||''}, ${c.venues[0]?.addr||''}</div>
+    </div>
+    <div class="cli-right">
+      <div style="color:var(--yellow);font-size:13px;">${stars} <strong>${c.rating}</strong></div>
+      <div style="font-size:12px;color:var(--light);">${(c.votes/1000).toFixed(1)}K голосов</div>
+      <div style="font-size:15px;font-weight:700;">от ${c.price.toLocaleString('ru')} ₽</div>
+      <button class="c-buy" style="width:100%;padding:8px 0;" onclick="openModal(${c.id},true)">Купить билет</button>
+    </div>`;
+  el.onclick=()=>openModal(c.id);
+  return el;
+}
+
+function setView(v) {
+  currentView=v;
+  document.getElementById('concertGrid').style.display=v==='grid'?'grid':'none';
+  document.getElementById('concertList').style.display=v==='list'?'flex':'none';
+  document.getElementById('btnGrid').classList.toggle('active',v==='grid');
+  document.getElementById('btnList').classList.toggle('active',v==='list');
+  applyFilters();
+}
+
+// ====================================================
+// SIDEBAR
+// ====================================================
+function renderVenuesSidebar() {
+  const el = document.getElementById('venuesSidebar');
+  el.innerHTML='';
+  (VENUES[currentCity]||[]).forEach(v => {
+    el.innerHTML+=`<div class="venue-item">
+      <div class="venue-name">${v.name}</div>
+      <div class="venue-addr">${v.addr}</div>
+      <div class="venue-cap">💺 ${v.cap} мест</div>
+    </div>`;
+  });
+}
+
+function renderHotSidebar(concerts) {
+  const hot = [...concerts].sort((a,b)=>b.votes-a.votes).slice(0,5);
+  const hs = document.getElementById('hotSidebar');
+  hs.innerHTML='';
+  hot.forEach((c,i) => {
+    hs.innerHTML+=`<div class="top-item" onclick="openModal(${c.id})">
+      <div class="top-num" style="color:${i===0?'var(--red)':'#ccc'};">${i+1}</div>
+      <div class="top-info">
+        <div class="top-title">${c.artist}</div>
+        <div class="top-meta">${c.date} · от ${c.price.toLocaleString('ru')} ₽</div>
+      </div>
+    </div>`;
+  });
+
+  const cs = document.getElementById('comingSidebar');
+  cs.innerHTML=`
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><div style="font-weight:700;">Elton John — Farewell Yellow Brick Road</div><div style="color:var(--light);font-size:11px;">С 15 августа · Рок</div></div>
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><div style="font-weight:700;">Bring Me The Horizon</div><div style="color:var(--light);font-size:11px;">С 22 сентября · Метал</div></div>
+    <div style="padding:8px 0;font-size:13px;"><div style="font-weight:700;">Gorillaz — The Now Now Tour</div><div style="color:var(--light);font-size:11px;">С 10 октября · Альтернатива</div></div>`;
+}
+
+// ====================================================
+// MODAL
+// ====================================================
+function openModal(id, goTickets=false) {
+  const c = CONCERTS.find(x=>x.id===id);
+  if (!c) return;
+  currentConcert = c;
+
+  document.getElementById('mgenre').textContent=`${c.genre} · ${c.age} · ${c.duration}`;
+  document.getElementById('mtitle').textContent=c.title;
+  document.getElementById('mmeta').innerHTML=`⭐ ${c.rating} (${(c.votes/1000).toFixed(1)}K голосов) · от ${c.price.toLocaleString('ru')} ₽`;
+  document.getElementById('mposter').style.cssText=`background:${c.color};`;
+  document.getElementById('mposter').textContent=c.icon;
+  document.getElementById('mdesc').textContent=c.desc;
+
+  document.getElementById('msetlist').innerHTML=c.setlist.length?`
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px;margin-bottom:8px;">Программа</div>
+    ${c.setlist.map((s,i)=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #f0eeea;font-size:13px;"><span style="color:var(--red);font-weight:700;font-family:'Oswald',sans-serif;">${i+1}</span><span>${s}</span></div>`).join('')}`:'';
+
+  document.getElementById('mdetails').innerHTML=[
+    ['Исполнитель', c.artist],
+    ['Жанр', c.genre],
+    ['Дата', c.date],
+    ['Длительность', c.duration],
+    ['Возраст', c.age],
+    ['Площадка', c.venues[0]?.name||''],
+    ['Цены', `от ${c.price.toLocaleString('ru')} до ${c.priceMax.toLocaleString('ru')} ₽`],
+  ].map(([k,v])=>`<tr><td style="color:#888;padding:5px 0;width:110px;font-size:12px;vertical-align:top;">${k}</td><td style="font-size:13px;font-weight:700;padding:5px 0;">${v}</td></tr>`).join('');
+
+  // Venues tab
+  const vl = document.getElementById('mvenueList');
+  vl.innerHTML='';
+  c.venues.forEach(v => {
+    const times = v.times.map(t=>`<button class="stime" onclick="selectVenueTime('${v.name}','${t}')">${t}</button>`).join('');
+    vl.innerHTML+=`<div class="m-venue-row" id="vrow-${v.name.replace(/\s/g,'_')}">
+      <div class="m-venue-head" onclick="toggleVenueRow(this)">
+        <div><div class="m-venue-name">📍 ${v.name}</div><div class="m-venue-addr">${v.addr} · ${v.cap}</div></div>
+        <div style="font-size:12px;color:var(--light);">▾</div>
+      </div>
+      <div class="m-venue-times">${times}</div>
+    </div>`;
+  });
+  document.getElementById('mvenueNote').textContent=`${c.title} — доступен в ${c.venues.length} ${c.venues.length===1?'месте':'местах'}`;
+
+  // Tickets init
+  ckState={venue:c.venues[0]?.name||'', time:c.venues[0]?.times[0]||'', zone:c.zones[0], seats:[]};
+  renderCkVenues();
+  renderCkZones();
+  ckStep(1);
+
+  switchMTab(goTickets?'tickets':'info');
+  document.getElementById('concertModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal() {
+  document.getElementById('concertModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function switchMTab(name) {
+  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',['info','venues','tickets'][i]===name));
+  document.querySelectorAll('.mpane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('mpane-'+name).classList.add('active');
+}
+
+function toggleVenueRow(head) {
+  const times = head.nextElementSibling;
+  times.style.display = times.style.display==='none'?'flex':'none';
+}
+
+function selectVenueTime(venue, time) {
+  ckState.venue=venue; ckState.time=time;
+  switchMTab('tickets'); ckStep(1);
+  renderCkVenues(); renderCkZones();
+}
+
+// ====================================================
+// TICKET CHECKOUT
+// ====================================================
+function renderCkVenues() {
+  const c = currentConcert;
+  const el = document.getElementById('ck-venues');
+  el.innerHTML='';
+  c.venues.forEach(v => {
+    const d=document.createElement('div');
+    const sel=ckState.venue===v.name;
+    d.style.cssText=`border:2px solid ${sel?'var(--red)':'#e0e0e0'};border-radius:4px;padding:10px 14px;margin-bottom:8px;cursor:pointer;background:${sel?'#fff0f0':'#fff'};transition:all .15s;`;
+    const timeBtns = v.times.map(t=>`<button onclick="ckSelectTime('${t}',event)" style="padding:6px 14px;border:1.5px solid ${ckState.time===t?'var(--red)':'#e0e0e0'};border-radius:3px;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;background:${ckState.time===t?'var(--red)':'#fff'};color:${ckState.time===t?'#fff':'var(--mid)'};cursor:pointer;margin-right:6px;">${t}</button>`).join('');
+    d.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:4px;">📍 ${v.name}</div><div style="font-size:11px;color:#888;margin-bottom:8px;">${v.addr}</div><div>${timeBtns}</div>`;
+    d.onclick=()=>{ ckState.venue=v.name; renderCkVenues(); };
+    el.appendChild(d);
+  });
+}
+
+function ckSelectTime(t, e) {
+  e.stopPropagation();
+  ckState.time=t;
+  renderCkVenues();
+}
+
+function renderCkZones() {
+  const c = currentConcert;
+  const el = document.getElementById('ck-zones');
+  el.innerHTML='';
+  c.zones.forEach(z => {
+    const sel=ckState.zone?.name===z.name;
+    const d=document.createElement('div');
+    d.className='zone-row'+(sel?' sel':'');
+    d.innerHTML=`<div class="zone-dot" style="background:${z.color};"></div><div class="zone-name">${z.name}</div><div class="zone-price">${z.price.toLocaleString('ru')} ₽</div>`;
+    d.onclick=()=>{ ckState.zone=z; ckState.seats=[]; renderCkZones(); renderSeatMap(); updateTotal(); };
+    el.appendChild(d);
+  });
+}
+
+function renderSeatMap() {
+  const el=document.getElementById('ck-seatmap');
+  el.innerHTML='';
+  const rows=9,cols=14;
+  const taken=new Set();
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(Math.random()<0.32) taken.add(`${r}-${c}`);
+  const labels='АБВГДЕЁЖИ';
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');
+    row.className='smap-row';
+    const lbl=document.createElement('span');
+    lbl.className='slbl'; lbl.textContent=labels[r]; row.appendChild(lbl);
+    for(let c=0;c<cols;c++){
+      const key=`${r}-${c}`;
+      const s=document.createElement('button');
+      s.className='seat'+(taken.has(key)?' taken':'');
+      const chosen=ckState.seats.includes(key);
+      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':(ckState.zone?.color||'#4caf50');
+      s.title=`Ряд ${labels[r]}, место ${c+1}`;
+      if(!taken.has(key)) s.onclick=()=>{
+        const i=ckState.seats.indexOf(key);
+        if(i>=0){ckState.seats.splice(i,1);s.style.background=ckState.zone?.color||'#4caf50';}
+        else{ckState.seats.push(key);s.style.background='#c8102e';}
+        updateTotal();
+      };
+      row.appendChild(s);
+    }
+    el.appendChild(row);
+  }
+}
+
+function updateTotal() {
+  const cnt=ckState.seats.length||1;
+  const total=(ckState.zone?.price||0)*cnt;
+  document.getElementById('ck-cnt').textContent=ckState.seats.length;
+  document.getElementById('ck-total').textContent=total.toLocaleString('ru')+' ₽';
+}
+
+function ckStep(n) {
+  [1,2,3,4].forEach(i=>document.getElementById('ck'+i).style.display=i===n?'block':'none');
+  if(n===2){ renderSeatMap(); updateTotal(); }
+  if(n===3){
+    const c=currentConcert;
+    const cnt=Math.max(ckState.seats.length,1);
+    const total=(ckState.zone?.price||0)*cnt;
+    document.getElementById('ck-order').innerHTML=`
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Ваш заказ</div>
+      <div>🎸 <strong>${c.title}</strong></div>
+      <div>📅 ${c.date}, ${ckState.time}</div>
+      <div>📍 ${ckState.venue}</div>
+      <div>🎟️ ${ckState.zone?.name} × ${cnt}</div>
+      <div style="margin-top:10px;font-size:18px;font-weight:700;color:var(--red);">Итого: ${total.toLocaleString('ru')} ₽</div>`;
+  }
+}
+
+function ckBuy() {
+  const c=currentConcert;
+  const cnt=Math.max(ckState.seats.length,1);
+  const total=(ckState.zone?.price||0)*cnt;
+  document.getElementById('ck-success').innerHTML=`
+    <div>🎸 <strong>${c.title}</strong></div>
+    <div>📅 ${c.date}, ${ckState.time}</div>
+    <div>📍 ${ckState.venue}</div>
+    <div>🎟️ ${ckState.zone?.name} × ${cnt} шт.</div>
+    <div style="margin-top:8px;font-weight:700;color:var(--red);">Оплачено: ${total.toLocaleString('ru')} ₽</div>`;
+  ckStep(4);
+}
+
+init();
+
+// GeoCity — определение города при загрузке
+if (window.GeoCity) {
+  
+  const _sc = window.switchCity;
+  window.switchCity = function(city, btn) {
+    if (_sc) _sc(city, btn);
+    GeoCity.setCity(city);
+  };
+}
+</script>
+<!-- ═══════════════════════════ AFISHI SHARED MODULE ═══════════════════════════ -->
+<script>
+// ================================================================
+//  AFISHI.RU — SHARED MODULE v2
+//  Auth + Reviews + Trailer  (injected into every page)
+//  Fixed: no containerId/pageId/itemId in onclick attrs
+// ================================================================
+(function () {
+  'use strict';
+
+  // ── CONFIG ────────────────────────────────────────────────────
+  const LS_USER    = 'afishi_user';
+  const LS_REVIEWS = 'afishi_reviews';
+
+  // ── AUTH STATE ────────────────────────────────────────────────
+  let _user = null;
+  try { _user = JSON.parse(localStorage.getItem(LS_USER)); } catch(e){}
+
+  // ── REVIEW STORE ──────────────────────────────────────────────
+  function rvLoad()  { try { return JSON.parse(localStorage.getItem(LS_REVIEWS)) || {}; } catch(e) { return {}; } }
+  function rvSave(db){ try { localStorage.setItem(LS_REVIEWS, JSON.stringify(db)); } catch(e){} }
+  function rvKey(pid, iid) { return pid + '::' + iid; }
+  function rvGet(pid, iid) { return rvLoad()[rvKey(pid, iid)] || []; }
+  function rvAdd(pid, iid, rev) {
+    const db = rvLoad(), k = rvKey(pid, iid);
+    if (!db[k]) db[k] = [];
+    db[k].unshift(rev);
+    rvSave(db);
+    return db[k];
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────
+  const SCORE_LABELS = ['','Провал','Ужасно','Плохо','Слабо','Нормально','Хорошо','Очень хорошо','Отлично','Великолепно','Шедевр!'];
+  const SCORE_EMOJI  = ['','💀','😤','👎','😐','😶','🙂','😊','😍','🤩','🏆'];
+  const AVT_COLORS   = ['#e53935','#1e88e5','#43a047','#8e24aa','#f4511e','#00897b','#3949ab','#d81b60','#00838f','#558b2f'];
+  function avColor(n) { return AVT_COLORS[(n||'A').charCodeAt(0) % AVT_COLORS.length]; }
+  function plural(n, f) {
+    if (n%10===1 && n%100!==11) return f[0];
+    if ([2,3,4].includes(n%10) && ![12,13,14].includes(n%100)) return f[1];
+    return f[2];
+  }
+  function fmtD(d) { return new Date(d||Date.now()).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}); }
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── CURRENT REVIEW CONTEXT (no onclick params needed) ─────────
+  // We store context in the container element itself via data-* attrs
+  // All event handlers read context from closest ancestor with data-rv-*
+
+  // ── CSS ───────────────────────────────────────────────────────
+  const css = `
+/* == AFISHI SHARED MODULE STYLES == */
+#afishiAuthModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9000;align-items:center;justify-content:center;padding:20px;}
+#afishiAuthModal.open{display:flex;}
+.am-box{background:#fff;width:100%;max-width:440px;border-radius:10px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5);position:relative;}
+.am-head{background:linear-gradient(135deg,#1a0a2e,#0a1a2e);padding:24px 28px 20px;color:#fff;}
+.am-title{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+.am-sub{font-size:13px;color:rgba(255,255,255,.5);}
+.am-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#aaa;font-size:20px;cursor:pointer;}
+.am-body{padding:22px 28px 28px;}
+.am-tabs{display:flex;border-bottom:2px solid #f0eeea;margin-bottom:20px;}
+.am-tab{padding:8px 20px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.am-tab.active{color:#c8102e;border-bottom-color:#c8102e;}
+.am-pane{display:none;}.am-pane.active{display:block;}
+.am-field{margin-bottom:14px;}
+.am-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:5px;}
+.am-input{width:100%;border:1.5px solid #e0e0e0;border-radius:5px;padding:10px 13px;font-family:'PT Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+.am-input:focus{border-color:#c8102e;}
+.am-btn{width:100%;background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border:none;padding:12px;border-radius:5px;cursor:pointer;margin-top:4px;}
+.am-btn:hover{background:#9e0c24;}
+.am-err{background:#ffebee;border:1px solid #ffcdd2;color:#c62828;font-size:13px;padding:8px 12px;border-radius:4px;margin-bottom:12px;display:none;}
+.am-ok {background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;font-size:13px;padding:8px 12px;border-radius:4px;margin-bottom:12px;display:none;}
+.am-switch{text-align:center;font-size:13px;color:#888;margin-top:16px;}
+.am-switch a{color:#c8102e;cursor:pointer;font-weight:700;}
+.am-social{display:flex;gap:8px;margin-bottom:18px;}
+.am-soc-btn{flex:1;border:1.5px solid #e0e0e0;border-radius:5px;padding:9px 8px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.am-soc-btn:hover{border-color:#c8102e;color:#c8102e;}
+.am-divider{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:12px;color:#aaa;}
+.am-divider::before,.am-divider::after{content:'';flex:1;height:1px;background:#e0e0e0;}
+.user-btn{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 8px 2px 4px;border-radius:3px;transition:background .15s;font-size:12px;color:#bbb;}
+.user-btn:hover{background:rgba(255,255,255,.08);}
+.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+/* Review pane */
+.rv-panel{padding:20px 24px;}
+.rv-summary{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:18px 20px;margin-bottom:18px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.rv-avg-num{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;line-height:1;}
+.rv-bars{flex:1;min-width:140px;}
+.rv-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.rv-bar-track{flex:1;height:6px;background:#f0eeea;border-radius:3px;overflow:hidden;}
+.rv-bar-fill{height:100%;border-radius:3px;}
+.rv-gate{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:13px;}
+.rv-gate-btn{margin-left:auto;background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.rv-form-box{background:#fff;border:2px solid #f5c518;border-radius:8px;padding:16px 18px;margin-bottom:16px;}
+.rv-form-title{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px;}
+.rv-star-row{display:flex;gap:2px;cursor:pointer;}
+.rv-star{font-size:28px;color:#ddd;transition:color .1s,transform .1s;user-select:none;}
+.rv-star.lit{color:#f5c518;transform:scale(1.1);}
+.rv-star-lbl{font-size:13px;font-weight:700;color:#444;margin-left:8px;min-width:160px;display:inline-block;}
+.rv-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.rv-field-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:4px;}
+.rv-input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:8px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+.rv-input:focus{border-color:#c8102e;}
+.rv-textarea{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:9px 10px;font-family:'PT Sans',sans-serif;font-size:13px;outline:none;resize:vertical;line-height:1.6;transition:border-color .15s;}
+.rv-textarea:focus{border-color:#c8102e;}
+.rv-submit-btn{background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:none;padding:10px 22px;border-radius:4px;cursor:pointer;}
+.rv-submit-btn:hover{background:#9e0c24;}
+.rv-msg{font-size:13px;font-weight:600;padding:8px 13px;border-radius:4px;display:none;}
+.rv-sort-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.rv-sort-title{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;}
+.rv-sort-sel{border:1px solid #e0e0e0;border-radius:4px;padding:5px 9px;font-family:'PT Sans',sans-serif;font-size:12px;outline:none;color:#444;}
+.rv-card{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px;transition:box-shadow .2s;}
+.rv-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.rv-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.rv-avt{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.rv-card-stars{color:#f5c518;font-size:12px;letter-spacing:1px;margin-bottom:8px;}
+.rv-card-text{font-size:13px;color:#444;line-height:1.7;margin-bottom:10px;}
+.rv-card-foot{display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid #f5f3f0;}
+.rv-helpful-btn{display:inline-flex;align-items:center;gap:4px;background:#f9f7f4;border:1px solid #ddd;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.rv-helpful-btn.voted{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;}
+.rv-empty{text-align:center;padding:28px 20px;color:#aaa;}
+/* Trailer pane */
+.yt-pane{padding:20px 24px;}
+.yt-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;background:#000;cursor:pointer;}
+.yt-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.yt-thumb{position:absolute;inset:0;}
+.yt-thumb img{width:100%;height:100%;object-fit:cover;}
+.yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.yt-play-btn{width:66px;height:66px;background:rgba(200,16,46,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .2s;}
+.yt-wrap:hover .yt-play-btn{transform:scale(1.1);}
+.yt-info-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;background:#f9f7f4;border-radius:4px;font-size:13px;color:#444;}
+.yt-yt-logo{width:30px;height:30px;background:#ff0000;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+`;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  // ── AUTH MODAL ────────────────────────────────────────────────
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="afishiAuthModal">
+    <div class="am-box">
+      <button class="am-close" id="amClose">✕</button>
+      <div class="am-head">
+        <div class="am-title">Войти на Афиши.ру</div>
+        <div class="am-sub">Чтобы оставлять отзывы и сохранять избранное</div>
+      </div>
+      <div class="am-body">
+        <div class="am-tabs">
+          <div class="am-tab active" id="amTabLogin">Войти</div>
+          <div class="am-tab"        id="amTabReg">Регистрация</div>
+        </div>
+        <div id="amErr" class="am-err"></div>
+        <div id="amOk"  class="am-ok"></div>
+        <div class="am-pane active" id="amPaneLogin">
+          <div class="am-social">
+            <button class="am-soc-btn" id="amSocVk">🔵 ВКонтакте</button>
+            <button class="am-soc-btn" id="amSocGoogle">🔴 Google</button>
+            <button class="am-soc-btn" id="amSocYandex">🟡 Яндекс</button>
+          </div>
+          <div class="am-divider">или через email</div>
+          <div class="am-field"><div class="am-label">Email</div>
+            <input class="am-input" id="amLoginEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div class="am-field"><div class="am-label">Пароль</div>
+            <input class="am-input" id="amLoginPass" type="password" placeholder="••••••••">
+          </div>
+          <button class="am-btn" id="amBtnLogin">Войти</button>
+          <div class="am-switch">Нет аккаунта? <a id="amToReg">Зарегистрируйтесь</a></div>
+        </div>
+        <div class="am-pane" id="amPaneReg">
+          <div class="am-field"><div class="am-label">Имя</div>
+            <input class="am-input" id="amRegName" type="text" placeholder="Иван Петров">
+          </div>
+          <div class="am-field"><div class="am-label">Email</div>
+            <input class="am-input" id="amRegEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div class="am-field"><div class="am-label">Пароль</div>
+            <input class="am-input" id="amRegPass" type="password" placeholder="Минимум 6 символов">
+          </div>
+          <div class="am-field"><div class="am-label">Город</div>
+            <input class="am-input" id="amRegCity" type="text" placeholder="Москва" value="Москва">
+          </div>
+          <button class="am-btn" id="amBtnReg">Создать аккаунт</button>
+          <div class="am-switch">Уже зарегистрированы? <a id="amToLogin">Войти</a></div>
+        </div>
+      </div>
+    </div>
+  </div>`);
+
+  // ── AUTH EVENT LISTENERS (no inline onclick) ──────────────────
+  function $(id) { return document.getElementById(id); }
+  $('amClose').onclick   = () => closeAuth();
+  $('amTabLogin').onclick = () => showTab('login');
+  $('amTabReg').onclick   = () => showTab('reg');
+  $('amToReg').onclick    = () => showTab('reg');
+  $('amToLogin').onclick  = () => showTab('login');
+  $('amBtnLogin').onclick = () => doLogin();
+  $('amBtnReg').onclick   = () => doRegister();
+  $('amSocVk').onclick    = () => socialLogin('vk');
+  $('amSocGoogle').onclick= () => socialLogin('google');
+  $('amSocYandex').onclick= () => socialLogin('yandex');
+  $('amLoginPass').onkeydown = e => { if (e.key==='Enter') doLogin(); };
+  $('afishiAuthModal').onclick = e => { if (e.target === $('afishiAuthModal')) closeAuth(); };
+
+  // ── AUTH LOGIC ────────────────────────────────────────────────
+  function getAccounts() { try { return JSON.parse(localStorage.getItem('afishi_accounts')||'[]'); } catch(e){return[];} }
+  function saveAccounts(a){ try { localStorage.setItem('afishi_accounts',JSON.stringify(a)); } catch(e){} }
+
+  function showMsg(type, msg) {
+    const err = $('amErr'), ok = $('amOk');
+    if (type==='err'){ err.textContent=msg; err.style.display='block'; ok.style.display='none'; }
+    else             { ok.textContent=msg;  ok.style.display='block'; err.style.display='none'; }
+    setTimeout(()=>{ err.style.display='none'; ok.style.display='none'; }, 4000);
+  }
+
+  let _afterLoginCb = null;
+  function closeAuth() {
+    $('afishiAuthModal').classList.remove('open');
+    _afterLoginCb = null;
+  }
+  function showTab(tab) {
+    ['Login','Reg'].forEach(t => {
+      $('amTab'+t).classList.toggle('active', t.toLowerCase()===tab);
+      $('amPane'+t).classList.toggle('active', t.toLowerCase()===tab);
+    });
+    $('amErr').style.display='none'; $('amOk').style.display='none';
+  }
+  function _login(user) {
+    _user = user;
+    try { localStorage.setItem(LS_USER, JSON.stringify(user)); } catch(e){}
+    closeAuth();
+    renderUserBtn();
+    showToast('👋 Добро пожаловать, ' + user.name + '!');
+    if (typeof _afterLoginCb === 'function') { _afterLoginCb(); _afterLoginCb = null; }
+  }
+  function doLogin() {
+    const email = $('amLoginEmail').value.trim().toLowerCase();
+    const pass  = $('amLoginPass').value;
+    if (!email||!pass) return showMsg('err','Введите email и пароль');
+    const found = getAccounts().find(a => a.email===email && a.pass===pass);
+    if (!found) return showMsg('err','Неверный email или пароль');
+    _login(found);
+  }
+  function doRegister() {
+    const name  = $('amRegName').value.trim();
+    const email = $('amRegEmail').value.trim().toLowerCase();
+    const pass  = $('amRegPass').value;
+    const city  = $('amRegCity').value.trim() || 'Москва';
+    if (!name)  return showMsg('err','Укажите имя');
+    if (!email) return showMsg('err','Укажите email');
+    if (!pass||pass.length<6) return showMsg('err','Пароль — минимум 6 символов');
+    const accounts = getAccounts();
+    if (accounts.find(a=>a.email===email)) return showMsg('err','Email уже зарегистрирован');
+    const user = { name, email, pass, city, joined: new Date().toISOString() };
+    accounts.push(user); saveAccounts(accounts);
+    showMsg('ok','Аккаунт создан! Добро пожаловать, '+name+'!');
+    setTimeout(()=>_login(user), 800);
+  }
+  function socialLogin(provider) {
+    const map = { vk:['ВК Пользователь','vk@demo.ru'], google:['Google Пользователь','google@demo.ru'], yandex:['Яндекс Пользователь','yandex@demo.ru'] };
+    const [name,email] = map[provider];
+    const accounts = getAccounts();
+    let user = accounts.find(a=>a.email===email);
+    if (!user) { user={name,email,pass:'',city:'Москва',provider,joined:new Date().toISOString()}; accounts.push(user); saveAccounts(accounts); }
+    _login(user);
+  }
+
+  // ── USER BUTTON ───────────────────────────────────────────────
+  function renderUserBtn() {
+    const topbar = document.querySelector('.topbar-inner > div:first-child') ||
+                   document.querySelector('.topbar-inner');
+    if (!topbar) return;
+    let ub = document.getElementById('afishiUserBtn');
+    if (!ub) {
+      ub = document.createElement('div');
+      ub.id = 'afishiUserBtn';
+      ub.style.cssText = 'margin-left:12px;display:inline-block;';
+      topbar.appendChild(ub);
+    }
+    if (_user) {
+      const initials = _user.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+      ub.innerHTML = `<div class="user-btn" id="afishiUBInner" title="${esc(_user.name)}">
+        <div class="user-avatar" style="background:${avColor(_user.name)};">${initials}</div>
+        <span style="color:#fff;">${esc(_user.name.split(' ')[0])}</span>
+        <span style="color:#666;font-size:9px;">▾</span></div>`;
+      document.getElementById('afishiUBInner').onclick = openUserMenu;
+    } else {
+      ub.innerHTML = `<div class="user-btn" id="afishiUBInner">
+        <span style="font-size:14px;">👤</span><span>Войти</span></div>`;
+      document.getElementById('afishiUBInner').onclick = () => openAuth();
+    }
+  }
+  function openUserMenu() {
+    if (!_user) return openAuth();
+    if (confirm(`Аккаунт: ${_user.name}\nEmail: ${_user.email}\n\nВыйти?`)) {
+      _user=null; localStorage.removeItem(LS_USER); renderUserBtn();
+      showToast('👋 Вы вышли из аккаунта');
+    }
+  }
+
+  // ── TRAILER RENDERER ──────────────────────────────────────────
+  function renderTrailerPane(containerId, ytId, title) {
+    const el = document.getElementById(containerId);
+    if (!el || !ytId) return;
+    el.innerHTML = `
+      <div class="yt-pane">
+        <div style="font-size:13px;color:#888;margin-bottom:12px;">
+          Официальный трейлер — <strong>${esc(title)}</strong>
+        </div>
+        <div class="yt-wrap" data-ytid="${esc(ytId)}">
+          <div class="yt-thumb"><img src="https://img.youtube.com/vi/${esc(ytId)}/maxresdefault.jpg"
+            onerror="this.src='https://img.youtube.com/vi/${esc(ytId)}/hqdefault.jpg'" alt="Трейлер"></div>
+          <div class="yt-play"><div class="yt-play-btn">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white" style="margin-left:4px"><path d="M8 5v14l11-7z"/></svg>
+          </div></div>
+        </div>
+        <div class="yt-info-row">
+          <div class="yt-yt-logo">
+            <svg viewBox="0 0 20 14" width="16" height="11" fill="white"><path d="M19.5 2.2C19.3 1.4 18.6.7 17.8.5 16.2 0 10 0 10 0S3.8 0 2.2.5C1.4.7.7 1.4.5 2.2 0 3.8 0 7 0 7s0 3.2.5 4.8c.2.8.9 1.5 1.7 1.7C3.8 14 10 14 10 14s6.2 0 7.8-.5c.8-.2 1.5-.9 1.7-1.7C20 10.2 20 7 20 7s0-3.2-.5-4.8z"/>
+            <polygon fill="white" points="8,10 13,7 8,4"/></svg>
+          </div>
+          <span>Трейлер загружается с YouTube. Нажмите ▶ для просмотра.</span>
+          <a href="https://www.youtube.com/watch?v=${esc(ytId)}" target="_blank"
+             style="margin-left:auto;color:#c8102e;font-weight:700;font-size:12px;white-space:nowrap;">YouTube →</a>
+        </div>
+      </div>`;
+    // Click on wrapper plays iframe
+    el.querySelector('.yt-wrap').addEventListener('click', function() {
+      const id = this.dataset.ytid;
+      this.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1"
+        frameborder="0" allowfullscreen allow="autoplay; encrypted-media"
+        style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+      this.style.cursor = 'default';
+    });
+  }
+
+  // ── REVIEW PANE ───────────────────────────────────────────────
+  // Context stored in DOM element, events delegated — no containerId in onclick
+  function renderReviewPane(containerId, pageId, itemId, itemTitle) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    // Store context as data attrs on container
+    el.dataset.rvPage  = pageId;
+    el.dataset.rvItem  = itemId;
+    el.dataset.rvTitle = itemTitle || '';
+    _buildReviewPane(el, 'new');
+  }
+
+  function _buildReviewPane(el, sort) {
+    const pageId   = el.dataset.rvPage;
+    const itemId   = el.dataset.rvItem;
+    const itemTitle= el.dataset.rvTitle;
+    const revs     = rvGet(pageId, itemId).map(function(r, idx) {
+      // Normalize old reviews that may lack .id
+      if (!r.id) r.id = 'r_legacy_' + idx + '_' + (r.date || idx);
+      return r;
+    });
+    sort = sort || 'new';
+
+    // ── Summary block ────────────────────────────────────────────
+    let summaryHtml = '';
+    if (revs.length) {
+      const avg    = revs.reduce((s,r)=>s+r.score,0) / revs.length;
+      const maxCnt = Math.max(...Array.from({length:10},(_,i)=>revs.filter(r=>r.score===10-i).length), 1);
+      const col    = avg>=8?'#2e7d32':avg>=6?'#f57f17':'#c62828';
+      const lbl    = avg>=9?'Шедевр':avg>=8?'Отлично':avg>=7?'Хорошо':avg>=6?'Нормально':'Неоднозначно';
+      const recPct = Math.round(revs.filter(r=>r.score>=8).length/revs.length*100);
+      summaryHtml = `
+        <div class="rv-summary">
+          <div style="text-align:center;min-width:88px;flex-shrink:0;">
+            <div class="rv-avg-num" style="color:${col};">${avg.toFixed(1)}</div>
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">из 10</div>
+            <div style="color:#f5c518;font-size:14px;margin-bottom:4px;">${'★'.repeat(Math.round(avg/2))}${'☆'.repeat(5-Math.round(avg/2))}</div>
+            <div style="font-size:12px;font-weight:700;color:${col};">${lbl}</div>
+            <div style="font-size:11px;color:#aaa;margin-top:3px;">${revs.length} ${plural(revs.length,['отзыв','отзыва','отзывов'])}</div>
+          </div>
+          <div class="rv-bars">
+            ${Array.from({length:10},(_,i)=>{const n=10-i,cnt=revs.filter(r=>r.score===n).length;return`
+              <div class="rv-bar-row">
+                <span style="font-size:11px;font-weight:700;color:#666;width:12px;text-align:right;">${n}</span>
+                <span style="font-size:10px;color:#f5c518;">★</span>
+                <div class="rv-bar-track"><div class="rv-bar-fill" style="width:${Math.round(cnt/maxCnt*100)}%;background:${n>=8?'#f5c518':n>=6?'#ff9800':'#c8102e'};"></div></div>
+                <span style="font-size:11px;color:#aaa;width:14px;text-align:right;">${cnt}</span>
+              </div>`;}).join('')}
+          </div>
+          <div style="min-width:110px;">
+            <div style="background:#e8f5e9;border-radius:6px;padding:10px;text-align:center;margin-bottom:8px;">
+              <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:#2e7d32;">${recPct}%</div>
+              <div style="font-size:11px;color:#4caf50;">рекомендуют</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Auth gate or form ────────────────────────────────────────
+    let formHtml = '';
+    if (!_user) {
+      formHtml = `
+        <div class="rv-gate">
+          <span style="font-size:22px;">🔒</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Войдите, чтобы оставить отзыв</div>
+            <div style="font-size:12px;color:#666;">Только для зарегистрированных пользователей</div>
+          </div>
+          <button class="rv-gate-btn rv-open-auth">Войти / Регистрация</button>
+        </div>`;
+    } else {
+      formHtml = `
+        <div class="rv-form-box">
+          <div class="rv-form-title">✍️ Ваш отзыв
+            <span style="font-family:'PT Sans',sans-serif;font-size:12px;font-weight:400;text-transform:none;color:#aaa;margin-left:6px;">
+              — вы вошли как <strong style="color:#333;">${esc(_user.name)}</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <div class="rv-star-row rv-stars" data-val="0">
+              ${Array.from({length:10},(_,i)=>`<span class="rv-star" data-v="${i+1}">★</span>`).join('')}
+            </div>
+            <span class="rv-star-lbl"></span>
+          </div>
+          <div class="rv-fields">
+            <div>
+              <div class="rv-field-lbl">Заголовок</div>
+              <input class="rv-input rv-title-inp" type="text" placeholder="Кратко о впечатлении">
+            </div>
+            <div>
+              <div class="rv-field-lbl">Автор</div>
+              <input class="rv-input" type="text" value="${esc(_user.name)}" readonly style="background:#fafafa;color:#666;">
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <div class="rv-field-lbl">Текст отзыва <span style="color:#c8102e;">*</span></div>
+              <span class="rv-char-count" style="font-size:11px;color:#aaa;">0 / 2000</span>
+            </div>
+            <textarea class="rv-textarea rv-text-inp" maxlength="2000" rows="4"
+              placeholder="Поделитесь впечатлениями..."></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+            <button class="rv-submit-btn rv-do-submit">Опубликовать</button>
+            <div class="rv-msg"></div>
+          </div>
+        </div>`;
+    }
+
+    // ── Reviews list ─────────────────────────────────────────────
+    let listHtml = '';
+    if (revs.length) {
+      let sorted = [...revs];
+      if (sort==='top')     sorted.sort((a,b)=>b.score-a.score);
+      else if (sort==='helpful') sorted.sort((a,b)=>(b.helpful||0)-(a.helpful||0));
+      listHtml = `
+        <div class="rv-sort-row">
+          <div class="rv-sort-title">Отзывы <span style="font-weight:400;font-size:12px;text-transform:none;color:#aaa;">(${revs.length})</span></div>
+          <select class="rv-sort-sel rv-sort-change">
+            <option value="new"${sort==='new'?' selected':''}>Сначала новые</option>
+            <option value="top"${sort==='top'?' selected':''}>По оценке</option>
+            <option value="helpful"${sort==='helpful'?' selected':''}>Полезные</option>
+          </select>
+        </div>
+        ${sorted.map(r => {
+          const initials=(r.name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+          const sBg=r.score>=8?'#e8f5e9':r.score>=6?'#fff8e1':'#fce4ec';
+          const sCol=r.score>=8?'#2e7d32':r.score>=6?'#f57f17':'#c62828';
+          return `<div class="rv-card">
+            <div class="rv-card-head">
+              <div class="rv-avt" style="background:${avColor(r.name)};">${initials}</div>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <strong style="font-size:13px;">${esc(r.name)}</strong>
+                  ${r.title?`<em style="font-size:12px;color:#666;">"${esc(r.title)}"</em>`:''}
+                  <span style="background:${sBg};color:${sCol};font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">${SCORE_LABELS[r.score]} ${SCORE_EMOJI[r.score]}</span>
+                </div>
+                <div style="font-size:11px;color:#aaa;margin-top:1px;">${fmtD(r.date)}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:${sCol};line-height:1;">${r.score}</div>
+                <div style="font-size:9px;color:#aaa;">из 10</div>
+              </div>
+            </div>
+            <div class="rv-card-stars">${'★'.repeat(r.score)}${'☆'.repeat(10-r.score)}</div>
+            <div class="rv-card-text">${esc(r.text)}</div>
+            <div class="rv-card-foot">
+              <span style="font-size:12px;color:#aaa;">Полезный?</span>
+              <button class="rv-helpful-btn${r._voted?' voted':''}" data-rid="${r.id||''}">
+                👍 <span class="rv-hlp-cnt">${r.helpful||0}</span>
+              </button>
+              <button class="rv-report-btn" data-rid="${r.id||''}" 
+                style="margin-left:auto;background:none;border:none;font-size:11px;color:#ccc;cursor:pointer;">⚑ Жалоба</button>
+            </div>
+          </div>`;
+        }).join('')}`;
+    } else {
+      listHtml = `<div class="rv-empty">
+        <div style="font-size:36px;margin-bottom:8px;">💬</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:15px;margin-bottom:5px;">Отзывов пока нет</div>
+        <div style="font-size:12px;">Станьте первым!</div>
+      </div>`;
+    }
+
+    el.innerHTML = `<div class="rv-panel">${summaryHtml}${formHtml}${listHtml}</div>`;
+
+    // ── Event delegation on the container ────────────────────────
+    el.addEventListener('click', function handler(ev) {
+      const t = ev.target;
+      // Auth gate button
+      if (t.classList.contains('rv-open-auth')) {
+        openAuth(() => _buildReviewPane(el, sort));
+        return;
+      }
+      // Submit button
+      if (t.classList.contains('rv-do-submit') || t.closest('.rv-do-submit')) {
+        _doSubmit(el); return;
+      }
+      // Helpful button
+      const hlp = t.closest('.rv-helpful-btn');
+      if (hlp) { _voteHelpful(el, hlp); return; }
+      // Report
+      if (t.classList.contains('rv-report-btn')) {
+        alert('Жалоба отправлена. Модераторы рассмотрят её.'); return;
+      }
+      // Star click
+      if (t.classList.contains('rv-star') && t.closest('.rv-stars')) {
+        const n = parseInt(t.dataset.v);
+        const row = t.closest('.rv-stars');
+        row.dataset.val = n;
+        row.querySelectorAll('.rv-star').forEach((s,i)=>{
+          s.classList.toggle('lit', i<n);
+        });
+        const lbl = row.nextElementSibling;
+        if (lbl&&lbl.classList.contains('rv-star-lbl')) {
+          lbl.textContent = n+'/10 — '+SCORE_LABELS[n]+' '+SCORE_EMOJI[n];
+          lbl.style.color = n>=8?'#2e7d32':n>=6?'#f57f17':'#c62828';
+        }
+        return;
+      }
+    }, {once:false});
+
+    // Star hover
+    el.querySelectorAll('.rv-star').forEach(s => {
+      s.addEventListener('mouseover', function() {
+        const n = parseInt(this.dataset.v);
+        this.closest('.rv-stars').querySelectorAll('.rv-star').forEach((x,i)=>x.classList.toggle('lit',i<n));
+      });
+      s.addEventListener('mouseleave', function() {
+        const row = this.closest('.rv-stars');
+        const cur = parseInt(row.dataset.val||0);
+        row.querySelectorAll('.rv-star').forEach((x,i)=>x.classList.toggle('lit',i<cur));
+      });
+    });
+
+    // Sort change
+    const sortSel = el.querySelector('.rv-sort-change');
+    if (sortSel) sortSel.addEventListener('change', function() {
+      _buildReviewPane(el, this.value);
+    });
+
+    // Char counter
+    const textarea = el.querySelector('.rv-text-inp');
+    const counter  = el.querySelector('.rv-char-count');
+    if (textarea && counter) {
+      textarea.addEventListener('input', function() {
+        counter.textContent = this.value.length + ' / 2000';
+      });
+    }
+
+    // Update badge
+    _updateBadge(pageId, itemId, revs.length);
+  }
+
+  function _doSubmit(el) {
+    if (!_user) return openAuth(() => _buildReviewPane(el));
+    const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
+    const row    = el.querySelector('.rv-stars');
+    const score  = parseInt(row?.dataset.val || '0');
+    const title  = el.querySelector('.rv-title-inp')?.value.trim() || '';
+    const text   = el.querySelector('.rv-text-inp')?.value.trim()  || '';
+    const msgEl  = el.querySelector('.rv-msg');
+
+    function showMsg(t, ok) {
+      if (!msgEl) return;
+      msgEl.textContent = t;
+      msgEl.style.cssText = `display:block;background:${ok?'#e8f5e9':'#ffebee'};border:1px solid ${ok?'#a5d6a7':'#ffcdd2'};color:${ok?'#2e7d32':'#c62828'};font-size:13px;font-weight:600;padding:8px 13px;border-radius:4px;`;
+      if (ok) setTimeout(()=>{ msgEl.style.display='none'; }, 4000);
+    }
+
+    if (!score)           return showMsg('⚠️ Поставьте оценку от 1 до 10', false);
+    if (text.length < 15) return showMsg('⚠️ Напишите хотя бы пару предложений', false);
+
+    rvAdd(pageId, itemId, {
+      id: 'r_' + Date.now(),
+      name: _user.name, score, title, text,
+      date: new Date().toISOString(),
+      helpful: 0, _voted: false,
+    });
+    _buildReviewPane(el, 'new');
+    showToast('✓ Отзыв опубликован!');
+  }
+
+  function _voteHelpful(el, btn) {
+    const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
+    const rid    = btn.dataset.rid;
+    const db     = rvLoad(), k = rvKey(pageId, itemId);
+    if (!db[k]) return;
+    const r = db[k].find(x=>x.id===rid); if (!r) return;
+    r._voted ? r.helpful-- : r.helpful++;
+    r._voted = !r._voted;
+    rvSave(db);
+    btn.classList.toggle('voted', r._voted);
+    const cnt = btn.querySelector('.rv-hlp-cnt');
+    if (cnt) cnt.textContent = r.helpful;
+  }
+
+  function _updateBadge(pageId, itemId, count) {
+    // Try multiple badge ID conventions used across pages
+    const ids = [
+      `rvBadge_${pageId}_${itemId}`,
+      `exRevBadge`,
+      `revBadge`,
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = count || '';
+      if (count > 0) { el.style.background='#c8102e'; el.style.color='#fff'; }
+    });
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────
+  let _tt = null;
+  function showToast(msg) {
+    let el = document.getElementById('afishiToast');
+    if (!el) {
+      el = document.createElement('div'); el.id='afishiToast';
+      el.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    requestAnimationFrame(()=>{ el.style.opacity='1'; el.style.transform='translateX(-50%) translateY(0)'; });
+    clearTimeout(_tt);
+    _tt = setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }, 3000);
+  }
+
+  function openAuth(cb) {
+    _afterLoginCb = cb || null;
+    $('afishiAuthModal').classList.add('open');
+    showTab('login');
+  }
+
+  // ── PUBLIC API ────────────────────────────────────────────────
+  window.Afishi = {
+    openAuth,
+    closeAuth,
+    isLoggedIn: () => !!_user,
+    getUser:    () => _user,
+    renderTrailerPane,
+    renderReviewPane,
+    rvGet,
+    // legacy compat
+    loadYt(ytId, cid) {
+      const wrap = document.querySelector(`#${cid} .yt-wrap`);
+      if (!wrap) return;
+      wrap.innerHTML=`<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+    },
+    // expose for pages that need old submitReview guard
+    requireLogin(cb) { if (!_user) { openAuth(cb); return false; } return true; },
+  };
+
+  document.addEventListener('DOMContentLoaded', renderUserBtn);
+})();
+
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     GeoCity System v2 — afishi.ru
+     ═══════════════════════════════════════════════════ -->
+<script>
+(function(){'use strict';
+  var LS_SESSION='afishi_geo_session',LS_DB='afishi_geo_db',LS_CITY='afishi_city',LS_TTL='afishi_geo_ttl';
+  var KNOWN=['Москва','Санкт-Петербург','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Самара','Омск','Ростов-на-Дону','Уфа','Красноярск','Воронеж','Пермь','Волгоград','Краснодар','Саратов','Тюмень','Ижевск','Барнаул','Иркутск','Хабаровск','Ярославль','Владивосток','Томск','Оренбург','Кемерово','Астрахань','Набережные Челны','Пенза','Рязань','Липецк','Киров','Чебоксары','Калининград','Тула','Белгород','Сочи','Мурманск','Ставрополь'];
+  var GEN={'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Новосибирск':'Новосибирске','Казань':'Казани','Нижний Новгород':'Нижнем Новгороде','Краснодар':'Краснодаре','Волгоград':'Волгограде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке','Томск':'Томске','Барнаул':'Барнауле','Сочи':'Сочи','Тула':'Туле','Ставрополь':'Ставрополе','Калининград':'Калининграде'};
+
+  // AbortController helper — compatible with all browsers
+  
+
+  function norm(r){if(!r)return null;var l=r.toLowerCase();return KNOWN.find(function(c){return c.toLowerCase()===l;})||KNOWN.find(function(c){return l.includes(c.toLowerCase());})||(r.charAt(0).toUpperCase()+r.slice(1));}
+  function gen(city){return GEN[city]||city;}
+  function lsG(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+  function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function lsD(k){try{localStorage.removeItem(k);}catch(e){}}
+  function dbLoad(){return lsG(LS_DB)||{};}
+  function dbSave(db){lsS(LS_DB,db);}
+  function dbAdd(ip,d){if(!ip||!d.city)return;var db=dbLoad(),e=db[ip]||{ip:ip,visits:0};e.city=d.city;e.region=d.region||'';e.country=d.country||'';e.isp=d.isp||'';e.source=d.source;e.lastSeen=new Date().toISOString();e.visits=(e.visits||0)+1;db[ip]=e;dbSave(db);}
+  function dbLookup(ip){return ip?(dbLoad()[ip]||null):null;}
+  function cacheGet(){var d=lsG(LS_SESSION),t=localStorage.getItem(LS_TTL);if(!d)return null;if(t&&(Date.now()-parseInt(t))/86400000>7){lsD(LS_SESSION);return null;}return d;}
+  function cacheSet(d){lsS(LS_SESSION,d);localStorage.setItem(LS_TTL,String(Date.now()));}
+  function cacheClear(){lsD(LS_SESSION);lsD(LS_TTL);}
+
+  var _tt=null;
+  function toast(msg){
+    var el=document.getElementById('geoToast');
+    if(!el){el=document.createElement('div');el.id='geoToast';el.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;';document.body.appendChild(el);}
+    el.textContent=msg;
+    requestAnimationFrame(function(){el.style.opacity='1';el.style.transform='translateX(-50%) translateY(0)';});
+    clearTimeout(_tt);
+    _tt=setTimeout(function(){el.style.opacity='0';el.style.transform='translateX(-50%) translateY(20px)';},3000);
+  }
+
+  function applyUI(city,source){
+    var g=gen(city);
+    var lbl=document.getElementById('cityLabel');
+    if(lbl){lbl.textContent=city;lbl.style.color='#f5c518';setTimeout(function(){lbl.style.color='';},600);}
+    var dot=document.getElementById('cityDot');
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    document.querySelectorAll('.city-pill,[data-city]').forEach(function(p){
+      var v=p.dataset.city||p.textContent.trim();p.classList.toggle('active',v===city);
+    });
+    var hint=document.getElementById('cityHint');if(hint)hint.textContent=g;
+    if(typeof currentCity!=='undefined')window.currentCity=city;
+    localStorage.setItem(LS_CITY,city);
+    if(typeof window._onGeoCity==='function')window._onGeoCity(city,source);
+    if(typeof applyFilters==='function')setTimeout(applyFilters,0);
+    toast('\uD83D\uDCCD Ваш город: '+city);
+  }
+
+  function setCity(city,source){
+    source=source||'manual';
+    var ip=localStorage.getItem('_afishi_ip')||'manual';
+    var data={ip:ip,city:city,region:'',country:'Россия',isp:'',source:source};
+    cacheSet(data);
+    if(source==='manual')dbAdd(ip,data);
+    applyUI(city,source);
+  }
+
+  async function detect(){
+    if(window._pendingCity){var pc=window._pendingCity;window._pendingCity=null;setCity(pc,'manual');return;}
+    var dot=document.getElementById('cityDot');
+
+    // 1. Use cached geo data
+    var cached=cacheGet();
+    if(cached&&cached.city){applyUI(cached.city,'cache');return;}
+
+    // 2. Use last manually picked city
+    var last=localStorage.getItem(LS_CITY);
+    if(last){applyUI(last,'last-manual');if(dot){dot.style.background='#4caf50';dot.style.animation='';}return;}
+
+    // 3. Try geo APIs silently (blocked in some environments — OK)
+    if(dot){dot.style.background='#f5c518';dot.style.animation='pulse 1s infinite';}
+    var found=false;
+
+    try{
+      var r1=await Promise.race([fetch('https://ip-api.com/json/?fields=status,city,regionName,country,query,isp,timezone&lang=ru'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d1=await r1.json();
+      if(d1.status==='success'&&d1.city){var c1=norm(d1.city);if(c1){cacheSave({ip:d1.query,city:c1,region:d1.regionName,country:d1.country,isp:d1.isp,timezone:d1.timezone,source:'ip-api'});applyUI(c1,'ip-api');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    try{
+      var r2=await Promise.race([fetch('https://ipinfo.io/json'),new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},5000);})]);
+      var d2=await r2.json();
+      if(d2.city){var c2=norm(d2.city);if(c2){cacheSave({ip:d2.ip,city:c2,region:d2.region,country:d2.country,isp:d2.org,timezone:d2.timezone,source:'ipinfo'});applyUI(c2,'ipinfo');found=true;}}
+    }catch(e){}
+
+    if(found)return;
+
+    // 4. Silent default — no warning toast
+    if(dot){dot.style.background='#4caf50';dot.style.animation='';}
+    applyUI('Волгоград','default');
+  }
+
+  window.GeoCity={detect:detect,setCity:setCity,getCity:function(){return localStorage.getItem(LS_CITY)||null;},clearCache:cacheClear,getDB:dbLoad,clearDB:function(){dbSave({});},removeFromDB:function(ip){var db=dbLoad();delete db[ip];dbSave(db);}};
+  window.switchCity=function(city,btn){setCity(city,'manual');document.querySelectorAll('.city-pill').forEach(function(p){p.classList.remove('active');});if(btn)btn.classList.add('active');};
+  window.detectCity=function(){cacheClear();detect();};
+  window.toggleCityDropdown=function(){var dd=document.getElementById('cityDropdown');if(!dd)return;var open=dd.classList.toggle('open');var sb=document.getElementById('citySelectBtn');if(sb)sb.classList.toggle('open',open);};
+  window.filterManualCities=function(q){var list=document.getElementById('manualCityList');if(!list)return;var f=q?KNOWN.filter(function(c){return c.toLowerCase().includes(q.toLowerCase());}):KNOWN;list.innerHTML=f.map(function(c){return'<div onclick="switchCity(\''+c+'\');var m=document.getElementById(\'manualModal\');if(m)m.style.display=\'none\'" style="padding:7px 10px;border-radius:3px;cursor:pointer;font-size:13px;" onmouseover="this.style.background=\'#fdf0f0\';this.style.color=\'var(--red)\'" onmouseout="this.style.background=\'\';this.style.color=\'\'">'+c+'</div>';}).join('');};
+  window.closeManualModal=function(){var m=document.getElementById('manualModal');if(m)m.style.display='none';};
+
+  document.addEventListener('click',function(e){
+    var dd=document.getElementById('cityDropdown'),btn=document.getElementById('citySelectBtn');
+    if(dd&&btn&&!btn.contains(e.target)&&!dd.contains(e.target)){dd.classList.remove('open');btn.classList.remove('open');}
+  });
+  document.addEventListener('DOMContentLoaded',detect);
+})();
+</script>
+
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+
+<footer>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+    </div>
+  </div>
+
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Колонка 1: Логотип + описание + соцсети -->
+      <div>
+        <div class="footer-logo">Афиши<span>.ру</span></div>
+        <div class="footer-desc">
+          Крупнейший агрегатор событий и мероприятий в России.
+          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
+          Основан в 2002 году.
+        </div>
+        <div class="footer-socials">
+          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
+          </a>
+          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
+          </a>
+          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
+          </a>
+          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Колонка 2: Разделы -->
+      <div>
+        <div class="footer-col-title">Разделы</div>
+        <div class="footer-links">
+          <a href="concerts.html">🎸 Концерты</a>
+          <a href="theater.html">🎭 Театр и балет</a>
+          <a href="cinema.html">🎬 Кино</a>
+          <a href="exhibits.html">🖼️ Выставки</a>
+          <a href="kids.html">🧸 Детям</a>
+          <a href="articles.html">📝 Статьи</a>
+          <a href="film-database.html">📽️ База фильмов</a>
+          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
+            🏛 Пушкинская карта
+          </a>
+        </div>
+      </div>
+
+      <!-- Колонка 3: Площадки Волгограда -->
+      <div>
+        <div class="footer-col-title">Площадки</div>
+        <div class="footer-links" id="footerVenuesList">
+          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
+          <a href="venue-arena.html">Стадион Волгоград Арена</a>
+          <a href="venue-dom-ofitserov-volgograd.html">Дом Офицеров</a>
+          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
+          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
+          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
+          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
+        </div>
+      </div>
+
+      <!-- Города перенесены в шапку сайта -->
+
+      <!-- Колонка 5: Компания -->
+      <div>
+        <div class="footer-col-title">Компания</div>
+        <div class="footer-links">
+          <a href="about.html">О проекте</a>
+          <a href="advertise.html">Реклама на сайте</a>
+          <a href="event-add.html">Добавить событие</a>
+          <a href="venue-add.html">Добавить площадку</a>
+          <a href="loyalty.html">АфишиПлюс ⭐</a>
+          <a href="partners.html">Партнёрам</a>
+          <a href="jobs.html">Вакансии</a>
+          <a href="admin-info.html">Администраторам</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="footer-divider">
+
+  <div class="footer-bottom">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span>© 2002–2026 afishi.ru</span>
+      <span class="footer-badge">🌆 Волгоград</span>
+      <span class="footer-badge">🔒 18+</span>
+    </div>
+    <div class="footer-bottom-links">
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="sitemap.html">Карта сайта</a>
+      <a href="admin-info.html">Администраторам</a>
+    </div>
+  </div>
+
+
+<!-- ── Кнопка «Поделиться» ─────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto 28px;padding:0 20px;">
+  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;">
+    <div style="margin-bottom:14px;">
+      <div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;">📢 Поделитесь афишей с друзьями</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);">Расскажите о событиях своего города</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="shareToVK()" style="display:flex;align-items:center;gap:6px;background:#4a76a8;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504C19.224 13.376 19 12.763 20.014 11.276c1.109-1.613 3.244-4.145 1.256-4.145h-3.983c-.61 0-.859.407-.859.407s-1.19 2.516-2.86 4.152c-.699.699-1.012.922-1.394.922-.194 0-.437-.223-.437-.931V7.547c0-.593-.166-.933-.644-.933H7.999c-.374 0-.594.271-.594.531 0 .533.821.677.906 2.183v3.089c0 .75-.136.886-.432.886-.79 0-2.712-2.448-3.855-5.25-.22-.601-.443-.836-1.054-.836H.987C.421 7.117 0 7.366 0 7.986c0 .624 1.812 5.109 5.686 8.984 2.979 2.979 6.951 4.024 9.476 4.024z"/></svg>
+        ВКонтакте
+      </button>
+      <button onclick="shareToOK()" style="display:flex;align-items:center;gap:6px;background:#ee8208;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 6a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm5.8 11.2c-.4.5-1.2.7-1.8.3l-2.1-1.3c-.6.2-1.2.3-1.9.3s-1.3-.1-1.9-.3l-2.1 1.3c-.6.4-1.4.2-1.8-.3-.4-.5-.2-1.3.4-1.6l1.8-1.1c-.7-.6-1.2-1.4-1.5-2.3-.2-.6.2-1.3.9-1.4.6-.1 1.2.2 1.4.8.3.9 1.3 1.6 2.8 1.6s2.5-.7 2.8-1.6c.2-.6.8-.9 1.4-.8.6.1 1.1.7.9 1.4-.3.9-.8 1.7-1.5 2.3l1.8 1.1c.6.3.8 1.1.4 1.6z"/></svg>
+        ОК
+      </button>
+      <button onclick="shareToTelegram()" style="display:flex;align-items:center;gap:6px;background:#0088cc;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+        Telegram
+      </button>
+      <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:6px;background:#25d366;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button onclick="shareToDzen()" style="display:flex;align-items:center;gap:6px;background:#ff6600;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor"><path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm23.3 53.3c-10.1 0-18.3 3.4-23.3 9.7-5-6.3-13.2-9.7-23.3-9.7-1.7 0-3.3.1-3.3-3.3 0-3.4 1.6-3.3 3.3-3.3 10.1 0 18.3-3.4 23.3-9.7 5 6.3 13.2 9.7 23.3 9.7 1.7 0 3.3-.1 3.3 3.3 0 3.4-1.6 3.3-3.3 3.3z"/></svg>
+        Дзен
+      </button>
+      <button onclick="shareToRutube()" style="display:flex;align-items:center;gap:6px;background:#060a11;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4.8 13.2l-6 3.6c-.2.1-.4.2-.6.2-.2 0-.4-.1-.6-.2-.4-.2-.6-.6-.6-1V8.4c0-.4.2-.8.6-1 .2-.1.4-.1.6-.2.2 0 .4.1.6.2l6 3.6c.4.2.6.6.6 1s-.2.8-.6 1.2z"/></svg>
+        Rutube
+      </button>
+      <button onclick="shareToYandex()" style="display:flex;align-items:center;gap:6px;background:#fc3f1d;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm-1.65 18.923h-2.113V9.596H9.587C9.1 11.42 8.625 13.007 8.225 14.08c-.722 1.927-1.517 2.594-2.816 2.594-.45 0-.857-.077-1.036-.174l.18-1.71c.167.064.386.115.578.115.5 0 .87-.424 1.25-1.58.6-1.778 1.35-4.665 2.08-7.93h6.573v13.528z"/></svg>
+        Яндекс
+      </button>
+      <button onclick="shareToMAX()" style="display:flex;align-items:center;gap:6px;background:#6c17c9;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
+        MAX
+      </button>
+      <button onclick="copyPageLink(this)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Скопировать</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- ── Партнёры: билетные операторы ─────────────────────── -->
+  <div style="border-top:1px solid rgba(255,255,255,.08);padding:20px 24px 0;margin-top:4px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;">Билеты</span>
+      <a href="https://vlg.kassir.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner" 
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassir.ru
+      </a>
+      <a href="https://kassy.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassy.ru
+      </a>
+      <a href="https://qtickets.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        qtickets.ru
+      </a>
+    </div>
+  </div>
+<!-- share functions see below -->
+
+</footer>
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+</body>
+</html>

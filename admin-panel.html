@@ -1,0 +1,2827 @@
+<!DOC
+// Автоочистка устаревших/неверных данных из localStorage
+(function() {
+  var BLACKLIST_TITLES = ['scorpions', '50th anniversary', 'каста — живой', 'arena волгоград'];
+  var BLACKLIST_VENUES = ['arena волгоград', 'le.kz'];
+  var WRONG_ADDR = {'просп. Ленина, 76, Волгоград': 'просп. Ленина, 76, Волгоград'};
+  var CORRECT_VENUE = {'Стадион Волгоград Арена': 'Стадион Волгоград Арена'};
+
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) | '[]');
+      var before = arr.length;
+      arr = arr.filter(function(ev) {
+        var t = (ev.title | '').toLowerCase();
+        var v = (ev.venue | '').toLowerCase();
+        return !BLACKLIST_TITLES.some(function(b){ return t.includes(b); }) &&
+               !BLACKLIST_VENUES.some(function(b){ return v.includes(b); });
+      });
+      // Исправить адреса и названия площадок
+      arr = arr.map(function(ev) {
+        if (WRONG_ADDR[ev.addr]) ev.addr = WRONG_ADDR[ev.addr];
+        if (CORRECT_VENUE[ev.venue]) ev.venue = CORRECT_VENUE[ev.venue];
+        if ((ev.venue|'').toLowerCase().includes('arena волгоград')) ev.venue = 'Стадион Волгоград Арена';
+        if ((ev.addr|'').includes('Маршала Чуйкова, 5а')) ev.addr = 'просп. Ленина, 76, Волгоград';
+        return ev;
+      });
+      if (arr.length !== before) localStorage.setItem(key, JSON.stringify(arr));
+      else if (JSON.stringify(arr) !== JSON.stringify(JSON.parse(localStorage.getItem(key)|'[]')))
+        localStorage.setItem(key, JSON.stringify(arr));
+    } catch(e) {}
+  });
+  // Исправить Экспоцентр адрес
+  try {
+    var pv = JSON.parse(localStorage.getItem('afishi_pending_venues') | '[]');
+    pv = pv.map(function(v) {
+      if ((v.name|'').toLowerCase().includes('экспо') && v.addr && !v.addr.includes('46А'))
+        v.addr = 'пр. Ленина, 46А, Волгоград';
+      return v;
+    });
+    localStorage.setItem('afishi_pending_venues', JSON.stringify(pv));
+  } catch(e) {}
+})();
+TYPE html>
+<html lang="ru">
+<head>
+<script>
+var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
+
+window.switchCity = function(city) {
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+};
+
+// ── localStorage helpers ──────────────────────────────────────────
+function getLS(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; }
+}
+function setLS(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+function removeLS(key) {
+  try { localStorage.removeItem(key); } catch(e) {}
+}
+</script>
+
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Панель управления | Афиши.ру Admin</title>
+<link rel="canonical" href="https://afishi.ru/admin-panel.html">
+<meta name="description" content="Административная панель управления порталом Афиши.ру. Только для администраторов.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>/* ── Header ──────────────────────────────── */
+header {
+  background: var(--white);
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 28px; height: 64px;
+}
+.header-inner { gap: 12px; }
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.logo { font-size: 24px; }
+.logo{font-size:18px !important;}
+nav { display: flex; gap: 0; flex: 1; }
+nav a {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 0 13px; height: 64px;
+  display: flex; align-items: center;
+  color: var(--mid);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
+nav a { padding: 0 8px; font-size: 12px; }
+.city-strip-inner{gap:6px !important;}
+.city-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.city-strip-inner::-webkit-scrollbar { display: none; }
+.city-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-pill {
+  padding: 6px 16px; border: 1.5px solid var(--border);
+  border-radius: 20px; font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--white); color: var(--mid); transition: all .15s;
+}
+.city-pill:hover { border-color: var(--red); color: var(--red); }
+.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
+.city-pill{font-size:11px !important;padding:4px 10px !important;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#c8102e;--dark:#111;--gold:#d4a017;--bg:#f4f2ee;
+  --border:#e8e4de;--mid:#666;--light:#aaa;
+}
+body{font-family:'PT Sans',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh;}
+/* ── Шапка ── */
+.hi{max-width:1400px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:20px;height:56px;}
+
+.logo span{color:var(--gold);}
+.admin-badge{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;}
+.hi-
+.hi-
+.hi-
+/* ── Admin layout grid ── */
+.admin-layout{display:none;grid-template-columns:220px 1fr;min-height:calc(100vh - 100px);}
+.admin-
+.admin-content{background:#f4f2ee;padding:24px;min-height:100%;overflow-y:auto;}
+.nav-group-label{font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;padding:12px 16px 4px;}
+.btn-admin{background:var(--gold);color:#111;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:6px 14px;border-radius:4px;text-decoration:none;}
+/* ── Layout ── */
+.admin-wrap{max-width:1400px;margin:0 auto;padding:20px;display:grid;grid-template-columns:220px 1fr;gap:20px;}
+@media(max-width:768px){.admin-wrap{grid-template-columns:1fr;}}
+/* ── Сайдбар ── */
+.sidebar{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px 0;height:fit-content;position:sticky;top:76px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:14px;font-weight:600;color:var(--dark);cursor:pointer;border-radius:0;transition:background .15s;text-decoration:none;}
+.nav-item:hover{background:#f9f7f4;}
+.nav-item.active{background:#fff5f5;color:var(--red);border-left:3px solid var(--red);}
+.nav-item .ni-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.nav-sep{height:1px;background:var(--border);margin:8px 0;}
+/* ── Панели ── */
+.panel-area{display:flex;flex-direction:column;gap:16px;}
+.panel-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;display:none;}
+.panel-card.active{display:block;}
+.panel-card[style*="display: block"]{display:block !important;}
+.panel-head{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+.panel-sub{font-size:13px;color:var(--mid);margin-bottom:16px;}
+/* ── Табы ── */
+.item-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.itab{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.3px;transition:all .15s;}
+.itab.active{background:var(--red);border-color:var(--red);color:#fff;}
+.itab:hover:not(.active){background:#f9f7f4;}
+.tb{display:inline-block;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;}
+/* ── Карточки ── */
+.item-list{display:flex;flex-direction:column;gap:10px;}
+.item-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;transition:box-shadow .15s;}
+.item-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.ic-icon{font-size:28px;flex-shrink:0;}
+.ic-body{flex:1;min-width:0;}
+.ic-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);margin-bottom:2px;}
+.ic-title{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;margin-bottom:2px;}
+.ic-meta{font-size:12px;color:var(--mid);}
+.ic-status{flex-shrink:0;}
+.s-pending{color:#f59e0b;background:#fffbeb;border:1px solid #fcd34d;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;}
+.s-approved{color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;}
+.s-rejected{color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;}
+.ic-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.btn-approve{background:#059669;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:5px 12px;border:none;border-radius:4px;cursor:pointer;}
+.btn-reject{background:#dc2626;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:5px 12px;border:none;border-radius:4px;cursor:pointer;}
+.btn-edit{background:#f4f2ee;border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:5px 12px;border-radius:4px;cursor:pointer;}
+/* ── Пустое состояние ── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--mid);}
+.empty-state-icon{font-size:48px;margin-bottom:12px;}
+.empty-state-text{font-size:15px;}
+/* ── Dashboard ── */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;}
+.dash-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+.dash-num{font-family:'Oswald',sans-serif;font-size:32px;font-weight:700;color:var(--red);}
+.dash-lbl{font-size:12px;color:var(--mid);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+/* ── Модалы ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;align-items:flex-start;justify-content:center;padding:28px 16px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:560px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.modal-head{padding:16px 20px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;}
+.modal-head h2{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;flex:1;}
+.modal-head button{background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;padding:0 4px;}
+.modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:13px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:10px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;}
+.fg input,.fg textarea,.fg select{border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;outline:none;width:100%;box-sizing:border-box;}
+.fg input:focus,.fg textarea:focus{border-color:var(--red);}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-foot{padding:12px 20px 18px;border-top:1.5px solid var(--border);display:flex;gap:10px;}
+.modal-foot button{flex:1;padding:12px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;}
+/* ── Toast ── */
+.admin-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;z-index:9000;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+/* ── Фильтры ── */
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.filter-row select,.filter-row input{border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-family:'PT Sans',sans-serif;font-size:13px;background:#fff;outline:none;}
+.filter-row input{flex:1;min-width:180px;}
+/* ── Кнопки действий ── */
+#addEventFloatBtn,#addVenueFloatBtn{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:400;transition:transform .15s;}
+#addEventFloatBtn{background:var(--red);color:#fff;}
+#addVenueFloatBtn{background:#1a6c2e;color:#fff;bottom:94px;}
+#addEventFloatBtn:hover,#addVenueFloatBtn:hover{transform:scale(1.1);}
+/* ── Редактирование ── */
+.edit-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:3000;align-items:flex-start;justify-content:center;padding:28px 16px;overflow-y:auto;}
+.edit-modal-overlay.open{display:flex;}
+
+/* ═══════════════════════════════════════════════
+   МОБИЛЬНАЯ АДАПТАЦИЯ — afishi.ru
+   Breakpoints: 768px (tablet), 480px (phone)
+═══════════════════════════════════════════════ */
+
+/* ── Hamburger button ─────────────────────────── */
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px;
+  background: none;
+  border: none;
+  margin-left: auto;
+}
+.burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all .25s;
+}
+.burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile nav drawer ───────────────────────── */
+.mobile-
+.mobile-nav.open { pointer-events: all; }
+.mobile-nav-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.mobile-nav.open .mobile-nav-overlay { opacity: 1; }
+.mobile-nav-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  background: var(--dark, #1a1a1a);
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-nav.open .mobile-nav-drawer { transform: translateX(0); }
+.mobile-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.mobile-nav-logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+.mobile-nav-logo span { color: var(--red, #c8102e); }
+.mobile-nav-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.mobile-nav-links {
+  padding: 12px 0;
+  flex: 1;
+}
+.mobile-nav-links a {
+  display: block;
+  color: #ddd;
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 13px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  text-decoration: none;
+  transition: background .15s;
+}
+.mobile-nav-links a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.mobile-nav-links a.active { color: var(--gold, #c9a84c); }
+.mobile-nav-links a.highlight {
+  color: var(--gold, #c9a84c);
+  font-weight: 700;
+}
+.mobile-nav-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: 11px;
+  color: #555;
+}
+
+@media (max-width: 768px) {
+  
+  .header-inner, .hi {
+    padding: 0 12px !important;
+    height: 54px !important;
+    gap: 12px !important;
+  }
+  
+  header nav, header 
+  .burger { display: flex !important; }
+
+  /* ── Topbar ───────────────────────────────────── */
+  .topbar { display: none !important; }
+
+  /* ── Hero / Page hero ────────────────────────── */
+  .page-hero { padding: 20px 0 16px !important; }
+  .page-title, .section-title { font-size: 20px !important; }
+  .hero-inner { padding: 0 12px !important; }
+  .section-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 0 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* ── Filter bar ──────────────────────────────── */
+  .filter-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .filter-inner {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    min-width: max-content;
+  }
+  .filter-group { min-width: 120px; }
+  .filter-select { font-size: 12px !important; padding: 7px 8px !important; }
+
+  /* ── Date tabs ───────────────────────────────── */
+  .date-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    padding: 0 12px !important;
+    gap: 6px !important;
+    scrollbar-width: none;
+  }
+  .date-tabs::-webkit-scrollbar { display: none; }
+  .date-tab { flex-shrink: 0 !important; padding: 6px 14px !important; }
+
+  /* ── City pills ──────────────────────────────── */
+  
+  
+  
+  
+
+  /* ── Grids ────────────────────────────────────── */
+  .concert-grid,
+  .concerts-grid,
+  .film-grid,
+  .events-grid,
+  .af-grid,
+  .ex-grid,
+  .kids-grid,
+  #concertGrid,
+  #cinemaGrid,
+  #exhibitsGrid,
+  #kidsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 10px !important;
+  }
+
+  /* ── Cards ────────────────────────────────────── */
+  .concert-card, .film-card, .cinema-card, .event-card, .ai-card {
+    font-size: 12px !important;
+  }
+  .c-poster, .film-poster, .cinema-poster {
+    aspect-ratio: 3/2 !important;
+    font-size: 36px !important;
+  }
+  .c-title, .film-title { font-size: 13px !important; }
+  .c-buy, .buy-btn { font-size: 11px !important; padding: 6px 8px !important; }
+  .c-price { font-size: 12px !important; }
+
+  /* ── Theater list ─────────────────────────────── */
+  #theaterList { padding: 0 10px !important; }
+  .show-card { padding: 12px !important; }
+  .show-poster { width: 60px !important; height: 80px !important; font-size: 24px !important; }
+  .show-title { font-size: 14px !important; }
+
+  /* ── Concert list view ────────────────────────── */
+  .cli-poster { width: 70px !important; }
+  .concert-list-item { padding: 10px !important; }
+
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar { display: none !important; }
+
+  /* ── Main layout ─────────────────────────────── */
+  .main-layout, .layout {
+    grid-template-columns: 1fr !important;
+    padding: 0 10px !important;
+  }
+  .main { padding: 16px 10px !important; }
+
+  /* ── Section spacing ─────────────────────────── */
+  section { margin-bottom: 24px !important; }
+
+  /* ── View toggle (grid/list) ─────────────────── */
+  .view-toggle { display: none !important; }
+
+  /* ── Modal ────────────────────────────────────── */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  .modal-box {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 92vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+  }
+  .modal-poster, #mposter {
+    height: 180px !important;
+    font-size: 52px !important;
+  }
+  .modal-title, #mtitle { font-size: 18px !important; }
+  .modal-tabs { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
+  .modal-tabs::-webkit-scrollbar { display: none; }
+  .modal-tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 8px 12px !important; }
+
+  /* ── Ticket modal ────────────────────────────── */
+  .ck-modal-box {
+    position: fixed !important;
+    inset: 0 !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+  }
+
+  /* ── Floating buttons ────────────────────────── */
+  #addEventFloatBtn, #addVenueFloatBtn {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+  #addEventFloatBtn span:not(:first-child),
+  #addVenueFloatBtn span:not(:first-child) { display: none !important; }
+
+  /* ── Loyalty page ────────────────────────────── */
+  .user-loyalty-card { flex-direction: column !important; text-align: center !important; }
+  .tiers { grid-template-columns: 1fr !important; }
+  .hiw-steps { grid-template-columns: 1fr 1fr !important; }
+  .stats-inner { grid-template-columns: 1fr 1fr !important; }
+  .points-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Articles ────────────────────────────────── */
+  .art-card { flex-direction: column !important; }
+  .art-cover { width: 100% !important; aspect-ratio: 16/6 !important; }
+
+  /* ── Admin panel ─────────────────────────────── */
+  .admin-layout { grid-template-columns: 1fr !important; }
+  .admin-
+  .admin-sidebar { display: none !important; }
+  .field-row { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  /* ── Phone — single column ───────────────────── */
+  .concert-grid,
+  .concerts-grid,
+  .film-grid,
+  .events-grid,
+  .af-grid,
+  .ex-grid,
+  .kids-grid,
+  #concertGrid,
+  #cinemaGrid,
+  #exhibitsGrid,
+  #kidsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* ── AI cards single col ─────────────────────── */
+  #aiGrid { grid-template-columns: 1fr !important; }
+
+  /* ── Theater shows ─────────────────────────── */
+  #theaterList .show-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  /* ── Concert card horizontal on phone ──────── */
+  .concert-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+  }
+  .c-poster {
+    width: 90px !important;
+    flex-shrink: 0 !important;
+    aspect-ratio: auto !important;
+    min-height: 90px !important;
+    font-size: 28px !important;
+  }
+  .c-body { flex: 1 !important; }
+  .c-genre { font-size: 9px !important; }
+  .c-meta, .c-venue, .c-stars { display: none !important; }
+
+  /* ── Modal full screen on small phones ──────── */
+  .modal-box { max-height: 100vh !important; border-radius: 0 !important; }
+
+  /* ── Section title smaller ───────────────────── */
+  .section-title { font-size: 17px !important; }
+  .section-icon { font-size: 18px !important; }
+
+  /* ── Page hero compact ───────────────────────── */
+  .page-sub { font-size: 12px !important; }
+
+  /* ── Loyalty compact ─────────────────────────── */
+  .hiw-steps { grid-template-columns: 1fr !important; }
+  .points-grid { grid-template-columns: 1fr !important; }
+  .stat-item { padding: 12px 8px !important; }
+  .stat-num { font-size: 22px !important; }
+}
+
+/* ══ РЕКЛАМНЫЕ БЛОКИ ════════════════════════════════════════ */
+.ad-slot{margin:20px 0;text-align:center;position:relative;}
+.ad-label{font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.ad-leaderboard{min-height:90px;display:flex;align-items:center;justify-content:center;background:#f9f7f4;border:1px dashed #ddd;border-radius:6px;}
+.ad-banner-728{width:100%;max-width:728px;height:90px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1a0038,#c8102e);color:#fff;padding:0 24px;border-radius:6px;text-decoration:none;transition:opacity .2s;}
+.ad-banner-728:hover{opacity:.9;}
+.ad-banner-left{font-family:'Oswald',sans-serif;}
+.ad-banner-left b{font-size:18px;font-weight:700;display:block;}
+.ad-banner-left span{font-size:13px;opacity:.8;}
+.ad-banner-cta{background:#fff;color:#c8102e;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;padding:9px 20px;border-radius:4px;white-space:nowrap;}
+/* Нативная карточка-реклама в сетке */
+.ad-native-event{background:linear-gradient(135deg,#1a0038,#2a0a2a) !important;color:#fff;position:relative;overflow:hidden;}
+.ad-native-event::before{content:'Реклама';position:absolute;top:8px;right:8px;background:rgba(255,255,255,.2);color:#fff;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:700;letter-spacing:.5px;}
+.ad-sidebar{width:300px;min-height:250px;background:#f9f7f4;border:1px dashed #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;}
+@media(max-width:768px){.ad-banner-728{display:none;}.ad-slot{display:none;}}
+
+/* ── Рекламные блоки ─────────────────────────────────────── */
+.ad-block{background:#f9f7f4;border:1px solid #e8e6e2;border-radius:6px;overflow:hidden;text-align:center;position:relative;}
+.ad-block::before{content:"Реклама";position:absolute;top:3px;left:6px;font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:.5px;}
+.ad-leaderboard{height:90px;display:flex;align-items:center;justify-content:center;margin:0 0 20px;}
+.ad-rect{width:300px;height:250px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ad-mobile{height:60px;display:flex;align-items:center;justify-content:center;margin:12px 0;}
+.ad-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:12px;color:#aaa;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;transition:background .15s;}
+.ad-inner:hover{background:rgba(0,0,0,.03);}
+.ad-inner img{max-width:100%;max-height:100%;object-fit:contain;}
+/* Скрыть рекламу для подписчиков Plus */
+body.afishi-plus-gold .ad-block,
+body.afishi-plus-plat .ad-block{display:none!important;}
+
+/* ── Рекламные баннеры (sidebar vertical) ────────────────── */
+.ad-sidebar-wrap{margin-bottom:16px;position:relative;}
+.ad-sidebar-label{position:absolute;top:4px;left:6px;font-size:9px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:.4px;z-index:1;}
+.ad-sidebar-close{position:absolute;top:4px;right:6px;background:none;border:none;color:#aaa;cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:2px;z-index:1;}
+.ad-sidebar-close:hover{color:#666;background:rgba(0,0,0,.06);}
+
+/* Формат 240×400 — стандартный sidebar */
+.ad-v-240{width:100%;height:400px;border-radius:8px;overflow:hidden;position:relative;background:#f5f3f0;border:1px solid #e8e6e2;display:flex;align-items:center;justify-content:center;}
+/* Формат 160×600 — wide skyscraper */
+.ad-v-160{width:100%;height:600px;border-radius:8px;overflow:hidden;position:relative;background:#f5f3f0;border:1px solid #e8e6e2;display:flex;align-items:center;justify-content:center;}
+/* Формат 300×250 — rectangle */
+.ad-v-300{width:100%;height:250px;border-radius:8px;overflow:hidden;position:relative;background:#f5f3f0;border:1px solid #e8e6e2;display:flex;align-items:center;justify-content:center;}
+/* Native card */
+.ad-native-card{background:#fff;border:1px solid #e8e6e2;border-radius:8px;padding:14px;margin-bottom:16px;position:relative;}
+
+/* HTML баннер внутри блока */
+.ad-iframe-wrap{width:100%;height:100%;border:none;}
+.ad-placeholder-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#ccc;font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-family:'Oswald',sans-serif;padding:20px;text-align:center;}
+
+/* Скрыть для Plus-подписчиков */
+body.afishi-plus-gold  .ad-sidebar-wrap,
+body.afishi-plus-plat  .ad-sidebar-wrap{display:none!important;}
+
+/* ── Edit button on concert cards ───────────────────── */
+.c-edit-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;
+  border:none;border-radius:4px;cursor:pointer;font-size:13px;padding:4px 8px;z-index:10;
+  opacity:0;transition:opacity .2s;line-height:1;}
+.concert-card:hover .c-edit-btn,
+.concert-list-item:hover .c-edit-btn{opacity:1;}
+.concert-card{position:relative;}
+.concert-list-item{position:relative;}
+/* Edit modal labels/inputs */
+.ecm-label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.4px;color:#666;margin-bottom:4px;}
+.ecm-input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:8px 10px;
+  font-family:'PT Sans',sans-serif;font-size:13px;transition:border-color .15s;}
+.ecm-input:focus{outline:none;border-color:var(--red,#c8102e);}
+
+/* ═══════════════════════════════════════════════════════════
+   AFISHI.RU — ПОДВАЛ (footer)
+   Единый для всех страниц
+═══════════════════════════════════════════════════════════ */
+footer {
+  background: #111;
+  color: #aaa;
+  margin-top: 48px;
+  font-family: 'PT Sans', sans-serif;
+}
+.footer-top {
+  background: #c8102e;
+  padding: 20px;
+  text-align: center;
+}
+.footer-top-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-cta-text {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.footer-cta-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,.8);
+  margin-top: 2px;
+}
+.footer-cta-btn {
+  background: #fff;
+  color: #c8102e;
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.footer-cta-btn:hover { opacity: .88; }
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 20px 0;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+.footer-logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #c8102e;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.footer-logo span { color: #fff; }
+.footer-desc {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #666;
+  margin-bottom: 18px;
+}
+.footer-socials {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: #222;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background .15s;
+}
+.footer-social:hover { background: #333; }
+.footer-col-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: #fff;
+  margin-bottom: 14px;
+}
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-links a {
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+  transition: color .15s;
+  line-height: 1.4;
+}
+.footer-links a:hover { color: #fff; }
+.footer-links a.new::after {
+  content: 'NEW';
+  font-size: 9px;
+  font-weight: 700;
+  background: #c8102e;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.footer-divider {
+  border: none;
+  border-top: 1px solid #222;
+  margin: 0;
+}
+.footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #444;
+}
+.footer-bottom-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-bottom-links a {
+  color: #444;
+  text-decoration: none;
+  font-size: 12px;
+}
+.footer-bottom-links a:hover { color: #888; }
+.footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #666;
+}
+@media (max-width: 900px) {
+    .footer-grid > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+    .footer-top-inner { flex-direction: column; text-align: center; }
+  .footer-bottom { flex-direction: column; text-align: center; }
+  .footer-cta-btn { width: 100%; text-align: center; }
+}
+
+/* ── Дополнительные стили для восстановленных разделов ── */
+.panel-stat-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;}
+.stat-box {background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+.stat-val {font-family:'Oswald',sans-serif;font-size:32px;font-weight:700;color:var(--red);line-height:1;}
+.stat-lbl {font-size:12px;color:var(--mid);margin-top:4px;}
+.banner-card {background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center;}
+.banner-preview {width:80px;height:50px;border-radius:4px;background:#f0eeea;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;border:1.5px dashed #ddd;flex-shrink:0;overflow:hidden;}
+.banner-info {flex:1;min-width:0;}
+.banner-name {font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:2px;}
+.banner-meta {font-size:11px;color:var(--mid);}
+.banner-actions {display:flex;gap:6px;flex-shrink:0;}
+.article-row {background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.article-icon {font-size:22px;flex-shrink:0;}
+.article-info {flex:1;min-width:0;}
+.article-title {font-family:Oswald,sans-serif;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.article-meta {font-size:11px;color:var(--mid);margin-top:2px;}
+.venue-page-card {background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.vpc-icon {font-size:28px;flex-shrink:0;}
+.vpc-info {flex:1;min-width:0;}
+.vpc-name {font-family:Oswald,sans-serif;font-size:14px;font-weight:700;}
+.vpc-addr {font-size:11px;color:var(--mid);margin-top:2px;}
+.vpc-actions {display:flex;gap:6px;}
+.mailing-form {background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;}
+.city-row {display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;}
+.city-flag {font-size:20px;}
+.city-name {font-family:Oswald,sans-serif;font-size:14px;font-weight:700;flex:1;}
+.city-count {font-size:12px;color:var(--mid);}
+.toggle-sw {position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle-sw input {opacity:0;width:0;height:0;}
+.toggle-slider {position:absolute;cursor:pointer;inset:0;background:#ddd;border-radius:12px;transition:.3s;}
+.toggle-slider:before {content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle-sw input:checked + .toggle-slider {background:#c8102e;}
+.toggle-sw input:checked + .toggle-slider:before {transform:translateX(20px);}
+
+/* Venue page edit section */
+.venues-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+
+/* ── Topbar ── */
+.topbar{background:#1a1a1a;padding:0;}
+.topbar-inner{max-width:100%;padding:8px 20px;display:flex;align-items:center;gap:16px;}
+.topbar-links{display:flex;gap:12px;}
+.topbar-links a{color:#888;font-size:12px;font-weight:600;text-decoration:none;transition:color .15s;}
+.topbar-links a:hover{color:#fff;}
+/* ── Кнопка btn-red ── */
+.btn-red{background:var(--red,#c8102e);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;transition:background .15s;}
+.btn-red:hover{background:#9e0c24;}
+/* ── Items list ── */
+.items-list{display:flex;flex-direction:column;gap:10px;}
+.s-past{background:#f0ede8;color:#888;}
+</style>
+<!-- Яндекс.Метрика -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+   ym(2234293, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Яндекс.Метрика -->
+</head>
+<body>
+
+
+
+<!-- HEADER -->
+<header>
+    <div class="header-inner">
+      <a href="index.html" class="logo">Афиши<span>.ру</span></a>
+      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+<div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
+  <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
+    <span style="font-size:16px;">🍷</span> <span>Ресторан «Волгоград»</span>
+  </a>
+  <div style="border-top:1px solid #f0ede8;margin:6px 0;"></div>
+  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Ближайшие мероприятия</div>
+  <div id="restDropdownEvents" style="padding:0 8px;">
+    <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
+  </div>
+  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
+</div></nav>
+      <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
+      <div class="search-box">
+        🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
+      </div>
+    </div>
+  </header>
+
+<!-- MOBILE MENU -->
+<div id="mobileMenu" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);" onclick="this.style.display='none'">
+  <div style="background:#1a1a1a;width:270px;height:100%;overflow-y:auto;padding:20px 0;" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:#fff;border-bottom:1px solid #333;margin-bottom:10px;">
+      🛠️ Панель управления
+    </div>
+    <div id="mobileNavItems"></div>
+  </div>
+</div>
+<button style="display:none;position:fixed;bottom:20px;left:20px;z-index:1500;background:#c8102e;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);" id="mobileMenuBtn" onclick="document.getElementById('mobileMenu').style.display='flex'">☰</button>
+
+<!-- MAIN LAYOUT -->
+<div class="admin-layout">
+
+  <!-- SIDEBAR NAV -->
+  <nav class="admin-nav" id="adminNav">
+    <div class="nav-group-label">Основное</div>
+    <a class="nav-item active" onclick="showPanel('dashboard',this)" href="#">
+      <span class="ni-icon">📊</span> Дашборд
+      <span class="n-badge" id="nb-dashboard"></span>
+    </a>
+    <a class="nav-item" onclick="showPanel('events',this)" href="#">
+      <span class="ni-icon">🎪</span> Мероприятия
+      <span class="n-badge" id="nb-events"></span>
+    </a>
+    <a class="nav-item" onclick="showPanel('venues',this)" href="#">
+      <span class="ni-icon">🏛️</span> Заведения
+      <span class="n-badge" id="nb-venues"></span>
+    </a>
+    <a class="nav-item" onclick="showPanel('venue-pages',this)" href="#">
+      <span class="ni-icon">📄</span> Страницы площадок
+    </a>
+    <a class="nav-item" onclick="showPanel('films',this)" href="#">
+      <span class="ni-icon">🎬</span> Фильмы
+      <span class="n-badge" id="nb-films"></span>
+    </a>
+    <div class="nav-group-label">Контент</div>
+    <a class="nav-item" onclick="showPanel('articles',this)" href="#">
+      <span class="ni-icon">📝</span> Статьи
+    </a>
+    <a class="nav-item" onclick="showPanel('reviews-panel',this)" href="#">
+      <span class="ni-icon">💬</span> Отзывы
+    </a>
+    <div class="nav-group-label">Монетизация</div>
+    <a class="nav-item" onclick="showPanel('banners',this)" href="#">
+      <span class="ni-icon">📢</span> Баннеры / Реклама
+    </a>
+    <div class="nav-group-label">Пользователи</div>
+    <a class="nav-item" onclick="showPanel('users',this)" href="#">
+      <span class="ni-icon">👥</span> Пользователи
+      <span class="n-badge" id="nb-users"></span>
+    </a>
+    <a class="nav-item" onclick="showPanel('mailing',this)" href="#">
+      <span class="ni-icon">✉️</span> Рассылка
+    </a>
+    <div class="nav-group-label">🎨 Оформление</div>
+    <a class="nav-item" onclick="showPanel('homepage',this)" href="#">
+      <span class="ni-icon">🏠</span> Главная страница
+    </a>
+    <a class="nav-item" onclick="showPanel('footer-editor',this)" href="#">
+      <span class="ni-icon">📋</span> Подвал (футер)
+    </a>
+    <a class="nav-item" onclick="showPanel('actors',this)" href="#">
+      <span class="ni-icon">⭐</span> Актёры / Звёзды
+    </a>
+    <div class="nav-group-label">Настройки</div>
+    <a class="nav-item" onclick="showPanel('cities',this)" href="#">
+      <span class="ni-icon">🌍</span> Города
+    </a>
+    <a class="nav-item" onclick="showPanel('stats',this)" href="#">
+      <span class="ni-icon">📈</span> Статистика
+    </a>
+    <div style="margin-top:16px;padding:0 12px;">
+      <button onclick="openCreatePageModal()" class="btn-red" style="width:100%;font-size:12px;padding:9px;">
+        ✚ Новое мероприятие
+      </button>
+      <button onclick="openCreateVenueModal()" style="width:100%;margin-top:8px;background:#1a6c2e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px;cursor:pointer;">
+        ✚ Новая площадка
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="admin-content">
+
+    <!-- ═══ ДАШБОРД ═══ -->
+    <div id="panel-dashboard" class="panel-card">
+      <div class="panel-head">📊 Дашборд</div>
+      <div class="panel-sub">Общая статистика сайта и очередь на модерацию</div>
+
+      <!-- Статистика -->
+      <div class="panel-stat-grid" id="dashStats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:var(--red);" id="ds-events">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">Мероприятий</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:#e65100;" id="ds-pending">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">На модерации</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:#1a6c2e;" id="ds-venues">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">Площадок</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:#0a3d6e;" id="ds-films">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">Фильмов</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:#555;" id="ds-users">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">Пользователей</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:#888;" id="ds-past">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">В архиве</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:Oswald,sans-serif;color:#9c27b0;" id="ds-reviews">—</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">Отзывов</div>
+        </div>
+      </div>
+
+      <!-- Быстрые действия -->
+      <div style="margin-bottom:24px;">
+        <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px;margin-bottom:12px;">⚡ Быстрые действия</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="openCreatePageModal()" class="btn-red" style="padding:9px 16px;font-size:12px;">✚ Новое мероприятие</button>
+          <button onclick="showPanel('events',null)" style="padding:9px 16px;font-size:12px;background:#f4f2ee;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;text-transform:uppercase;">📋 Все мероприятия</button>
+          <button onclick="showPanel('cities',null)" style="padding:9px 16px;font-size:12px;background:#f4f2ee;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;text-transform:uppercase;">🌍 Города</button>
+          <button onclick="showPanel('homepage',null)" style="padding:9px 16px;font-size:12px;background:#f4f2ee;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;text-transform:uppercase;">🏠 Главная</button>
+        </div>
+      </div>
+
+      <!-- На модерации -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;">
+        <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;">🕐 Ожидают модерации</div>
+        <div id="dashPending" style="color:#aaa;font-size:13px;">Загрузка...</div>
+      </div>
+      <!-- Быстрые кнопки управления всем сайтом -->
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📋 Управление контентом</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="showPanel('events',null)" class="btn-red" style="font-size:12px;">🎪 Мероприятия</button>
+          <button onclick="showPanel('venues',null)" class="btn-red" style="font-size:12px;">🏛️ Заведения</button>
+          <button onclick="showPanel('venue-pages',null)" class="btn-red" style="font-size:12px;">📄 Страницы залов</button>
+          <button onclick="showPanel('films',null)" class="btn-red" style="font-size:12px;">🎬 Фильмы</button>
+          <button onclick="showPanel('articles',null)" class="btn-red" style="font-size:12px;">📝 Статьи</button>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">⚙️ Настройки сайта</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="showPanel('banners',null)" style="background:#e67e22;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;">📢 Баннеры</button>
+          <button onclick="showPanel('cities',null)" style="background:#2980b9;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;">🌍 Города</button>
+          <button onclick="showPanel('users',null)" style="background:#8e44ad;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;">👥 Пользователи</button>
+          <button onclick="showPanel('stats',null)" style="background:#2c3e50;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;">📈 Счётчики</button>
+          <button onclick="showPanel('mailing',null)" style="background:#16a085;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;">📧 Рассылка</button>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🔗 Быстрый переход на сайт</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="index.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🏠 Главная</a>
+          <a href="concerts.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🎵 Концерты</a>
+          <a href="theater.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🎭 Театр</a>
+          <a href="cinema.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🎬 Кино</a>
+          <a href="exhibits.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🖼 Выставки</a>
+          <a href="kids.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🧒 Детям</a>
+          <a href="pushkin-card.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🏛 Пушкинская</a>
+          <a href="venue-ckz-oktyabr-volgograd.html" target="_blank" style="background:#fff;color:var(--dark);border:1.5px solid var(--border);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;">🎼 Филармония</a>
+        </div>
+      </div>
+      <div style="background:#fff8f0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 14px;margin-bottom:16px;" id="dashPendingInfo">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;color:#e67e22;margin-bottom:6px;">⏳ Ожидают проверки</div>
+        <div style="font-size:13px;color:#555;" id="dashPendingList">Загрузка...</div>
+      </div>
+
+      <!-- Прошедшие мероприятия -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px 18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;">🕐 Прошедшие мероприятия</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="pastEventsCount" style="background:#888;color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;">0</span>
+            <button onclick="clearPastEvents()" style="background:#dc3545;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;">🗑 Удалить все</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#999;margin-bottom:10px;">Мероприятия, дата которых уже прошла. Не отображаются в общем списке.</div>
+        <div id="pastEventsList" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;">
+          <div style="color:#bbb;font-size:13px;text-align:center;padding:16px;">Загрузка...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ МЕРОПРИЯТИЯ ═══ -->
+    <div id="panel-events" class="panel-card">
+      <div class="panel-head">🎪 Мероприятия</div>
+      <div class="panel-sub">Все мероприятия с сайта и добавленные вручную</div>
+      <!-- Строка фильтров по статусу -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+        <button onclick="renderList('events','all')" class="btn-red ev-filter-btn" data-status="all" style="padding:7px 14px;font-size:12px;">Все</button>
+        <button onclick="renderList('events','pending')" data-status="pending" style="padding:7px 14px;font-size:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">⏳ На модерации</button>
+        <button onclick="renderList('events','approved')" data-status="approved" style="padding:7px 14px;font-size:12px;background:#d4edda;border:1px solid #28a745;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">✓ Одобренные</button>
+        <button onclick="renderList('events','future')" data-status="future" style="padding:7px 14px;font-size:12px;background:#e8f4fd;border:1px solid #90caf9;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;color:#1565c0;">📅 Будут</button>
+        <button onclick="renderList('events','past')" data-status="past" style="padding:7px 14px;font-size:12px;background:#f0ede8;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;color:#888;">📁 Прошедшие</button>
+        <div style="flex:1;"></div>
+        <button onclick="openAddEventModal()" class="btn-red" style="padding:7px 14px;font-size:12px;">✚ Добавить</button>
+      </div>
+      <!-- Строка фильтров по городу + поиск -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+        <select id="eventsCityFilter" onchange="renderList('events','all')" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">
+          <option value="">🌍 Все города</option>
+          <option value="Волгоград">Волгоград</option>
+          <option value="Москва">Москва</option>
+          <option value="Санкт-Петербург">Санкт-Петербург</option>
+          <option value="Екатеринбург">Екатеринбург</option>
+          <option value="Казань">Казань</option>
+          <option value="Краснодар">Краснодар</option>
+          <option value="Нижний Новгород">Нижний Новгород</option>
+          <option value="Ростов-на-Дону">Ростов-на-Дону</option>
+        </select>
+
+      </div>
+      <div id="list-events" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="color:#aaa;padding:20px;text-align:center;font-size:13px;">Загрузка мероприятий...</div>
+      </div>
+    </div>
+
+    <!-- ═══ ЗАВЕДЕНИЯ ═══ -->
+    <div id="panel-venues" class="panel-card">
+      <div class="panel-head">🏛️ Заведения</div>
+      <div class="panel-sub">Площадки и концертные залы</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <button onclick="openCreateVenueModal()"
+          style="background:#1a6c2e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;">
+          ✚ Создать страницу заведения
+        </button>
+      </div>
+      <div class="filter-row">
+        <select id="venuesCityFilter" onchange="renderList('venues', getActiveStatus('venues'))">
+          <option value="">🌍 Все города</option>
+          <option value="Волгоград">Волгоград</option>
+          <option value="Москва">Москва</option>
+          <option value="Санкт-Петербург">Санкт-Петербург</option>
+          <option value="Краснодар">Краснодар</option>
+        </select>
+        <input id="venuesSearch" type="text" placeholder="🔍 Поиск площадки..."
+          oninput="renderList('venues', getActiveStatus('venues'))">
+      </div>
+      <div class="item-tabs">
+        <div class="itab active" data-filter="pending" onclick="setActiveTab(this,'venues')">На проверке <span class="tb" id="vtab-pending"></span></div>
+        <div class="itab" data-filter="approved" onclick="setActiveTab(this,'venues')">Одобренные</div>
+        <div class="itab" data-filter="rejected" onclick="setActiveTab(this,'venues')">Отклонённые</div>
+        <div class="itab" data-filter="all" onclick="setActiveTab(this,'venues')">Все</div>
+      </div>
+      <div class="item-list" id="list-venues">
+        <div class="empty-state"><div class="empty-state-icon">🏛️</div><div class="empty-state-text">Нет заведений</div></div>
+      </div>
+    </div>
+
+    <!-- Одобренные -->
+    
+
+    <!-- ═══ СТРАНИЦЫ ПЛОЩАДОК ═══ -->
+    <div id="panel-venue-pages" class="panel-card" style="display:none;">
+      <div class="panel-head">📄 Страницы площадок</div>
+      <div class="panel-sub">HTML страницы концертных залов и театров</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <button onclick="openCreatePageModal()" class="btn-red" style="font-size:12px;">📄 Создать HTML страницу</button>
+        <button onclick="openCreateVenueModal()" style="background:#1a6c2e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;">✚ Добавить в базу</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <select id="vpCityFilter" onchange="renderVenuePages()"
+          style="border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-size:13px;font-family:'PT Sans',sans-serif;background:#fff;min-width:180px;">
+          <option value="">🌍 Все города</option>
+          <option>Волгоград</option>
+          <option>Москва</option>
+          <option>Санкт-Петербург</option>
+          <option>Екатеринбург</option>
+          <option>Казань</option>
+          <option>Краснодар</option>
+        </select>
+        <span id="vpCount" style="font-size:12px;color:#999;"></span>
+      </div>
+      <div id="venuePagesGrid">
+        <!-- Карточки заполняются из JS, разбитые по городам -->
+      </div>
+    </div>
+
+    <!-- ═══ ФИЛЬМЫ ═══ -->
+    <div id="panel-films" class="panel-card" style="display:none;">
+      <div class="panel-head">🎬 Фильмы</div>
+      <div class="panel-sub">База фильмов и кинотеатры</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+        <select id="filmsCityFilter" style="border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-family:'PT Sans',sans-serif;font-size:13px;background:#fff;min-width:160px;">
+          <option value="">🌍 Все города</option>
+          <option>Волгоград</option><option>Москва</option><option>Санкт-Петербург</option>
+        </select>
+        <input id="filmsSearch" type="text" placeholder="🔍 Поиск фильма..." style="border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-size:13px;flex:1;min-width:180px;">
+        <a href="add-film.html" class="btn-red" style="font-size:12px;text-decoration:none;">✚ Добавить фильм</a>
+      </div>
+      <div class="item-tabs">
+        <div class="itab active" data-filter="pending" onclick="filterItems('films','pending',this)">На проверке <span class="tb" id="ftab-pending"></span></div>
+        <div class="itab" data-filter="approved" onclick="filterItems('films','approved',this)">Одобренные</div>
+        <div class="itab" data-filter="rejected" onclick="filterItems('films','rejected',this)">Отклонённые</div>
+      </div>
+      <div class="items-list" id="list-films"></div>
+    </div>
+
+    <!-- ═══ СТАТЬИ ═══ -->
+    <div id="panel-articles" class="panel-card" style="display:none;">
+      <div class="panel-head">📝 Статьи</div>
+      <div class="panel-sub">Редакционные материалы и новости</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        <a href="articles.html" class="btn-red" style="font-size:12px;text-decoration:none;">✚ Написать статью</a>
+        <a href="article-edit.html" style="background:#444;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;text-decoration:none;">Все статьи</a>
+      </div>
+      <div id="articlesList">
+        <div class="article-row"><div class="article-icon">📰</div><div class="article-info"><div class="article-title">Топ концертов мая — что не пропустить</div><div class="article-meta">admin@afishi.ru · 3 мая 2026 · Опубликована</div></div><div style="display:flex;gap:6px;"><a href="article-edit.html" class="btn-edit">✏️ Редактировать</a></div></div>
+        <div class="article-row"><div class="article-icon">🎭</div><div class="article-info"><div class="article-title">Лучшие театральные премьеры сезона</div><div class="article-meta">admin@afishi.ru · 28 апр 2026 · Опубликована</div></div><div style="display:flex;gap:6px;"><a href="article-edit.html" class="btn-edit">✏️ Редактировать</a></div></div>
+        <div class="article-row"><div class="article-icon">🏛</div><div class="article-info"><div class="article-title">Пушкинская карта 2026 — полный гид</div><div class="article-meta">admin@afishi.ru · 20 апр 2026 · Опубликована</div></div><div style="display:flex;gap:6px;"><a href="article-edit.html" class="btn-edit">✏️ Редактировать</a></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ ОТЗЫВЫ ═══ -->
+    <div id="panel-reviews-panel" class="panel-card" style="display:none;">
+      <div class="panel-head">💬 Отзывы</div>
+      <div class="panel-sub">Все отзывы пользователей с сайта</div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <button onclick="renderReviews('all')" class="btn-red" style="padding:8px 14px;font-size:12px;">Все</button>
+        <button onclick="renderReviews('pending')" style="padding:8px 14px;font-size:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">⏳ На модерации</button>
+        <button onclick="renderReviews('approved')" style="padding:8px 14px;font-size:12px;background:#d4edda;border:1px solid #28a745;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">✓ Одобренные</button>
+        <button onclick="clearAllReviews()" style="padding:8px 14px;font-size:12px;background:#fff;border:1px solid #dc3545;color:#dc3545;border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">🗑 Очистить все</button>
+      </div>
+
+      <div id="reviewsList" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="color:#aaa;padding:20px;text-align:center;">Загрузка...</div>
+      </div>
+      <div class="panel-sub">Модерация отзывов пользователей</div>
+      <div class="item-tabs" style="margin-bottom:14px;">
+        <div class="itab active">Все отзывы</div>
+        <div class="itab">Ждут проверки</div>
+        <div class="itab">Жалобы</div>
+      </div>
+      <div id="reviewsList"></div>
+      <div style="background:#f9f7f4;border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-top:12px;font-size:11px;color:#999;">
+        💡 Отзывы хранятся в localStorage этого браузера. Показаны отзывы оставленные с данного устройства.
+      </div>
+    </div>
+
+    <!-- ═══ БАННЕРЫ / РЕКЛАМА ═══ -->
+    <div id="panel-banners" class="panel-card" style="display:none;">
+      <div class="panel-head">📢 Баннеры / Реклама</div>
+      <div class="panel-sub">Управление рекламными блоками на сайте</div>
+
+      <!-- ═══ Яндекс.Директ ═══ -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:32px;height:32px;background:#fc3f1d;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;">Я</div>
+          <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;">Яндекс.Директ / РСЯ</div>
+        </div>
+        <div class="fg"><label>Скрипт подключения (из кабинета Яндекс)</label>
+          <textarea id="ya_head_script" rows="3" placeholder="&lt;script src=&quot;https://an.yandex.ru/...&quot;&gt;&lt;/script&gt;" style="font-family:monospace;font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:8px;width:100%;box-sizing:border-box;"></textarea>
+        </div>
+        <div class="fg"><label>Блок рекламы (ins / script для тела страницы)</label>
+          <textarea id="ya_block_script" rows="5" placeholder='&lt;ins class="yandex-ad" ...&gt;&lt;/ins&gt;&#10;&lt;script&gt;(window.yandex_context_callbacks...)&lt;/script&gt;' style="font-family:monospace;font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:8px;width:100%;box-sizing:border-box;"></textarea>
+        </div>
+        <div style="background:#fff8e1;border-radius:6px;padding:10px 14px;font-size:12px;color:#856404;margin-bottom:12px;line-height:1.6;">
+          📋 <strong>Инструкция:</strong> Яндекс.Директ → РСЯ → Мои блоки → Создать блок → Копировать код → Вставить выше.<br>
+          Первое поле — код для &lt;head&gt;, второе — для тела страницы.
+        </div>
+        <button onclick="saveAdScript('yandex')" style="background:#fc3f1d;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:9px 20px;cursor:pointer;">💾 Сохранить скрипт Яндекс</button>
+      </div>
+
+      <!-- ═══ Google AdSense ═══ -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:32px;height:32px;background:#4285f4;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700;">G</div>
+          <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;">Google AdSense</div>
+        </div>
+        <div class="fg"><label>Скрипт Auto Ads (для &lt;head&gt;)</label>
+          <textarea id="ga_auto_script" rows="4" placeholder='&lt;script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX" crossorigin="anonymous"&gt;&lt;/script&gt;' style="font-family:monospace;font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:8px;width:100%;box-sizing:border-box;"></textarea>
+        </div>
+        <div class="fg"><label>Блок рекламы (ins для тела страницы)</label>
+          <textarea id="ga_block_script" rows="6" placeholder='&lt;ins class="adsbygoogle"&#10;     style="display:block"&#10;     data-ad-client="ca-pub-XXXXXXXX"&#10;     data-ad-slot="XXXXXXXXXX"&#10;     data-ad-format="auto"&gt;&lt;/ins&gt;&#10;&lt;script&gt;(adsbygoogle = window.adsbygoogle | []).push({});&lt;/script&gt;' style="font-family:monospace;font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:8px;width:100%;box-sizing:border-box;"></textarea>
+        </div>
+        <div style="background:#e8f0fe;border-radius:6px;padding:10px 14px;font-size:12px;color:#1a73e8;margin-bottom:12px;line-height:1.6;">
+          📋 <strong>Инструкция:</strong> Google AdSense → Рекламные блоки → Создать блок → Auto ads или Display → Скопируйте оба фрагмента кода.<br>
+          После сохранения вставьте скрипт из &lt;head&gt; в каждую HTML-страницу сайта перед &lt;/head&gt;.
+        </div>
+        <button onclick="saveAdScript('google')" style="background:#4285f4;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:9px 20px;cursor:pointer;">💾 Сохранить скрипт Google</button>
+      </div>
+
+      <!-- ═══ Статус ═══ -->
+      <div style="background:#f9f7f4;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;margin-bottom:8px;">📊 Сохранённые скрипты</div>
+        <div id="adScriptsStatus" style="font-size:12px;color:#888;"></div>
+        <button onclick="loadAdScripts()" style="margin-top:8px;background:none;border:1px solid var(--border);border-radius:4px;padding:5px 12px;font-size:11px;font-family:'Oswald',sans-serif;font-weight:700;cursor:pointer;">🔄 Загрузить</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <button onclick="openBannerModal()" class="btn-red" style="font-size:12px;">✚ Добавить баннер</button>
+        <select id="bannerPageFilter" style="border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-family:'PT Sans',sans-serif;font-size:13px;background:#fff;" onchange="renderBanners()">
+          <option value="">📄 Все страницы</option>
+          <option value="index">Главная</option>
+          <option value="concerts">Концерты</option>
+          <option value="theater">Театр</option>
+          <option value="cinema">Кино</option>
+          <option value="exhibits">Выставки</option>
+          <option value="kids">Детям</option>
+          <option value="pushkin-card">Пушкинская карта</option>
+        </select>
+        <select id="bannerCityFilter" style="border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-family:'PT Sans',sans-serif;font-size:13px;background:#fff;" onchange="renderBanners()">
+          <option value="">🌍 Все города (федеральный)</option>
+          <option value="Волгоград">Волгоград</option>
+          <option value="Москва">Москва</option>
+          <option value="Санкт-Петербург">Санкт-Петербург</option>
+          <option value="Краснодар">Краснодар</option>
+          <option value="Казань">Казань</option>
+          <option value="Екатеринбург">Екатеринбург</option>
+        </select>
+      </div>
+      <div id="bannersList"></div>
+    </div>
+
+    <!-- ═══ ПОЛЬЗОВАТЕЛИ ═══ -->
+    <div id="panel-users" class="panel-card" style="display:none;">
+      <div class="panel-head">👥 Пользователи</div>
+      <div class="panel-sub">Регистрация администраторов и модераторов</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px;">
+        <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;">➕ Добавить пользователя</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div><label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Email</label><input id="nu-email" type="email" placeholder="admin@afishi.ru" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;width:100%;box-sizing:border-box;outline:none;"></div>
+          <div><label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Роль</label>
+            <select id="nu-role" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;width:100%;box-sizing:border-box;background:#fff;">
+              <option value="moderator">Модератор</option>
+              <option value="admin">Администратор</option>
+              <option value="editor">Редактор</option>
+            </select>
+          </div>
+          <div><label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Пароль</label><input id="nu-pass" type="password" placeholder="Пароль" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;width:100%;box-sizing:border-box;outline:none;"></div>
+          <div><label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Имя</label><input id="nu-name" type="text" placeholder="Имя пользователя" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;width:100%;box-sizing:border-box;outline:none;"></div>
+        </div>
+        <button onclick="addUser()" class="btn-red" style="font-size:12px;">✚ Создать пользователя</button>
+      </div>
+      <div id="usersList"></div>
+    </div>
+
+    <!-- ═══ РАССЫЛКА ═══ -->
+    <div id="panel-mailing" class="panel-card" style="display:none;">
+      <div class="panel-head">✉️ Рассылка</div>
+      <div class="panel-sub">Email уведомления подписчикам</div>
+      <div class="mailing-form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Тема письма</label>
+            <input id="ml-subject" type="text" placeholder="Новые события в Волгограде" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;width:100%;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Получатели</label>
+            <select id="ml-recipients" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;width:100%;box-sizing:border-box;background:#fff;">
+              <option>Все подписчики</option>
+              <option>Подписчики Волгограда</option>
+              <option>Подписчики Москвы</option>
+              <option>Администраторы заведений</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Текст письма</label>
+          <textarea id="ml-body" rows="6" placeholder="Текст рассылки..." style="border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;font-family:'PT Sans',sans-serif;width:100%;box-sizing:border-box;outline:none;resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="sendMailing()" class="btn-red" style="font-size:12px;">📧 Отправить рассылку</button>
+          <button onclick="previewMailing()" style="background:#f4f2ee;border:none;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:9px 14px;cursor:pointer;">👁 Предпросмотр</button>
+        </div>
+        <div style="margin-top:16px;padding:12px 14px;background:#f9f7f4;border-radius:6px;">
+          <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;color:var(--mid);margin-bottom:6px;">📊 СТАТИСТИКА РАССЫЛОК</div>
+          <div style="display:flex;gap:20px;font-size:12px;color:#555;">
+            <span>Подписчиков: <strong id="ml-count">—</strong></span>
+            <span>Последняя рассылка: <strong id="ml-last">—</strong></span>
+            <span>Открываемость: <strong id="ml-rate">—</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ГОРОДА ═══ -->
+    <div id="panel-cities" class="panel-card" style="display:none;">
+      <div class="panel-head">🌍 Управление по городам — Страница концертов</div>
+      <div class="panel-sub">Анонсы «Скоро в продаже» и горячие события для каждого города</div>
+
+      <!-- Выбор города -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <label style="font-weight:700;font-size:13px;">Город:</label>
+        <select id="cityManagerSelect" onchange="loadCityManager()" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">
+          <option value="Волгоград">Волгоград</option>
+          <option value="Москва">Москва</option>
+          <option value="Санкт-Петербург">Санкт-Петербург</option>
+          <option value="Екатеринбург">Екатеринбург</option>
+          <option value="Казань">Казань</option>
+          <option value="Краснодар">Краснодар</option>
+          <option value="Нижний Новгород">Нижний Новгород</option>
+          <option value="Ростов-на-Дону">Ростов-на-Дону</option>
+        </select>
+        <button onclick="saveCityManager()" class="btn-red" style="padding:8px 18px;font-size:13px;">💾 Сохранить</button>
+        <span id="cityManagerSaved" style="color:#1a6c2e;font-size:12px;display:none;">✓ Сохранено</span>
+      </div>
+
+      <!-- 🏆 Скоро в продаже -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+        <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;">🏆 Скоро в продаже</div>
+        <div style="font-size:12px;color:#888;margin-bottom:16px;">Показывается в сайдбаре страницы концертов для выбранного города. До 5 анонсов.</div>
+
+        <div id="comingSoonList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+
+        <button onclick="addComingSoonItem()" style="background:none;border:2px dashed var(--border);border-radius:8px;width:100%;padding:10px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='#888'">
+          + Добавить анонс
+        </button>
+      </div>
+
+      <!-- 🔥 Горячие билеты -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;">
+        <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;">🔥 Горячие билеты</div>
+        <div style="font-size:12px;color:#888;margin-bottom:16px;">Закреплённые события сверху в разделе «Горячие» для выбранного города. До 3 событий.</div>
+
+        <div id="hotPinnedList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+
+        <button onclick="addHotPinnedItem()" style="background:none;border:2px dashed var(--border);border-radius:8px;width:100%;padding:10px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='#888'">
+          + Добавить горячее событие
+        </button>
+      </div>
+      <div class="panel-sub">Управление городами, площадками и автоматический мониторинг мероприятий</div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px;">🔍 Автоматический мониторинг мероприятий</div>
+        <div style="font-size:12px;color:#888;margin-bottom:12px;">Проверяет сайты площадок каждую <strong>субботу в 00:00</strong>.</div>
+        <div id="monitorStatus" style="background:#f0fff4;border:1px solid #b2dfdb;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px;">⏳ Загрузка...</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="runMonitorNow()" style="background:#28a745;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:9px 18px;cursor:pointer;">▶ Запустить проверку</button>
+          <button onclick="showMonitorLog()" style="background:#f4f2ee;color:var(--dark);font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:1px solid var(--border);border-radius:4px;padding:9px 14px;cursor:pointer;">📋 Журнал</button>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;">🏙️ Города и источники мероприятий</div>
+        <div id="citiesMonitorList" style="margin-bottom:8px;">...</div>
+        <button onclick="addMonitorCity()" style="background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:8px 16px;cursor:pointer;">✚ Добавить город</button>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;margin-bottom:10px;">🔧 Настройка определения города по IP</div>
+        <div style="font-size:13px;color:#555;margin-bottom:12px;line-height:1.6;">
+          При первом визите город определяется по IP-адресу пользователя и устанавливается в шапке сайта. Пользователь может сменить город вручную — выбор сохраняется в <code>localStorage</code>.
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="geo-enabled" checked style="accent-color:#c8102e;width:16px;height:16px;">
+            Включить определение по IP
+          </label>
+          <select id="geo-fallback" style="border:1.5px solid var(--border);border-radius:6px;padding:7px 12px;font-size:13px;background:#fff;">
+            <option>Волгоград (по умолчанию)</option>
+            <option>Москва</option>
+          </select>
+          <button onclick="saveGeoSettings()" class="btn-red" style="font-size:11px;padding:7px 14px;">Сохранить</button>
+        </div>
+      </div>
+      <div id="citiesList"></div>
+    </div>
+
+    <!-- ═══ СТАТИСТИКА ═══ -->
+    <div id="panel-stats" class="panel-card" style="display:none;">
+      <div class="panel-head">📈 Статистика и счётчики</div>
+      <div class="panel-sub">Подключение Яндекс.Метрики и Google Analytics</div>
+
+      ';
+  var el = document.getElementById('ym-code-preview');
+  if (el) { el.textContent = code; el.style.display = 'block'; }
+  navigator.clipboard.writeText(code).then(function(){ showToastAdmin('📋 Код Яндекс.Метрики скопирован'); }).catch(function(){ showToastAdmin('Код показан ниже — скопируйте вручную'); });
+}
+
+// ── Google Analytics ────────────────────────────────────────────
+function saveGACounter() {
+  var id = (document.getElementById('ga-measurement-id')|| {}).value || '';
+  id = id.trim().toUpperCase();
+  if (!id | !id.startsWith('G-')) { showToastAdmin('❌ Формат: G-XXXXXXXXXX'); return; }
+  try { localStorage.setItem('afishi_ga_counter', id); } catch(e) {}
+  updateCounterStatus();
+  showToastAdmin('✅ Google Analytics ' + id + ' сохранён');
+}
+
+function copyGACode() {
+  var id = (document.getElementById('ga-measurement-id')|| {}).value || '';
+  id = id.trim().toUpperCase() | localStorage.getItem('afishi_ga_counter') || '';
+  if (!id) { showToastAdmin('❌ Сначала введите Measurement ID'); return; }
+    var NL2 = '\n';
+  var code = '<!-- Google Analytics 4 -->' + NL2 +
+    '<script async src="https://www.googletagmanager.com/gtag/js?id=' + id + '"><\/script>' + NL2 +
+    '<script>' + NL2 +
+    '  window.dataLayer = window.dataLayer || [];' + NL2 +
+    '  function gtag(){dataLayer.push(arguments);}' + NL2 +
+    '  gtag("js", new Date());' + NL2 +
+    '  gtag("config", "' + id + '");' + NL2 +
+    '<\/script>' + NL2 +
+    '<!-- /Google Analytics 4 -->';
+  var el = document.getElementById('ga-code-preview');
+  if (el) { el.textContent = code; el.style.display = 'block'; }
+  navigator.clipboard.writeText(code).then(function(){ showToastAdmin('📋 Код Google Analytics скопирован'); }).catch(function(){ showToastAdmin('Код показан ниже — скопируйте вручную'); });
+}
+
+function updateCounterStatus() {
+  var ymId = localStorage.getItem('afishi_ym_counter') || '';
+  var gaId = localStorage.getItem('afishi_ga_counter') || '';
+  var ymStatus = document.getElementById('ym-status');
+  var gaStatus = document.getElementById('ga-status');
+  var ymInp = document.getElementById('ym-counter-id');
+  var gaInp = document.getElementById('ga-measurement-id');
+  if (ymStatus) { ymStatus.textContent = ymId ? '✅ ' + ymId : 'не подключён'; ymStatus.style.background = ymId ? '#d4edda' : '#eee'; ymStatus.style.color = ymId ? '#155724' : '#666'; }
+  if (gaStatus) { gaStatus.textContent = gaId ? '✅ ' + gaId : 'не подключён'; gaStatus.style.background = gaId ? '#d4edda' : '#eee'; gaStatus.style.color = gaId ? '#155724' : '#666'; }
+  if (ymInp && ymId) ymInp.value = ymId;
+  if (gaInp && gaId) gaInp.value = gaId;
+}
+
+// ══ ГЛАВНАЯ СТРАНИЦА ══════════════════════════════════════════
+function renderHomepage() {
+  var cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(e) {}
+  var el = function(id) { return document.getElementById(id); };
+  if (el('hp_feat_title')) el('hp_feat_title').value = cfg.title || '';
+  if (el('hp_feat_sub'))   el('hp_feat_sub').value   = cfg.subtitle || '';
+  if (el('hp_feat_link'))  el('hp_feat_link').value  = cfg.link || '';
+  if (el('hp_feat_img'))   el('hp_feat_img').value   = cfg.img || '';
+  if (el('hp_feat_active')) el('hp_feat_active').checked = cfg.active !== false;
+
+  // Блоки
+  var blocks = JSON.parse(localStorage.getItem('afishi_homepage_blocks') || 'null') || [
+    {id:'concerts', label:'🎵 Концерты', active:true},
+    {id:'theater',  label:'🎭 Театр и спектакли', active:true},
+    {id:'cinema',   label:'🎬 Кино', active:true},
+    {id:'exhibits', label:'🖼️ Выставки', active:true},
+    {id:'kids',     label:'🧒 Детям', active:true},
+    {id:'pushkin',  label:'🏛️ Пушкинская карта', active:true},
+    {id:'hot',      label:'🔥 Горячие события', active:true},
+    {id:'venues',   label:'📍 Площадки', active:true},
+  ];
+  var list = document.getElementById('hp_blocks_list');
+  if (!list) return;
+  list.innerHTML = blocks.map(function(b) {
+    return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f7f4;border-radius:6px;cursor:pointer;">' +
+      '<input type="checkbox" data-block="'+b.id+'" '+(b.active?'checked':'')+' onchange="toggleBlock(this)">' +
+      '<span style="font-size:13px;">'+b.label+'</span>' +
+    '</label>';
+  }).join('');
+}
+
+function saveHomepage() {
+  var cfg = {
+    title:    (document.getElementById('hp_feat_title')|| {}).value || '',
+    subtitle: (document.getElementById('hp_feat_sub')|| {}).value   || '',
+    link:     (document.getElementById('hp_feat_link')|| {}).value  || '',
+    img:      (document.getElementById('hp_feat_img')|| {}).value   || '',
+    active:   (document.getElementById('hp_feat_active')|| {}).checked !== false,
+  };
+  try { localStorage.setItem('afishi_featured', JSON.stringify(cfg)); } catch(e) {}
+  showToastAdmin('✅ Главная страница сохранена');
+}
+
+function toggleBlock(chk) {
+  var blocks = JSON.parse(localStorage.getItem('afishi_homepage_blocks') || 'null') || [];
+  var id = chk.dataset.block;
+  var b = blocks.find(function(x){ return x.id===id; });
+  if (b) b.active = chk.checked;
+  try { localStorage.setItem('afishi_homepage_blocks', JSON.stringify(blocks)); } catch(e) {}
+}
+
+function saveHomepageBlocks() {
+  var checkboxes = document.querySelectorAll('#hp_blocks_list input[data-block]');
+  var blocks = [];
+  var labels = {concerts:'🎵 Концерты',theater:'🎭 Театр',cinema:'🎬 Кино',exhibits:'🖼️ Выставки',
+    kids:'🧒 Детям',pushkin:'🏛️ Пушкинская карта',hot:'🔥 Горячие события',venues:'📍 Площадки'};
+  checkboxes.forEach(function(cb) {
+    blocks.push({id:cb.dataset.block, label:labels[cb.dataset.block]|cb.dataset.block, active:cb.checked});
+  });
+  try { localStorage.setItem('afishi_homepage_blocks', JSON.stringify(blocks)); } catch(e) {}
+  showToastAdmin('✅ Блоки сохранены');
+}
+
+// ══ ПОДВАЛ ════════════════════════════════════════════════════
+function renderFooterEditor() { loadFooter(); }
+
+function loadFooter() {
+  var cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('afishi_footer_config') || '{}'); } catch(e) {}
+  var fields = {ft_phone:'phone', ft_email:'email', ft_addr:'addr', ft_hours:'hours',
+                ft_vk:'vk', ft_tg:'tg', ft_ok:'ok', ft_yt:'yt',
+                ft_slogan:'slogan', ft_copy:'copyright', ft_disc:'disclaimer'};
+  Object.keys(fields).forEach(function(elId) {
+    var el = document.getElementById(elId);
+    if (el) el.value = cfg[fields[elId]] || '';
+  });
+}
+
+function saveFooter() {
+  var fields = {ft_phone:'phone', ft_email:'email', ft_addr:'addr', ft_hours:'hours',
+                ft_vk:'vk', ft_tg:'tg', ft_ok:'ok', ft_yt:'yt',
+                ft_slogan:'slogan', ft_copy:'copyright', ft_disc:'disclaimer'};
+  var cfg = {};
+  Object.keys(fields).forEach(function(elId) {
+    var el = document.getElementById(elId);
+    if (el && el.value) cfg[fields[elId]] = el.value;
+  });
+  try { localStorage.setItem('afishi_footer_config', JSON.stringify(cfg)); } catch(e) {}
+  showToastAdmin('✅ Подвал сохранён — откройте любую страницу сайта чтобы проверить');
+}
+
+// ══ МОНИТОРИНГ ПЛОЩАДОК ═══════════════════════════════════════
+
+var DEFAULT_MONITOR_CITIES = {
+  'Волгоград': {
+    sites: [
+      {name:'ЦКЗ Волгоградская Филармония', url:'https://volgphil.ru/afisha/', active:true},
+      {name:'НЭТ — Новый экспериментальный театр', url:'https://neatvolg.ru/afisha/', active:true},
+      {name:'Царицынская опера', url:'https://tzopera.ru/afisha/', active:true},
+      {name:'ТЮЗ', url:'https://volgogradtuz.ru/afisha/', active:true},
+      {name:'Кроп Арена', url:'https://krop-arena.ru/events/', active:true},
+      {name:'Ресторан Волгоград', url:'https://restvlg.ru/', active:true},
+      {name:'КассирРу Волгоград', url:'https://vlg.kassir.ru/', active:true},
+      {name:'Афиша.Волгоград ВКонтакте', url:'https://vk.com/afisha_volgograd', active:true},
+      {name:'Т-Банк Афиша Волгоград', url:'https://www.tbank.ru/gorod/afisha/volgograd/concerts/', active:true},
+      {name:'Яндекс.Афиша Волгоград', url:'https://afisha.yandex.ru/volgograd/concert', active:true},
+      {name:'КонцертГорода Волгоград', url:'https://koncertgoroda.ru/volgograd', active:true},
+      {name:'АфишаГо Волгоград', url:'https://vlg.afishago.ru/events/', active:true},
+    ]
+  },
+  'Москва': {
+    sites: [
+      {name:'KassirRu Москва', url:'https://www.kassir.ru/', active:true},
+      {name:'Афиша Москва', url:'https://www.afisha.ru/msk/', active:true},
+      {name:'Яндекс.Афиша Москва', url:'https://afisha.yandex.ru/moscow/', active:true},
+      {name:'Ticketland Москва', url:'https://www.ticketland.ru/', active:true},
+    ]
+  }
+};
+
+function loadMonitorCities() {
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem('afishi_monitor_cities') || '{}'); } catch(e) {}
+  return Object.keys(saved).length ? saved : DEFAULT_MONITOR_CITIES;
+}
+
+function saveMonitorCities(data) {
+  try { localStorage.setItem('afishi_monitor_cities', JSON.stringify(data)); } catch(e) {}
+}
+
+function renderCitiesMonitorList() {
+  var el = document.getElementById('citiesMonitorList');
+  if (!el) return;
+  var cities = loadMonitorCities();
+  var html = Object.keys(cities).map(function(city) {
+    var sites = cities[city].sites || [];
+    return '<div style="margin-bottom:16px;">' +
+      '<div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;color:var(--mid);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;">' +
+        '🏙️ ' + city +
+        '<button onclick="addMonitorSite(' + JSON.stringify(city) + ')" style="background:none;border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:10px;font-family:Oswald,sans-serif;cursor:pointer;">+ сайт</button>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        sites.map(function(s, idx) {
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f9f7f4;border-radius:6px;">' +
+            '<input type="checkbox" ' + (s.active?'checked':'') + ' onchange="toggleMonitorSite(' + JSON.stringify(city) + ',' + idx + ',this.checked)">' +
+            '<a href="' + s.url + '" target="_blank" style="flex:1;font-size:12px;color:var(--dark);text-decoration:none;">' + s.name + '</a>' +
+            '<span style="font-size:10px;color:#bbb;max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + s.url + '</span>' +
+            '<button onclick="removeMonitorSite(' + JSON.stringify(city) + ',' + idx + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:14px;padding:0 4px;">×</button>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  el.innerHTML = html || '<div style="color:#bbb;font-size:13px;">Нет городов</div>';
+}
+
+function toggleMonitorSite(city, idx, active) {
+  var cities = loadMonitorCities();
+  if (cities[city] && cities[city].sites[idx]) {
+    cities[city].sites[idx].active = active;
+    saveMonitorCities(cities);
+  }
+}
+
+function removeMonitorSite(city, idx) {
+  if (!confirm('Удалить сайт из мониторинга?')) return;
+  var cities = loadMonitorCities();
+  if (cities[city]) { cities[city].sites.splice(idx, 1); saveMonitorCities(cities); }
+  renderCitiesMonitorList();
+}
+
+function addMonitorSite(city) {
+  var url = prompt('URL сайта для мониторинга (например: https://example.ru/afisha/):');
+  if (!url) return;
+  var name = prompt('Название площадки:');
+  if (!name) return;
+  var cities = loadMonitorCities();
+  if (!cities[city]) cities[city] = {sites:[]};
+  cities[city].sites.push({name:name, url:url.trim(), active:true});
+  saveMonitorCities(cities);
+  renderCitiesMonitorList();
+  showToastAdmin('✅ Сайт добавлен: ' + name);
+}
+
+function addMonitorCity() {
+  var city = prompt('Название города:');
+  if (!city) return;
+  var cities = loadMonitorCities();
+  if (!cities[city]) cities[city] = {sites:[]};
+  saveMonitorCities(cities);
+  renderCitiesMonitorList();
+  showToastAdmin('✅ Город добавлен: ' + city);
+}
+
+function setupSaturdayMonitor() {
+  // Проверить — нужно ли запускать (каждую субботу в 00:00)
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var now = new Date();
+  var isSaturday = now.getDay() === 6;
+  var isAfterMidnight = now.getHours() < 2; // 00:00-02:00
+  var oneDayMs = 86400000;
+  var needsRun = isSaturday && isAfterMidnight && (Date.now() - lastRun > oneDayMs);
+  if (needsRun) runMonitorNow();
+}
+
+function runMonitorNow() {
+  var cities = loadMonitorCities();
+  var activeSites = [];
+  Object.keys(cities).forEach(function(city) {
+    (cities[city].sites || []).forEach(function(s) {
+      if (s.active) activeSites.push({city:city, name:s.name, url:s.url});
+    });
+  });
+
+  // Сохранить лог запуска
+  var log = {
+    runAt: new Date().toLocaleString('ru'),
+    sites: activeSites.length,
+    status: 'completed',
+    note: 'Автоматическая проверка. Для реального парсинга нужен серверный скрипт (PHP/Python).'
+  };
+  var logs = [];
+  try { logs = JSON.parse(localStorage.getItem('afishi_monitor_log') || '[]'); } catch(e) {}
+  logs.unshift(log);
+  if (logs.length > 20) logs = logs.slice(0, 20);
+  try { localStorage.setItem('afishi_monitor_log', JSON.stringify(logs)); } catch(e) {}
+  localStorage.setItem('afishi_monitor_last_run', String(Date.now()));
+
+  // Обновить статус
+  var statusEl = document.getElementById('monitorStatus');
+  if (statusEl) {
+    statusEl.innerHTML = '✅ Проверка завершена · ' + log.runAt + ' · Сайтов в мониторинге: ' + activeSites.length + '<br>' +
+      '<span style="color:#888;font-size:11px;">⚠️ Для реального автоматического парсинга нужен серверный cron-скрипт. ' +
+      'Сейчас отмечается факт проверки. Добавьте PHP-скрипт на хостинг для реального мониторинга.</span>';
+  }
+  showToastAdmin('🔍 Проверка запущена: ' + activeSites.length + ' сайтов');
+}
+
+function showMonitorLog() {
+  var logs = [];
+  try { logs = JSON.parse(localStorage.getItem('afishi_monitor_log') || '[]'); } catch(e) {}
+  if (!logs.length) { showToastAdmin('Журнал мониторинга пуст'); return; }
+  var lines = [];
+  logs.forEach(function(l) { lines.push(l.runAt + ' || ' + l.sites + ' сайтов || ' + l.status); });
+  window.alert('Журнал мониторинга (' + lines.length + ' записей):\n' + lines.join(', '));
+}
+</script>
+
+
+<script>
+
+// ══ НЕДОСТАЮЩИЕ ФУНКЦИИ ════════════════════════════════════════
+
+// isPastEvent — проверка что событие прошло
+function isPastEvent(ev) {
+  var iso = ev.dateISO || ev.dateStart || ev.date || '';
+  if (!iso) return false;
+  var datePart = iso.slice(0,10);
+  var p = datePart.split('-');
+  if (p.length !== 3) return false;
+  var now = new Date();
+  // Дата начала: берём дату мероприятия + время начала
+  var evStart = new Date(+p[0], +p[1]-1, +p[2], 0, 0, 0, 0);
+  var timeStr = ev.time || ev.timeStart || '';
+  if (timeStr) {
+    var tp = timeStr.split(':');
+    evStart.setHours(parseInt(tp[0])|| 0, parseInt(tp[1])|| 0, 0, 0);
+  } else {
+    // Если время не задано — считаем прошедшим только на следующий день
+    evStart.setHours(23, 59, 59, 0);
+  }
+  return now >= evStart;
+}
+
+// renderStats — статистика сайта
+function renderStats() {
+  renderDashboardFull();
+}
+
+// renderArticles — заглушка для раздела Статьи
+function renderArticles() {
+  var el = document.getElementById('panel-articles');
+  if (!el) return;
+  var content = el.querySelector('.articles-list');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:32px;color:#bbb;">Статьи загружаются...</div>';
+}
+
+// renderMailing — заглушка для раздела Рассылка
+function renderMailing() {
+  // Рассылка требует серверной части — показать статус
+  var el = document.getElementById('mailing-status');
+  if (el) el.textContent = 'Для рассылки настройте SMTP на сервере.';
+}
+
+// renderShows — спектакли
+function renderShows() {
+  renderList('events', 'all');
+}
+
+// ══ ДАШБОРД ════════════════════════════════════════════════════
+function renderDashboardFull() {
+  // Читаем все данные из localStorage
+  var _pending_ev  = getLS('afishi_pending_events')  || [];
+  var _pending_vn  = getLS('afishi_pending_venues')  || [];
+  var _pending_fm  = getLS('afishi_pending_films')   || [];
+  var _accounts    = getLS('afishi_accounts')        || [];
+
+  var events  = _pending_ev.length;
+  var venues  = _pending_vn.length;
+  var films   = _pending_fm.length;
+  var users   = _accounts.length;
+  var pending = _pending_ev.filter(function(x){ return x && x.status==='pending'; }).length
+              + _pending_vn.filter(function(x){ return x && x.status==='pending'; }).length;
+
+  // Прошедшие
+  var today = new Date(); today.setHours(0,0,0,0);
+  var pastLS = _pending_ev.filter(function(x){
+    if (!x) return false;
+    var iso = x.dateISO || x.dateStart || '';
+    if (!iso) return false;
+    var d = new Date(iso.slice(0,10)); d.setHours(0,0,0,0);
+    return !isNaN(d) && d < today;
+  }).length;
+  var past = pastLS + 16; // + статические архивные
+
+  // Отзывы — все форматы
+  var reviews = 0;
+  try {
+    var _rv1 = getLS('afishi_reviews');
+    if (_rv1 && typeof _rv1 === 'object' && !Array.isArray(_rv1)) {
+      Object.values(_rv1).forEach(function(arr) { if (Array.isArray(arr)) reviews += arr.length; });
+    }
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('afishi_reviews_')) {
+        var arr2 = getLS(k);
+        if (Array.isArray(arr2)) reviews += arr2.length;
+      }
+    }
+  } catch(e) {}
+
+  // Записать в DOM — ищем ОБА варианта id (stat-grid новый + старый)
+  var ids = {
+    'ds-events':  events,
+    'ds-venues':  venues,
+    'ds-films':   films,
+    'ds-users':   users,
+    'ds-pending': pending,
+    'ds-reviews': reviews,
+    'ds-past':    past
+  };
+  Object.keys(ids).forEach(function(id) {
+    document.querySelectorAll('#' + id).forEach(function(el) {
+      el.textContent = ids[id];
+    });
+  });
+
+  // Pending список
+  setTimeout(function() {
+    try { renderList('events','all'); } catch(e) {}
+    try { renderList('venues','all'); } catch(e) {}
+    try { renderList('films','all');  } catch(e) {}
+    // Блок "Ожидают модерации" в дашборде
+    var dp = document.getElementById('dashPending');
+    if (dp) {
+      var pev = _pending_ev.filter(function(x){ return x && x.status==='pending'; });
+      if (!pev.length) {
+        dp.innerHTML = '<span style="color:#1a6c2e;font-size:13px;">✓ Нет событий на модерации</span>';
+      } else {
+        dp.innerHTML = pev.slice(0,5).map(function(ev) {
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0ede8;">'
+            + '<span style="font-size:12px;background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;flex-shrink:0;">Концерт</span>'
+            + '<span style="font-size:13px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(ev.title||'—')+'</span>'
+            + '<span style="font-size:11px;color:#888;flex-shrink:0;">'+(ev.dateISO || ev.dateStart||'')+'</span>'
+            + '<button data-eid="'+ev.id+'" onclick="approveEvent(this.dataset.eid)" style="background:#1a6c2e;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">✓</button>'
+            + '</div>';
+        }).join('')
+        + (pev.length > 5 ? '<div style="text-align:center;margin-top:8px;font-size:12px;color:#888;">и ещё '+(pev.length-5)+'...</div>' : '');
+      }
+    }
+  }, 100);
+}
+
+// Автоинициализация при загрузке
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof checkAuth === 'function') checkAuth();
+  if (typeof renderDashboardFull === 'function') renderDashboardFull();
+});
+
+
+// ══════════════════════════════════════════════════════════
+// УПРАВЛЕНИЕ ПО ГОРОДАМ — Скоро в продаже и Горячие билеты
+// ══════════════════════════════════════════════════════════
+
+function getCityManagerData(city) {
+  try {
+    var all = JSON.parse(localStorage.getItem('afishi_city_manager') || '{}');
+    return all[city] || { coming: [], hot: [] };
+  } catch(e) { return { coming: [], hot: [] }; }
+}
+
+function saveCityManagerData(city, data) {
+  try {
+    var all = JSON.parse(localStorage.getItem('afishi_city_manager') || '{}');
+    all[city] = data;
+    localStorage.setItem('afishi_city_manager', JSON.stringify(all));
+  } catch(e) {}
+}
+
+function loadCityManager() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var data = getCityManagerData(city);
+  renderComingSoonList(data.coming || []);
+  renderHotPinnedList(data.hot || []);
+}
+
+function saveCityManager() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var coming = collectComingSoonItems();
+  var hot    = collectHotPinnedItems();
+  saveCityManagerData(city, { coming, hot });
+  var saved = document.getElementById('cityManagerSaved');
+  if (saved) { saved.style.display='inline'; setTimeout(function(){ saved.style.display='none'; }, 2000); }
+}
+
+// ── Скоро в продаже ────────────────────────────────────────
+function renderComingSoonList(items) {
+  var el = document.getElementById('comingSoonList');
+  if (!el) return;
+  el.innerHTML = '';
+  (items.length ? items : []).forEach(function(item, i) {
+    el.innerHTML += comingSoonRow(item, i);
+  });
+}
+
+function comingSoonRow(item, i) {
+  return '<div class="cs-row" data-idx="'+i+'" style="display:flex;gap:10px;align-items:flex-start;background:#f9f7f4;border-radius:8px;padding:12px;">' +
+    '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">' +
+      '<input class="cs-title" placeholder="Название концерта / артист" value="'+(item.title||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%;">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<input class="cs-date" placeholder="Дата (напр: с 15 августа)" value="'+(item.date||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:140px;">' +
+        '<input class="cs-genre" placeholder="Жанр" value="'+(item.genre||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:100px;">' +
+        '<input class="cs-price" placeholder="Цена, ₽" value="'+(item.price||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:100px;">' +
+      '</div>' +
+      '<input class="cs-link" placeholder="Ссылка на билеты (необязательно)" value="'+(item.link||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:100%;">' +
+    '</div>' +
+    '<button onclick="removeComingSoonItem('+i+')" style="background:#fee;border:1px solid #fcc;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:14px;flex-shrink:0;">🗑️</button>' +
+  '</div>';
+}
+
+function addComingSoonItem() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var data = getCityManagerData(city);
+  if ((data.coming|| []).length >= 5) { showToastAdmin('Максимум 5 анонсов'); return; }
+  var coming = collectComingSoonItems();
+  coming.push({ title:'', date:'', genre:'', price:'', link:'' });
+  renderComingSoonList(coming);
+}
+
+function removeComingSoonItem(idx) {
+  var items = collectComingSoonItems();
+  items.splice(idx, 1);
+  renderComingSoonList(items);
+}
+
+function collectComingSoonItems() {
+  var rows = document.querySelectorAll('#comingSoonList .cs-row');
+  var items = [];
+  rows.forEach(function(row) {
+    items.push({
+      title: row.querySelector('.cs-title').value.trim(),
+      date:  row.querySelector('.cs-date').value.trim(),
+      genre: row.querySelector('.cs-genre').value.trim(),
+      price: row.querySelector('.cs-price').value.trim(),
+      link:  row.querySelector('.cs-link').value.trim()
+    });
+  });
+  return items.filter(function(i){ return i.title; });
+}
+
+// ── Горячие билеты ─────────────────────────────────────────
+function renderHotPinnedList(items) {
+  var el = document.getElementById('hotPinnedList');
+  if (!el) return;
+  el.innerHTML = '';
+  (items.length ? items : []).forEach(function(item, i) {
+    el.innerHTML += hotPinnedRow(item, i);
+  });
+}
+
+function hotPinnedRow(item, i) {
+  return '<div class="hp-row" data-idx="'+i+'" style="display:flex;gap:10px;align-items:flex-start;background:#fff8f0;border:1px solid #ffe4b5;border-radius:8px;padding:12px;">' +
+    '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">' +
+      '<input class="hp-title" placeholder="Название / артист" value="'+(item.title||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%;">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<input class="hp-date" placeholder="Дата" value="'+(item.date||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:140px;">' +
+        '<input class="hp-price" placeholder="от ... ₽" value="'+(item.price||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:120px;">' +
+      '</div>' +
+    '</div>' +
+    '<button onclick="removeHotPinnedItem('+i+')" style="background:#fee;border:1px solid #fcc;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:14px;flex-shrink:0;">🗑️</button>' +
+  '</div>';
+}
+
+function addHotPinnedItem() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var data = getCityManagerData(city);
+  if ((data.hot|| []).length >= 3) { showToastAdmin('Максимум 3 события'); return; }
+  var hot = collectHotPinnedItems();
+  hot.push({ title:'', date:'', price:'' });
+  renderHotPinnedList(hot);
+}
+
+function removeHotPinnedItem(idx) {
+  var items = collectHotPinnedItems();
+  items.splice(idx, 1);
+  renderHotPinnedList(items);
+}
+
+function collectHotPinnedItems() {
+  var rows = document.querySelectorAll('#hotPinnedList .hp-row');
+  var items = [];
+  rows.forEach(function(row) {
+    items.push({
+      title: row.querySelector('.hp-title').value.trim(),
+      date:  row.querySelector('.hp-date').value.trim(),
+      price: row.querySelector('.hp-price').value.trim()
+    });
+  });
+  return items.filter(function(i){ return i.title; });
+}
+
+// showPanel intercept перенесён в heroAside блок
+
+
+// ── Hero Aside Admin ───────────────────────────────────────
+var _heroAsideDefaults = [
+  {badge:'Театр',title:'«Мастер и Маргарита» — МХТ им. Чехова',
+   meta:'1 июля · 19:00 · от 1 200 ₽',bg:'linear-gradient(135deg,#0d1b2a,#1b4f72)',
+   icon:'🎭',link:'theater.html'},
+  {badge:'Выставка',title:'Айвазовский & Куинджи — Третьяковка',
+   meta:'до 20 августа · от 400 ₽',bg:'linear-gradient(135deg,#0b3d0b,#1e7a1e)',
+   icon:'🖼️',link:'exhibits.html'}
+];
+
+var _heroAsideBgs = [
+  'linear-gradient(135deg,#0d1b2a,#1b4f72)',
+  'linear-gradient(135deg,#0b3d0b,#1e7a1e)',
+  'linear-gradient(135deg,#2a0a0a,#6a1a1a)',
+  'linear-gradient(135deg,#1a0a2e,#4a0a6e)',
+  'linear-gradient(135deg,#1a1a00,#5a5a00)',
+];
+var _heroAsideIcons = ['🎭','🖼️','🎸','🎬','🎪','🎨','📸','🎤','🏛️','🎻'];
+
+function loadHomepageCity() { loadHeroAsideAdmin(); }
+
+function loadHeroAsideAdmin() {
+  var cards = [];
+  var city = (document.getElementById('homepageCitySelect') || {}).value || 'Волгоград';
+  var _allHero = {};
+  try { _allHero = JSON.parse(localStorage.getItem('afishi_hero_aside_cities') || '{}'); } catch(e) {}
+  cards = _allHero[city] || [];
+  // Фоллбэк — старый ключ
+  if (!cards.length) { try { cards = JSON.parse(localStorage.getItem('afishi_hero_aside') || '[]'); } catch(e) {} }
+  if (!cards.length) cards = _heroAsideDefaults;
+  var el = document.getElementById('heroAsideAdmin');
+  if (!el) return;
+  el.innerHTML = cards.slice(0,2).map(function(c,i) {
+    var iconOpts = _heroAsideIcons.map(function(ic){
+      return '<option'+(ic===c.icon?' selected':'')+'>'+ic+'</option>';
+    }).join('');
+    var bgSwatches = _heroAsideBgs.map(function(bg){
+      var sel = bg===(c.bg || _heroAsideBgs[i]) ? 'outline:2px solid #c8102e;' : '';
+      return '<div class="ha-bg-swatch" data-bg="'+bg+'" style="width:28px;height:28px;border-radius:4px;background:'+bg+';cursor:pointer;flex-shrink:0;'+sel+'"></div>';
+    }).join('');
+    return '<div class="ha-card-row" style="background:#f9f7f4;border-radius:8px;padding:14px;">'
+      + '<div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#444;">Анонс '+(i+1)+'</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+        + '<div style="display:flex;gap:8px;">'
+          + '<select class="ha-icon" style="width:60px;font-size:18px;border:1px solid var(--border);border-radius:6px;padding:6px;">'+iconOpts+'</select>'
+          + '<input class="ha-badge" placeholder="Бейдж (Театр, Выставка...)" value="'+(c.badge||'')+'" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+        + '</div>'
+        + '<input class="ha-title" placeholder="Заголовок анонса" value="'+(c.title||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:100%;">'
+        + '<input class="ha-meta" placeholder="Подзаголовок (дата, цена)" value="'+(c.meta||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:100%;">'
+        + '<input class="ha-link" placeholder="Ссылка (concerts.html...)" value="'+(c.link||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:100%;">'
+        + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
+          + '<span style="font-size:12px;color:#888;flex-shrink:0;">Фон:</span>'
+          + bgSwatches
+          + '<input class="ha-bg-val" type="hidden" value="'+(c.bg || _heroAsideBgs[i])+'">'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.classList.contains('ha-bg-swatch')) return;
+  var row = e.target.closest('div[style*="background:#f9f7f4"]');
+  if (!row) return;
+  row.querySelectorAll('.ha-bg-swatch').forEach(function(d){ d.style.outline=''; });
+  e.target.style.outline = '2px solid #c8102e';
+  var inp = row.querySelector('.ha-bg-val');
+  if (inp) inp.value = e.target.dataset.bg;
+});
+
+function saveHeroAside() {
+  var rows = document.querySelectorAll('#heroAsideAdmin > div');
+  var cards = [];
+  rows.forEach(function(row) {
+    cards.push({
+      icon:  row.querySelector('.ha-icon').value,
+      badge: row.querySelector('.ha-badge').value.trim(),
+      title: row.querySelector('.ha-title').value.trim(),
+      meta:  row.querySelector('.ha-meta').value.trim(),
+      link:  row.querySelector('.ha-link').value.trim(),
+      bg:    row.querySelector('.ha-bg-val').value || _heroAsideBgs[0]
+    });
+  });
+  var _cityHP = (document.getElementById('homepageCitySelect') || {}).value || 'Волгоград';
+  var _allHeroSave = {};
+  try { _allHeroSave = JSON.parse(localStorage.getItem('afishi_hero_aside_cities') || '{}'); } catch(e) {}
+  _allHeroSave[_cityHP] = cards;
+  localStorage.setItem('afishi_hero_aside_cities', JSON.stringify(_allHeroSave));
+  localStorage.setItem('afishi_hero_aside', JSON.stringify(cards)); // совместимость
+  var saved = document.getElementById('heroAsideSaved');
+  if (saved) { saved.style.display='inline'; setTimeout(function(){ saved.style.display='none'; }, 2000); }
+}
+
+// Автозагрузка при открытии панели главной
+(function() {
+  var origShow = window.showPanel;
+  window.showPanel = function(name, el) {
+    if (typeof origShow === 'function') origShow(name, el);
+    if (name === 'homepage') setTimeout(loadHeroAsideAdmin, 50);
+    if (name === 'reviews-panel') setTimeout(function(){ renderReviews('all'); }, 50);
+    if (name === 'cities')   setTimeout(loadCityManager, 50);
+  };
+})();
+
+
+function approveEvent(id) {
+  if (!id) return;
+  try {
+    var evs = JSON.parse(localStorage.getItem('afishi_pending_events') || '[]');
+    evs = evs.map(function(e) {
+      if (String(e.id) === String(id)) e.status = 'approved';
+      return e;
+    });
+    localStorage.setItem('afishi_pending_events', JSON.stringify(evs));
+    renderDashboardFull();
+    showToastAdmin('Мероприятие одобрено');
+  } catch(e) { console.error(e); }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// ОТЗЫВЫ — чтение из всех форматов localStorage
+// ══════════════════════════════════════════════════════════
+function _getAllReviews() {
+  var all = [];
+  // Формат 1: afishi_reviews = { "concerts::id": [{...}], ... }
+  try {
+    var db = JSON.parse(localStorage.getItem('afishi_reviews') || 'null');
+    if (db && typeof db === 'object' && !Array.isArray(db)) {
+      Object.entries(db).forEach(function(entry) {
+        var key = entry[0], arr = entry[1];
+        if (Array.isArray(arr)) arr.forEach(function(r) {
+          all.push(Object.assign({}, r, {_source: key, _fmt: 1}));
+        });
+      });
+    }
+  } catch(e) {}
+  // Формат 2: afishi_reviews_<type>_<id> = [{...}]
+  try {
+    for (var i=0; i<localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('afishi_reviews_')) {
+        var arr2 = JSON.parse(localStorage.getItem(k) || '[]');
+        if (Array.isArray(arr2)) arr2.forEach(function(r) {
+          all.push(Object.assign({}, r, {_source: k, _fmt: 2}));
+        });
+      }
+    }
+  } catch(e) {}
+  return all;
+}
+
+function renderReviews(filter) {
+  filter = filter || 'all';
+  var panel = document.getElementById('panel-reviews-panel');
+  if (!panel) return;
+  var container = document.getElementById('reviewsList');
+  if (!container) return;
+
+  var all = _getAllReviews();
+
+  if (filter === 'pending') all = all.filter(function(r){ return r.status === 'pending' | !r.status; });
+  if (filter === 'approved') all = all.filter(function(r){ return r.status === 'approved'; });
+
+  // Обновить счётчик
+  var ds = document.getElementById('ds-reviews');
+  if (ds) ds.textContent = _getAllReviews().length;
+
+  if (!all.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">'
+      + '<div style="font-size:36px;margin-bottom:12px;">💬</div>'
+      + '<div style="font-size:14px;">Отзывов пока нет</div>'
+      + '<div style="font-size:12px;margin-top:8px;">Они появятся когда пользователи начнут оставлять отзывы на сайте</div>'
+      + '</div>';
+    return;
+  }
+
+  container.innerHTML = all.map(function(r, idx) {
+    var score = r.score || r.rating || 0;
+    var stars = '★'.repeat(Math.min(5,score)) + '☆'.repeat(5-Math.min(5,score));
+    var statusBg = r.status==='approved' ? '#d4edda' : r.status==='rejected' ? '#f8d7da' : '#fff3cd';
+    var statusTxt = r.status==='approved' ? '✓ Одобрен' : r.status==='rejected' ? '✗ Отклонён' : '⏳ На модерации';
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">'
+        + '<div style="flex:1;">'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+            + '<span style="font-weight:700;font-size:14px;">'+(r.name || r.author||'Аноним')+'</span>'
+            + '<span style="color:#f0a500;">' + stars + '</span>'
+            + '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+statusBg+';font-weight:700;">'+statusTxt+'</span>'
+          + '</div>'
+          + (r.title ? '<div style="font-weight:700;font-size:13px;margin-bottom:4px;">'+r.title+'</div>' : '')
+          + '<div style="font-size:13px;color:#444;line-height:1.5;">'+(r.text || r.comment||'')+'</div>'
+          + '<div style="font-size:11px;color:#aaa;margin-top:6px;">'+(r.date || r.createdAt||'')+(r._source?' · '+r._source:'')+'</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
+          + '<button data-ridx="'+idx+'" onclick="approveReview(this.dataset.ridx)" style="background:#1a6c2e;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">✓ Одобрить</button>'
+          + '<button data-ridx="'+idx+'" onclick="rejectReview(this.dataset.ridx)" style="background:#dc3545;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">✗ Отклонить</button>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function approveReview(idx) {
+  _updateReviewStatus(parseInt(idx), 'approved');
+}
+function rejectReview(idx) {
+  _updateReviewStatus(parseInt(idx), 'rejected');
+}
+function _updateReviewStatus(idx, status) {
+  var all = _getAllReviews();
+  var rev = all[idx];
+  if (!rev) return;
+  // Обновить в localStorage
+  if (rev._fmt === 1) {
+    var db = {};
+    try { db = JSON.parse(localStorage.getItem('afishi_reviews') || '{}'); } catch(e) {}
+    if (db[rev._source]) {
+      db[rev._source] = db[rev._source].map(function(r) {
+        if ((r.text||'') === (rev.text||'') && (r.date||'') === (rev.date||'')) r.status = status;
+        return r;
+      });
+      localStorage.setItem('afishi_reviews', JSON.stringify(db));
+    }
+  } else {
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem(rev._source) || '[]'); } catch(e) {}
+    arr = arr.map(function(r) {
+      if ((r.text||'') === (rev.text||'') && (r.date||'') === (rev.date||'')) r.status = status;
+      return r;
+    });
+    localStorage.setItem(rev._source, JSON.stringify(arr));
+  }
+  renderReviews();
+  showToastAdmin(status === 'approved' ? 'Отзыв одобрен' : 'Отзыв отклонён');
+}
+
+function clearAllReviews() {
+  if (!confirm('Удалить ВСЕ отзывы? Это действие нельзя отменить.')) return;
+  localStorage.removeItem('afishi_reviews');
+  for (var i=localStorage.length-1; i>=0; i--) {
+    var k = localStorage.key(i);
+    if (k && k.startsWith('afishi_reviews_')) localStorage.removeItem(k);
+  }
+  renderReviews();
+  showToastAdmin('Все отзывы удалены');
+}
+
+function filterEventsList() {
+  renderList('events', 'all');
+}
+
+function openAddEventModal() {
+  var modal = document.getElementById('editModal');
+  var body  = document.getElementById('editModalBody');
+  if (!modal | !body) return;
+  window._newEventId = 'ev_' + Date.now();
+  var genreOpts = ['Концерт','Рок','Поп','Хип-хоп','Электронная','Классика','Фестиваль','Другое']
+    .map(function(g){ return '<option value="'+g+'">'+g+'</option>'; }).join('');
+  var cityOpts = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар']
+    .map(function(c){ return '<option>'+c+'</option>'; }).join('');
+
+  body.innerHTML =
+    '<div style="padding:4px 0;">' +
+    '<div style="font-family:Oswald,sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;">✚ Новое мероприятие</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      '<input id="aev_title" placeholder="Название *" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<input id="aev_artist" placeholder="Артист / исполнитель" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<div style="display:flex;gap:8px;">' +
+        '<input id="aev_date" type="date" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;">' +
+        '<input id="aev_time" type="time" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;">' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<select id="aev_genre" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' + genreOpts + '</select>' +
+        '<select id="aev_city" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' + cityOpts + '</select>' +
+      '</div>' +
+      '<select id="aev_venue" onchange="autoFillVenueAddr()" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%;">' +
+      '<option value="">— Выберите площадку —</option>' +
+      '<option value="Стадион Волгоград Арена">🏟️ Стадион Волгоград Арена</option>' +
+      '<option value="Выставочный комплекс ВолгоградЭКСПО">🏛️ Выставочный комплекс ВолгоградЭКСПО</option>' +
+      '<option value="ЦКЗ Волгоградская Филармония">🎼 ЦКЗ Волгоградская Филармония</option>' +
+      '<option value="Дом Офицеров">🏛️ Дом Офицеров</option>' +
+      '<option value="Ресторан «Волгоград»">🍷 Ресторан «Волгоград»</option>' +
+      '<option value="НЭТ — Новый Экспериментальный Театр">🎭 НЭТ — Новый Экспериментальный Театр</option>' +
+      '<option value="Царицынская опера">🎶 Царицынская опера</option>' +
+      '<option value="ТЮЗ — Театр юного зрителя">🎪 ТЮЗ — Театр юного зрителя</option>' +
+      '<option value="Волгоградский цирк">🎡 Волгоградский цирк</option>' +
+      '<option value="Другое">• Другое</option>' +
+      '</select>' +
+      '<input id="aev_addr" placeholder="Адрес площадки" readonly style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:#f9f7f4;width:100%;color:#555;" title="Заполняется автоматически при выборе площадки">' +
+      '<input id="aev_price" type="number" placeholder="Цена от (₽)" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<input id="aev_photo" placeholder="Фото (URL)" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<select id="aev_status" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+        '<option value="approved">✅ Опубликовать сразу</option>' +
+        '<option value="pending">⏳ На модерацию</option>' +
+      '</select>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;margin-top:16px;">' +
+      '<button onclick="saveNewEventAdmin()" class="btn-red" style="flex:1;padding:10px;">💾 Сохранить</button>' +
+      '<button onclick="closeModal()" style="flex:1;padding:10px;background:#f4f2ee;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">Отмена</button>' +
+    '</div>' +
+    '</div>';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function saveNewEventAdmin() {
+  var id = window._newEventId | ('ev_' + Date.now());
+  var title  = (document.getElementById('aev_title')  || {}).value || '';
+  var artist = (document.getElementById('aev_artist') || {}).value || '';
+  var date   = (document.getElementById('aev_date')   || {}).value || '';
+  var time   = (document.getElementById('aev_time')   || {}).value || '';
+  var genre  = (document.getElementById('aev_genre')  || {}).value || 'Концерт';
+  var city   = (document.getElementById('aev_city')   || {}).value || 'Волгоград';
+  var venue  = (document.getElementById('aev_venue')  || {}).value || '';
+  var addr_v = (document.getElementById('aev_addr')   || {}).value | (VENUE_ADDR_MAP && VENUE_ADDR_MAP[venue] ? VENUE_ADDR_MAP[venue] : '');
+  var price  = parseInt((document.getElementById('aev_price') || {}).value) || 0;
+  var photo  = (document.getElementById('aev_photo')  || {}).value || '';
+  var status = (document.getElementById('aev_status') || {}).value || 'approved';
+
+  if (!title | !date) { showToastAdmin('Укажите название и дату'); return; }
+
+  var ev = {
+    id: id, title: title, artist: artist | title,
+    genre: genre, icon: '🎤', color: '#1a0a2e',
+    dateISO: date, dateStart: date, time: time,
+    date: (function() {
+      var mn=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+      var d=new Date(date); return !isNaN(d)?(d.getDate()+' '+mn[d.getMonth()]):'';
+    })(),
+    city: city, venue: venue, addr: addr_v, price: price, photo: photo,
+    status: status, submittedBy: 'admin',
+    submittedAt: new Date().toLocaleDateString('ru'),
+    cat: 'concert', age: '6+', hot: false
+  };
+
+  try {
+    var pev = JSON.parse(localStorage.getItem('afishi_pending_events') || '[]');
+    pev.unshift(ev);
+    localStorage.setItem('afishi_pending_events', JSON.stringify(pev));
+    if (photo) {
+      var cp = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}');
+      cp[id] = photo;
+      localStorage.setItem('afishi_concert_photos', JSON.stringify(cp));
+    }
+  } catch(e) {}
+
+  closeModal();
+  renderList('events', 'all');
+  renderDashboardFull();
+  showToastAdmin('✅ Мероприятие добавлено!');
+}
+
+// ── Автообновление вкладки мероприятий каждые 60 секунд ──────────
+(function() {
+  var _evRefreshTimer = null;
+  var _origShowPanel = window.showPanel;
+  window.showPanel = function(name, el) {
+    if (typeof _origShowPanel === 'function') _origShowPanel(name, el);
+    if (name === 'events') {
+      // Запустить таймер обновления
+      if (_evRefreshTimer) clearInterval(_evRefreshTimer);
+      _evRefreshTimer = setInterval(function() {
+        var panel = document.getElementById('panel-events');
+        if (!panel | panel.style.display === 'none') {
+          clearInterval(_evRefreshTimer);
+          return;
+        }
+        // Тихо обновить — событие могло перейти в прошедшие
+        var activeBtn = panel.querySelector('.ev-filter-active');
+        var status = activeBtn ? activeBtn.dataset.status : 'all';
+        renderList('events', status);
+      }, 60000); // каждую минуту
+    } else {
+      if (_evRefreshTimer) { clearInterval(_evRefreshTimer); _evRefreshTimer = null; }
+    }
+  };
+})();
+
+function deleteEventByTitle(titleKeyword) {
+  if (!confirm('Удалить все мероприятия содержащие "' + titleKeyword + '" из базы?')) return;
+  var deleted = 0;
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var before = arr.length;
+      arr = arr.filter(function(ev) {
+        return !(ev.title || '').toLowerCase().includes(titleKeyword.toLowerCase());
+      });
+      deleted += before - arr.length;
+      localStorage.setItem(key, JSON.stringify(arr));
+    } catch(e) {}
+  });
+  renderList('events', 'all');
+  renderDashboardFull();
+  showToastAdmin('Удалено ' + deleted + ' событий с "' + titleKeyword + '"');
+}
+
+// Автоудаление устаревших/неверных мероприятий из localStorage
+(function() {
+  var BAD_TITLES = ['scorpions','50th anniversary','каста — живой','arena волгоград'];
+  var BAD_VENUES = ['arena волгоград'];
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var filtered = arr.filter(function(ev) {
+        var t = (ev.title || '').toLowerCase();
+        var v = (ev.venue || '').toLowerCase();
+        var badTitle = BAD_TITLES.some(function(b){ return t.includes(b); });
+        var badVenue = BAD_VENUES.some(function(b){ return v === b; });
+        return !badTitle && !badVenue;
+      });
+      if (filtered.length !== arr.length) {
+        localStorage.setItem(key, JSON.stringify(filtered));
+      }
+    } catch(e) {}
+  });
+  // Исправить адрес стадиона во всех событиях
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var changed = false;
+      arr = arr.map(function(ev) {
+        var v = (ev.venue || '').toLowerCase();
+        if (v.includes('стадион волгоград арена') || v.includes('волгоград арена')) {
+          if (ev.addr !== 'просп. Ленина, 76, Волгоград') {
+            ev.addr = 'просп. Ленина, 76, Волгоград';
+            ev.venue = 'Стадион Волгоград Арена';
+            changed = true;
+          }
+        }
+        if (v.includes('экспо') || v.includes('expocentr')) {
+          if (ev.addr !== 'пр. Ленина, 46А, Волгоград') {
+            ev.addr = 'пр. Ленина, 46А, Волгоград';
+            changed = true;
+          }
+        }
+        return ev;
+      });
+      if (changed) localStorage.setItem(key, JSON.stringify(arr));
+    } catch(e) {}
+  });
+})();
+
+// ── Карта адресов площадок ──────────────────────────────────────
+var VENUE_ADDR_MAP = {
+  'Стадион Волгоград Арена':               'просп. Ленина, 76, Волгоград',
+  'Выставочный комплекс ВолгоградЭКСПО':   'пр. Ленина, 46А, Волгоград',
+  'ЦКЗ Волгоградская Филармония':          'наб. 62-й Армии, 4, Волгоград',
+  'Дом Офицеров':                          'просп. Ленина, 31, Волгоград',
+  'Ресторан «Волгоград»':                  'ул. Мира, 12, Волгоград',
+  'НЭТ — Новый Экспериментальный Театр':  'ул. Рабоче-Крестьянская, 15А, Волгоград',
+  'Царицынская опера':                     'просп. Ленина, 97, Волгоград',
+  'ТЮЗ — Театр юного зрителя':            'ул. Рабоче-Крестьянская, 16, Волгоград',
+  'Волгоградский цирк':                    'ул. Маршала Чуйкова, 22, Волгоград',
+};
+
+function autoFillVenueAddr() {
+  var sel = document.getElementById('aev_venue');
+  var addr = document.getElementById('aev_addr');
+  if (!sel | !addr) return;
+  var venueName = sel.value;
+  addr.value = VENUE_ADDR_MAP[venueName] || '';
+}
+
+function closeModal() {
+  var m = document.getElementById('editModal');
+  if (m) m.style.display = 'none';
+  m = document.getElementById('editModalOuter');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  _editCtx = null;
+}
+</script>
+
+<footer>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+    </div>
+  </div>
+
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Колонка 1: Логотип + описание + соцсети -->
+      <div>
+        <div class="footer-logo">Афиши<span>.ру</span></div>
+        <div class="footer-desc">
+          Крупнейший агрегатор событий и мероприятий в России.
+          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
+          Основан в 2002 году.
+        </div>
+        <div class="footer-socials">
+          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
+          </a>
+          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
+          </a>
+          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
+          </a>
+          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Колонка 2: Разделы -->
+      <div>
+        <div class="footer-col-title">Разделы</div>
+        <div class="footer-links">
+          <a href="concerts.html">🎸 Концерты</a>
+          <a href="theater.html">🎭 Театр и балет</a>
+          <a href="cinema.html">🎬 Кино</a>
+          <a href="exhibits.html">🖼️ Выставки</a>
+          <a href="kids.html">🧸 Детям</a>
+          <a href="articles.html">📝 Статьи</a>
+          <a href="film-database.html">📽️ База фильмов</a>
+          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
+            🏛 Пушкинская карта
+          </a>
+        </div>
+      </div>
+
+      <!-- Колонка 3: Площадки Волгограда -->
+      <div>
+        <div class="footer-col-title">Площадки</div>
+        <div class="footer-links" id="footerVenuesList">
+          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
+          <a href="venue-arena.html">Стадион Волгоград Арена</a>
+          <a href="venue-dom-ofitserov-volgograd.html">Дом Офицеров</a>
+          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
+          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
+          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
+          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
+        </div>
+      </div>
+
+      <!-- Города перенесены в шапку сайта -->
+
+      <!-- Колонка 5: Компания -->
+      <div>
+        <div class="footer-col-title">Компания</div>
+        <div class="footer-links">
+          <a href="about.html">О проекте</a>
+          <a href="advertise.html">Реклама на сайте</a>
+          <a href="event-add.html">Добавить событие</a>
+          <a href="venue-add.html">Добавить площадку</a>
+          <a href="loyalty.html">АфишиПлюс ⭐</a>
+          <a href="partners.html">Партнёрам</a>
+          <a href="jobs.html">Вакансии</a>
+          <a href="admin-info.html">Администраторам</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="footer-divider">
+
+  <div class="footer-bottom">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span>© 2002–2026 afishi.ru</span>
+      <span class="footer-badge">🌆 Волгоград</span>
+      <span class="footer-badge">🔒 18+</span>
+    </div>
+    <div class="footer-bottom-links">
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="sitemap.html">Карта сайта</a>
+      <a href="admin-info.html">Администраторам</a>
+    </div>
+  </div>
+
+
+<!-- ── Кнопка «Поделиться» ─────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto 28px;padding:0 20px;">
+  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;">
+    <div style="margin-bottom:14px;">
+      <div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;">📢 Поделитесь афишей с друзьями</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);">Расскажите о событиях своего города</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="shareToVK()" style="display:flex;align-items:center;gap:6px;background:#4a76a8;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504C19.224 13.376 19 12.763 20.014 11.276c1.109-1.613 3.244-4.145 1.256-4.145h-3.983c-.61 0-.859.407-.859.407s-1.19 2.516-2.86 4.152c-.699.699-1.012.922-1.394.922-.194 0-.437-.223-.437-.931V7.547c0-.593-.166-.933-.644-.933H7.999c-.374 0-.594.271-.594.531 0 .533.821.677.906 2.183v3.089c0 .75-.136.886-.432.886-.79 0-2.712-2.448-3.855-5.25-.22-.601-.443-.836-1.054-.836H.987C.421 7.117 0 7.366 0 7.986c0 .624 1.812 5.109 5.686 8.984 2.979 2.979 6.951 4.024 9.476 4.024z"/></svg>
+        ВКонтакте
+      </button>
+      <button onclick="shareToOK()" style="display:flex;align-items:center;gap:6px;background:#ee8208;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 6a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm5.8 11.2c-.4.5-1.2.7-1.8.3l-2.1-1.3c-.6.2-1.2.3-1.9.3s-1.3-.1-1.9-.3l-2.1 1.3c-.6.4-1.4.2-1.8-.3-.4-.5-.2-1.3.4-1.6l1.8-1.1c-.7-.6-1.2-1.4-1.5-2.3-.2-.6.2-1.3.9-1.4.6-.1 1.2.2 1.4.8.3.9 1.3 1.6 2.8 1.6s2.5-.7 2.8-1.6c.2-.6.8-.9 1.4-.8.6.1 1.1.7.9 1.4-.3.9-.8 1.7-1.5 2.3l1.8 1.1c.6.3.8 1.1.4 1.6z"/></svg>
+        ОК
+      </button>
+      <button onclick="shareToTelegram()" style="display:flex;align-items:center;gap:6px;background:#0088cc;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+        Telegram
+      </button>
+      <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:6px;background:#25d366;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button onclick="shareToDzen()" style="display:flex;align-items:center;gap:6px;background:#ff6600;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor"><path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm23.3 53.3c-10.1 0-18.3 3.4-23.3 9.7-5-6.3-13.2-9.7-23.3-9.7-1.7 0-3.3.1-3.3-3.3 0-3.4 1.6-3.3 3.3-3.3 10.1 0 18.3-3.4 23.3-9.7 5 6.3 13.2 9.7 23.3 9.7 1.7 0 3.3-.1 3.3 3.3 0 3.4-1.6 3.3-3.3 3.3z"/></svg>
+        Дзен
+      </button>
+      <button onclick="shareToRutube()" style="display:flex;align-items:center;gap:6px;background:#060a11;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4.8 13.2l-6 3.6c-.2.1-.4.2-.6.2-.2 0-.4-.1-.6-.2-.4-.2-.6-.6-.6-1V8.4c0-.4.2-.8.6-1 .2-.1.4-.1.6-.2.2 0 .4.1.6.2l6 3.6c.4.2.6.6.6 1s-.2.8-.6 1.2z"/></svg>
+        Rutube
+      </button>
+      <button onclick="shareToYandex()" style="display:flex;align-items:center;gap:6px;background:#fc3f1d;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm-1.65 18.923h-2.113V9.596H9.587C9.1 11.42 8.625 13.007 8.225 14.08c-.722 1.927-1.517 2.594-2.816 2.594-.45 0-.857-.077-1.036-.174l.18-1.71c.167.064.386.115.578.115.5 0 .87-.424 1.25-1.58.6-1.778 1.35-4.665 2.08-7.93h6.573v13.528z"/></svg>
+        Яндекс
+      </button>
+      <button onclick="shareToMAX()" style="display:flex;align-items:center;gap:6px;background:#6c17c9;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
+        MAX
+      </button>
+      <button onclick="copyPageLink(this)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Скопировать</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- ── Партнёры: билетные операторы ─────────────────────── -->
+  <div style="border-top:1px solid rgba(255,255,255,.08);padding:20px 24px 0;margin-top:4px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;">Билеты</span>
+      <a href="https://vlg.kassir.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner" 
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassir.ru
+      </a>
+      <a href="https://kassy.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        kassy.ru
+      </a>
+      <a href="https://qtickets.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
+         target="_blank" rel="noopener noreferrer"
+         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
+         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
+        qtickets.ru
+      </a>
+    </div>
+  </div>
+<!-- share functions see below -->
+
+</footer>
+
+
+
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+</body>
+</html>

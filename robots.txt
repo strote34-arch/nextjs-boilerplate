@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin-panel.html
+Disallow: /admin-info.html
+Disallow: /cinema-admin.html
+Disallow: /venue-admin.html
+Disallow: /venue-admin-v2.html
+Disallow: /venue-admin-show.html
+Disallow: /event-add.html
+Disallow: /venue-add.html
+Disallow: /article-edit.html
+Disallow: /add-film.html
+Disallow: /index-legacy.html
+Disallow: /afishi_ru_2018.html
+Disallow: /afishi_ru_cinema.html
+Disallow: /afishi_ru_venue.html
+Disallow: /afishi_ru_venue_concert.html
+Disallow: /DOCS.html
+
+Sitemap: https://afishi.ru/sitemap.xml
