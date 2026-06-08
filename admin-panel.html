@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ru">
+<!DOC<html lang="ru">
 <head>
 <script>
 // Автоочистка устаревших/неверных данных из localStorage
@@ -43,7 +42,6 @@
     localStorage.setItem('afishi_pending_venues', JSON.stringify(pv));
   } catch(e) {}
 })();
-TYPE html>
 </script>
 
 <script>
@@ -3901,7 +3899,7 @@ function previewMailing() {
   var body    = (document.getElementById('ml-body')    || {}).value || '';
   var win = window.open('', '_blank', 'width=700,height=600');
   if (!win) { alert('Разрешите открытие всплывающих окон'); return; }
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+  var html = '<!DOC<html><head><meta charset="utf-8">'
     + '<title>' + subject + '</title>'
     + '<style>body{font-family:sans-serif;max-width:600px;margin:40px auto;}'
     + 'h2{color:#c8102e;}</style></head><body>'
