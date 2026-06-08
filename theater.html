@@ -1428,6 +1428,175 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- FOOTER -->
 
+
+<script>
+// ── Данные театров по городам ─────────────────────────────────
+var THEATERS_DB = {
+  'Волгоград': [
+    {id:'net', name:'Театр НЭТ', full:'Новый Экспериментальный Театр',
+     addr:'ул. Мира, 5', phone:'+7 (8442) 93-47-30', cap:380,
+     url:'theater-net-novyy-eksperimentalnyy.html',
+     img:'', cat:'drama',
+     shows:[
+       {title:'Ромео и Джульетта', date:'15 июн', price:'от 600 ₽', url:'theater-net-novyy-eksperimentalnyy.html'},
+       {title:'Три сестры', date:'22 июн', price:'от 500 ₽', url:'theater-net-novyy-eksperimentalnyy.html'}
+     ]},
+    {id:'tuz', name:'ТЮЗ Волгоград', full:'Театр Юного Зрителя',
+     addr:'пр-кт им. В.И. Ленина, 15', phone:'+7 (8442) 93-33-87', cap:400,
+     url:'theater-tyuz-volgograd.html',
+     img:'', cat:'youth',
+     shows:[
+       {title:'Золушка', date:'7 июн', price:'от 400 ₽', url:'theater-tyuz-volgograd.html'},
+       {title:'Буратино', date:'14 июн', price:'от 350 ₽', url:'theater-tyuz-volgograd.html'}
+     ]},
+    {id:'opera', name:'Царицынская Опера', full:'Волгоградский театр оперы и балета',
+     addr:'ул. Мира, 4', phone:'+7 (8442) 93-22-01', cap:860,
+     url:'venue-opera-volgograd.html',
+     img:'', cat:'opera',
+     shows:[
+       {title:'Лебединое озеро', date:'20 июн', price:'от 800 ₽', url:'venue-opera-volgograd.html'},
+       {title:'Травиата', date:'27 июн', price:'от 700 ₽', url:'venue-opera-volgograd.html'}
+     ]},
+    {id:'muzth', name:'Музыкальный Театр', full:'Волгоградский Музыкальный Театр',
+     addr:'пр. Ленина, 28', phone:'+7 (8442) 93-40-73', cap:850,
+     url:'theater-volgogradskiy-muzykalnyy-teatr.html',
+     img:'', cat:'musical',
+     shows:[
+       {title:'Кошки', date:'12 июн', price:'от 900 ₽', url:'theater-volgogradskiy-muzykalnyy-teatr.html'}
+     ]},
+    {id:'kukly', name:'Театр Кукол', full:'Волгоградский Театр Кукол',
+     addr:'пр. Ленина, 15', phone:'+7 (8442) 93-10-74', cap:300,
+     url:'theater-kukol-volgograd.html',
+     img:'', cat:'puppet',
+     shows:[
+       {title:'Колобок', date:'8 июн', price:'от 300 ₽', url:'theater-kukol-volgograd.html'}
+     ]}
+  ],
+  'Москва': [
+    {id:'bolshoy', name:'Большой театр', full:'Государственный академический Большой театр',
+     addr:'Театральная пл., 1', phone:'+7 (495) 455-55-55', cap:1740,
+     url:'theater-bolshoy-teatr.html', cat:'opera',
+     shows:[{title:'Лебединое озеро', date:'18 июн', price:'от 1500 ₽', url:'theater-bolshoy-teatr.html'}]},
+    {id:'lenkom', name:'Ленком', full:'Театр «Ленком Марка Захарова»',
+     addr:'ул. Малая Дмитровка, 6', phone:'+7 (495) 699-96-68', cap:820,
+     url:'theater-lenkom.html', cat:'drama',
+     shows:[{title:'Юнона и Авось', date:'21 июн', price:'от 2000 ₽', url:'theater-lenkom.html'}]},
+    {id:'mkht', name:'МХТ им. Чехова', full:'Московский Художественный театр',
+     addr:'Камергерский пер., 3', phone:'+7 (495) 692-67-48', cap:1400,
+     url:'theater-mkht-im-chekhova.html', cat:'drama',
+     shows:[{title:'Три сестры', date:'25 июн', price:'от 1200 ₽', url:'theater-mkht-im-chekhova.html'}]}
+  ],
+  'Санкт-Петербург': [
+    {id:'mariin', name:'Мариинский театр', full:'Мариинский театр',
+     addr:'Театральная пл., 1', phone:'+7 (812) 326-41-41', cap:1700,
+     url:'theater-mariinskiy-teatr.html', cat:'opera',
+     shows:[{title:'Щелкунчик', date:'14 июн', price:'от 1000 ₽', url:'theater-mariinskiy-teatr.html'}]},
+    {id:'bdt', name:'БДТ', full:'БДТ им. Товстоногова',
+     addr:'наб. реки Фонтанки, 65', phone:'+7 (812) 244-93-57', cap:1100,
+     url:'theater-bdt-im-tovstonogova.html', cat:'drama',
+     shows:[{title:'Дядя Ваня', date:'19 июн', price:'от 800 ₽', url:'theater-bdt-im-tovstonogova.html'}]}
+  ]
+};
+
+var CITIES_TH = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань'];
+var currentCityTh = localStorage.getItem('afishi_city') || 'Волгоград';
+
+// Инициализация пилюль городов
+function renderCityPills() {
+  var container = document.getElementById('cityPillsContainer');
+  if (!container) return;
+  container.innerHTML = '<span class="city-label">Город:</span>' +
+    CITIES_TH.map(function(city) {
+      return '<button class="city-pill' + (city === currentCityTh ? ' active' : '') + '" ' +
+        'onclick="selectCity(\'' + city + '\', this)" ' +
+        'style="border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-size:13px;font-weight:700;font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;' +
+        (city === currentCityTh ? 'background:#c8102e;color:#fff;' : 'background:#f4f2ee;color:#444;') + '">' +
+        city + '</button>';
+    }).join('');
+}
+
+function selectCity(city, btn) {
+  currentCityTh = city;
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+  // Обновить пилюли
+  document.querySelectorAll('.city-pill').forEach(function(b) {
+    b.style.background = '#f4f2ee'; b.style.color = '#444';
+  });
+  if (btn) { btn.style.background = '#c8102e'; btn.style.color = '#fff'; }
+  renderTheaters(city);
+  // Обновить label в шапке
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = city;
+}
+
+function renderTheaters(city) {
+  var theaters = THEATERS_DB[city] || [];
+  var container = document.getElementById('theaters-grid');
+  if (!container) {
+    // Найти контейнер для карточек
+    container = document.querySelector('.theaters-list, .theater-cards, .events-grid, #theatersList, #theaters-list');
+  }
+  if (!container) {
+    // Создать контейнер
+    var hero = document.querySelector('.hero-banner, .hero, main');
+    if (hero) {
+      container = document.createElement('div');
+      container.id = 'theaters-grid';
+      container.style.cssText = 'max-width:1200px;margin:32px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;';
+      hero.after(container);
+    }
+  }
+  if (!container) return;
+
+  if (!theaters.length) {
+    container.innerHTML = '<div style="padding:48px;text-align:center;color:#888;grid-column:1/-1">В ' + city + ' скоро появятся спектакли</div>';
+    return;
+  }
+
+  container.innerHTML = theaters.map(function(th) {
+    var showsHtml = (th.shows||[]).slice(0,3).map(function(s) {
+      return '<a href="' + s.url + '" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;text-decoration:none;color:inherit;">' +
+        '<span style="font-size:14px;">' + s.title + '</span>' +
+        '<span style="font-size:12px;color:#c8102e;font-weight:700;white-space:nowrap;margin-left:8px;">' + s.date + '</span>' +
+        '</a>';
+    }).join('');
+    return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);">' +
+      '<div style="background:linear-gradient(135deg,#1a1a1a,#2d2d2d);padding:24px 20px;color:#fff;">' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">🎭 ' + (th.cat==='opera'?'Опера/Балет':th.cat==='musical'?'Мюзикл':th.cat==='youth'?'Молодёжный':th.cat==='puppet'?'Куклы':'Драма') + '</div>' +
+        '<div style="font-size:20px;font-weight:700;font-family:Oswald,sans-serif;margin-bottom:4px;">' + th.name + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.6);">📍 ' + (th.addr||'') + '</div>' +
+        (th.cap ? '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px;">👥 ' + th.cap.toLocaleString('ru') + ' мест</div>' : '') +
+      '</div>' +
+      '<div style="padding:16px 20px;">' +
+        (showsHtml ? '<div style="margin-bottom:12px;">' + showsHtml + '</div>' : '') +
+        '<a href="' + (th.url||'#') + '" style="display:inline-block;padding:8px 20px;background:#c8102e;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.05em;">Афиша →</a>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+  renderCityPills();
+  renderTheaters(currentCityTh);
+  // Обновить label в шапке
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = currentCityTh;
+});
+
+// При смене города из шапки
+(function() {
+  var orig = window.switchCity;
+  window.switchCity = function(city, btn) {
+    if (orig) orig(city, btn);
+    currentCityTh = city;
+    renderCityPills();
+    renderTheaters(city);
+  };
+})();
+</script>
+
+
 <footer>
   <!-- CTA полоса -->
   <div class="footer-top">
