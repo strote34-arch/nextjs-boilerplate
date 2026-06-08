@@ -1,4 +1,7 @@
-<!DOC
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
 // Автоочистка устаревших/неверных данных из localStorage
 (function() {
   var BLACKLIST_TITLES = ['scorpions', '50th anniversary', 'каста — живой', 'arena волгоград'];
@@ -41,8 +44,8 @@
   } catch(e) {}
 })();
 TYPE html>
-<html lang="ru">
-<head>
+</script>
+
 <script>
 window.switchCity = function(city) {
   try { localStorage.setItem('afishi_city', city); } catch(e) {}
