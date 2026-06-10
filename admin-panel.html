@@ -10,7 +10,7 @@
 
   ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
     try {
-      var arr = JSON.parse(localStorage.getItem(key) | '[]');
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
       var before = arr.length;
       arr = arr.filter(function(ev) {
         var t = (ev.title | '').toLowerCase();
@@ -27,13 +27,13 @@
         return ev;
       });
       if (arr.length !== before) localStorage.setItem(key, JSON.stringify(arr));
-      else if (JSON.stringify(arr) !== JSON.stringify(JSON.parse(localStorage.getItem(key)|'[]')))
+      else if (JSON.stringify(arr) !== JSON.stringify(JSON.parse(localStorage.getItem(key) || '[]')))
         localStorage.setItem(key, JSON.stringify(arr));
     } catch(e) {}
   });
   // Исправить Экспоцентр адрес
   try {
-    var pv = JSON.parse(localStorage.getItem('afishi_pending_venues') | '[]');
+    var pv = JSON.parse(localStorage.getItem('afishi_pending_venues') || '[]');
     pv = pv.map(function(v) {
       if ((v.name|'').toLowerCase().includes('экспо') && v.addr && !v.addr.includes('46А'))
         v.addr = 'пр. Ленина, 46А, Волгоград';
