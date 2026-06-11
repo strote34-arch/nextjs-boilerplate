@@ -254,6 +254,26 @@ window.switchCity = function(city, btn) {
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Яндекс.Метрика -->
+
+<script>
+// Подсветить активный пункт меню
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var page = 'partners.html';
+    document.querySelectorAll('header a, .nav-link, .main-nav a').forEach(function(a) {
+      var href = (a.getAttribute('href') || '').split('?')[0].split('#')[0].split('/').pop();
+      if (href === page || (page === 'index.html' && href === '')) {
+        a.style.color = '#c8102e';
+        a.style.fontWeight = '700';
+        var parent = a.parentElement;
+        if (parent && parent.tagName === 'LI') {
+          parent.classList.add('active');
+        }
+      }
+    });
+  });
+})();
+</script>
 </head>
 <body>
 
@@ -353,8 +373,92 @@ window.switchCity = function(city, btn) {
   </div>
 </div>
 
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
+
 <footer>
-<a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+  <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
     </div>
   </div>
 
@@ -535,88 +639,6 @@ window.switchCity = function(city, btn) {
 </footer>
 
 
-<script>
-// ── Footer: площадки по городу ───────────────────────────────
-var FOOTER_VENUES = {
-  'Волгоград': [
-    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
-    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
-    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
-    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
-    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
-    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
-    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
-  ],
-  'Москва': [
-    {name:'Олимпийский',       href:'concerts.html'},
-    {name:'Лужники',           href:'concerts.html'},
-    {name:'Крокус Сити Холл',  href:'concerts.html'},
-    {name:'Большой театр',     href:'theater.html'},
-    {name:'МХТ им. Чехова',    href:'theater.html'},
-    {name:'Мультиплекс',       href:'cinema.html'}
-  ],
-  'Санкт-Петербург': [
-    {name:'СКК Петербургский', href:'concerts.html'},
-    {name:'Ледовый дворец',    href:'concerts.html'},
-    {name:'Мариинский театр',  href:'theater.html'},
-    {name:'БДТ им. Товстоногова', href:'theater.html'},
-    {name:'Эрмитаж',           href:'exhibits.html'}
-  ],
-  'Екатеринбург': [
-    {name:'Уральский рок-клуб', href:'concerts.html'},
-    {name:'Екатеринбург Арена', href:'concerts.html'},
-    {name:'Коляда-театр',       href:'theater.html'},
-    {name:'Театр оперы и балета', href:'theater.html'}
-  ],
-  'Казань': [
-    {name:'Казань Арена',       href:'concerts.html'},
-    {name:'УНИКС',              href:'concerts.html'},
-    {name:'Татарский театр им. Камала', href:'theater.html'},
-    {name:'Театр им. Качалова', href:'theater.html'}
-  ],
-  'Новосибирск': [
-    {name:'Новосибирск Арена',  href:'concerts.html'},
-    {name:'ДКЖ',               href:'concerts.html'},
-    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
-    {name:'Красный факел',      href:'theater.html'}
-  ],
-  'Краснодар': [
-    {name:'Краснодар Арена',    href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
-  ],
-  'Ростов-на-Дону': [
-    {name:'ДонБасс Арена',      href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
-  ]
-};
 
-function updateFooterVenues(city) {
-  var el = document.getElementById('footerVenuesList');
-  if (!el) return;
-  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
-  el.innerHTML = venues.map(function(v){
-    return '<a href="' + v.href + '">' + v.name + '</a>';
-  }).join('');
-}
-
-// Запустить при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  var city = (typeof currentCity !== 'undefined' && currentCity)
-    ? currentCity
-    : (localStorage.getItem('afishi_city') || 'Волгоград');
-  updateFooterVenues(city);
-});
-
-// Перехватить смену города
-(function() {
-  var orig = window._onGeoCity;
-  window._onGeoCity = function(city) {
-    if (orig) orig(city);
-    updateFooterVenues(city);
-  };
-})();
-</script>
 </body>
 </html>

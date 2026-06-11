@@ -216,6 +216,26 @@ window.switchCity = function(city, btn) {
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Яндекс.Метрика -->
+
+<script>
+// Подсветить активный пункт меню
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var page = 'monetization.html';
+    document.querySelectorAll('header a, .nav-link, .main-nav a').forEach(function(a) {
+      var href = (a.getAttribute('href') || '').split('?')[0].split('#')[0].split('/').pop();
+      if (href === page || (page === 'index.html' && href === '')) {
+        a.style.color = '#c8102e';
+        a.style.fontWeight = '700';
+        var parent = a.parentElement;
+        if (parent && parent.tagName === 'LI') {
+          parent.classList.add('active');
+        }
+      }
+    });
+  });
+})();
+</script>
 </head>
 <body>
 <header>
@@ -993,7 +1013,14 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <footer>
-<a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
     </div>
   </div>
 

@@ -1,9 +1,49 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Концертные площадки Волгограда | Афиши.ру</title>
+<meta name="description" content="Все концертные площадки, театры и музеи Волгограда. Афиша, адреса, телефоны.">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+:root{--red:#c8102e;--dark:#1a1a1a;--bg:#f4f2ee;--gold:#c9a84c;--border:#e0e0e0;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);}
+.page-hero{background:linear-gradient(135deg,#1a1a1a 0%,#2d0a0a 100%);padding:40px 20px;text-align:center;color:#fff;}
+.page-hero h1{font-family:'Oswald',sans-serif;font-size:clamp(24px,5vw,42px);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;}
+.page-hero p{color:rgba(255,255,255,.7);font-size:15px;}
+.filter-bar{background:#fff;border-bottom:2px solid var(--border);padding:12px 20px;position:sticky;top:60px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.filter-inner{max-width:1200px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.ftype{font-size:11px;color:#888;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;}
+.ftab{border:none;border-radius:20px;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em;transition:all .15s;background:#f4f2ee;color:#444;}
+.ftab.active{background:var(--red);color:#fff;}
+.venues-wrap{max-width:1200px;margin:32px auto;padding:0 16px;}
+.venues-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;}
+.vcard{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .2s;}
+.vcard:hover{box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(-2px);}
+.vcard-head{background:linear-gradient(135deg,#1a1a1a,#333);padding:24px 20px;color:#fff;}
+.vcard-cat{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.vcard-name{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;line-height:1.2;}
+.vcard-addr{font-size:12px;color:rgba(255,255,255,.6);}
+.vcard-cap{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;}
+.vcard-body{padding:16px 20px;}
+.show-item{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f4f4;text-decoration:none;color:inherit;}
+.show-item:last-child{border-bottom:none;}
+.show-title{font-size:13px;flex:1;}
+.show-date{font-size:12px;color:var(--red);font-weight:700;white-space:nowrap;margin-left:8px;}
+.vcard-btn{display:inline-block;margin-top:12px;padding:8px 20px;background:var(--red);color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:20px;max-width:520px;width:100%;padding:36px;max-height:85vh;overflow-y:auto;}
+.modal-title{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin-bottom:8px;}
+.modal-meta{color:#666;font-size:13px;line-height:1.8;margin-bottom:20px;}
+.modal-close{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:#999;margin-top:-4px;}
+.empty{padding:60px 20px;text-align:center;color:#aaa;font-size:16px;grid-column:1/-1;}
+</style>
+</head>
+<body>
 <script>
-var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
-
 // switchCity global stub — available immediately for onclick handlers
 window.switchCity = function(city, btn) {
   // Update pills immediately (visual feedback)
@@ -30,9 +70,21 @@ window.switchCity = function(city, btn) {
   if (typeof applyFilters === 'function') setTimeout(applyFilters, 0);
   // Save to localStorage immediately
   try { localStorage.setItem('afishi_city', city); } catch(e) {}
+  // Перерисовать страницу
+  setTimeout(function() {
+    if (typeof renderPage === 'function') {
+      renderPage(city);
+    } else if (typeof window._onGeoCity === 'function') {
+      window._onGeoCity(city);
+    }
+  }, 0);
 };
 
-
+// ── Яндекс.Метрика: трекинг клика на билет ──
+function trackTicketClick(url, title) {
+  try { ym(2234293, 'reachGoal', 'ticket_click', {url: url, title: title}); } catch(e) {}
+  try { if(window.gtag) gtag('event', 'ticket_click', {event_category: 'tickets', event_label: title}); } catch(e) {}
+}
 
 
 // ── Инициализация города из localStorage ───────────────────────
@@ -50,655 +102,6 @@ window.switchCity = function(city, btn) {
   }
 })();
 </script>
-
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<meta charset="UTF-8">
-<meta name="description" content="Афиша концертов в залах города. Расписание и продажа билетов.">
-<meta property="og:title" content="Концертные залы — афиша | Афиши.ру">
-<meta property="og:description" content="Афиша концертов в залах города. Расписание и продажа билетов.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Афиши.ру">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Концертные залы — афиша | Афиши.ру</title>
-<link rel="canonical" href="https://afishi.ru/venue-concert-city.html">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<style>/* ── Header ──────────────────────────────── */
-header {
-  background: var(--white);
-  border-bottom: 3px solid var(--red);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  position: sticky; top: 0; z-index: 200;
-}
-.header-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 16px;
-  display: flex; align-items: center; gap: 28px; height: 64px;
-}
-.header-inner { gap: 12px; }
-.logo {
-  font-family: 'Oswald', sans-serif;
-  font-size: 30px; font-weight: 700;
-  color: var(--red); letter-spacing: -1px;
-  text-transform: uppercase; flex-shrink: 0;
-}
-.logo { font-size: 24px; }
-.logo{font-size:18px !important;}
-nav { display: flex; gap: 0; flex: 1; }
-nav a {
-  font-family: 'Oswald', sans-serif;
-  font-size: 13px; font-weight: 400;
-  letter-spacing: 0.5px; text-transform: uppercase;
-  padding: 0 13px; height: 64px;
-  display: flex; align-items: center;
-  color: var(--mid);
-  border-bottom: 3px solid transparent;
-  margin-bottom: -3px;
-  transition: color .15s, border-color .15s;
-}
-nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
-nav a { padding: 0 8px; font-size: 12px; }
-.city-strip-inner{gap:6px !important;}
-.city-strip {
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  padding: 0 16px;
-}
-.city-strip-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.city-strip-inner::-webkit-scrollbar { display: none; }
-.city-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--mid);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.city-pill {
-  padding: 6px 16px; border: 1.5px solid var(--border);
-  border-radius: 20px; font-family: 'Oswald', sans-serif;
-  font-size: 13px; font-weight: 500; cursor: pointer;
-  background: var(--white); color: var(--mid); transition: all .15s;
-}
-.city-pill:hover { border-color: var(--red); color: var(--red); }
-.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
-.city-pill{font-size:11px !important;padding:4px 10px !important;}
-
-:root{--red:#c8102e;--red-dark:#9e0c24;--black:#111;--dark:#1a1a1a;--mid:#444;--light:#888;--border:#e0e0e0;--bg:#f4f2ee;--white:#fff;--gold:#c9a84c;--yellow:#f5c518;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'PT Sans',sans-serif;background:var(--bg);color:var(--black);font-size:14px;}
-a{color:inherit;text-decoration:none;}
-::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:#f0eeea;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
-
-.topbar{background:var(--dark);color:#ccc;font-size:12px;padding:5px 0;}
-.topbar-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
-.topbar a{color:#bbb;margin:0 8px;} .topbar a:hover{color:#fff;}
-
-.logo span{color:var(--red);}
-
-.page-hero{background:linear-gradient(135deg,#0a0014,#1a0533);padding:36px 0 28px;border-bottom:1px solid #2a2a2a;}
-.page-hero-inner{max-width:1200px;margin:0 auto;padding:0 16px;}
-.page-hero h1{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:#fff;margin-bottom:6px;}
-.page-hero .sub{font-size:14px;color:rgba(255,255,255,.5);}
-
-.main-layout{max-width:1200px;margin:0 auto;padding:28px 16px;display:grid;grid-template-columns:1fr 280px;gap:24px;}
-@media(max-width:900px){.main-layout{grid-template-columns:1fr;}}
-
-.venues-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;}
-.venue-card{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s;}
-.venue-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.12);transform:translateY(-2px);}
-.vc-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:56px;position:relative;}
-.vc-body{padding:16px;}
-.vc-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gold);margin-bottom:4px;}
-.vc-name{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px;}
-.vc-addr{font-size:12px;color:var(--light);margin-bottom:10px;}
-.vc-stats{display:flex;gap:16px;border-top:1px solid #f5f3f0;padding-top:10px;}
-.vc-stat{text-align:center;flex:1;}
-.vc-stat-n{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:var(--red);}
-.vc-stat-l{font-size:10px;color:var(--light);font-weight:700;text-transform:uppercase;}
-
-.fallback-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:6px 0 10px;}
-.fallback-divider::before,.fallback-divider::after{content:'';flex:1;height:1px;background:var(--border);}
-.fallback-label{background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:5px 16px;white-space:nowrap;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--light);}
-
-/* SIDEBAR */
-.sidebar-widget{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;}
-.sw-head{background:var(--dark);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;}
-.sw-body{padding:14px 16px;}
-
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
-.modal-overlay.open{display:flex;}
-.modal-box{background:#fff;border-radius:8px;width:100%;max-width:720px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.4);margin:auto;}
-.modal-head{background:linear-gradient(135deg,#1a0533,#0a1a2e);padding:28px 28px 0;color:#fff;position:relative;}
-.modal-poster{width:80px;height:80px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:40px;float:left;margin-right:16px;margin-bottom:16px;}
-.modal-info{overflow:hidden;padding-bottom:16px;}
-.modal-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5);margin-bottom:4px;}
-.modal-title{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;}
-.modal-meta{font-size:13px;color:rgba(255,255,255,.6);}
-.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;}
-.modal-tabs{display:flex;border-bottom:1px solid #e0e0e0;clear:both;}
-.mtab{padding:12px 18px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .15s;}
-.mtab:hover{color:var(--red);}
-.mtab.active{color:var(--red);border-bottom-color:var(--red);}
-.mpane{display:none;padding:20px 24px;}
-.mpane.active{display:block;}
-
-.spec-row{display:flex;border-bottom:1px solid #f5f3f0;}
-.spec-key{width:140px;font-size:12px;color:var(--light);padding:8px 0;flex-shrink:0;}
-.spec-val{flex:1;font-size:13px;font-weight:700;padding:8px 0;}
-
-.concert-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f5f3f0;cursor:pointer;transition:background .15s;border-radius:4px;}
-.concert-item:hover{background:#f9f7f4;padding-left:8px;}
-.concert-item:last-child{border-bottom:none;}
-.ci-poster{width:44px;height:44px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-
-.btn-red{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:none;padding:12px 24px;border-radius:4px;cursor:pointer;transition:background .15s;}
-.btn-red:hover{background:var(--red-dark);}
-.btn-outline{background:none;border:1.5px solid var(--border);color:var(--mid);font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;padding:9px 18px;border-radius:4px;cursor:pointer;transition:all .15s;}
-.btn-outline:hover{border-color:var(--red);color:var(--red);}
-
-.empty{text-align:center;padding:40px;color:var(--light);grid-column:1/-1;}
-.empty-icon{font-size:48px;margin-bottom:12px;}
-
-footer{background:var(--dark);color:#666;font-size:12px;padding:20px 0;border-top:1px solid #2a2a2a;margin-top:40px;}
-.footer-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
-
-.sp-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 0;}
-.sp-btn{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px 4px;border-radius:10px;transition:background .15s;border:none;background:none;}
-.sp-btn:hover{background:#f4f2ee;}
-.sp-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
-.sp-lbl{font-size:10px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.3px;}
-
-/* ─── Мобильная адаптация ─────────────────────────────── */
-@media(max-width:600px){
-  .main{grid-template-columns:1fr !important;padding:0 12px !important;}
-  .hero,.hero-inner{padding:20px 12px !important;}
-  .hero-name{font-size:20px !important;}
-  .hero-addr{font-size:11px !important;}
-  .hero-ico{font-size:32px !important;}
-  .vsb{gap:12px !important;}
-  .ib{padding:14px !important;}
-  
-  .hi{height:48px !important;}
-  
-}
-
-#sharePanelOverlay{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center;}
-#sharePanelOverlay.open{display:flex;}
-#sharePanel{background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:520px;padding:20px;}
-</style>
-<style id="afishi-mobile">
-
-/* ═══════════════════════════════════════════════
-   МОБИЛЬНАЯ АДАПТАЦИЯ — afishi.ru
-   Breakpoints: 768px (tablet), 480px (phone)
-═══════════════════════════════════════════════ */
-
-/* ── Hamburger button ─────────────────────────── */
-.burger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-  padding: 4px;
-  background: none;
-  border: none;
-  margin-left: auto;
-}
-.burger span {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: #fff;
-  border-radius: 2px;
-  transition: all .25s;
-}
-.burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-/* ── Mobile nav drawer ───────────────────────── */
-.mobile-nav {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  pointer-events: none;
-}
-.mobile-nav.open { pointer-events: all; }
-.mobile-nav-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.5);
-  opacity: 0;
-  transition: opacity .25s;
-}
-.mobile-nav.open .mobile-nav-overlay { opacity: 1; }
-.mobile-nav-drawer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 280px;
-  max-width: 85vw;
-  height: 100%;
-  background: var(--dark, #1a1a1a);
-  transform: translateX(100%);
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-.mobile-nav.open .mobile-nav-drawer { transform: translateX(0); }
-.mobile-nav-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.mobile-nav-logo {
-  font-family: 'Oswald', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
-}
-.mobile-nav-logo span { color: var(--red, #c8102e); }
-.mobile-nav-close {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 22px;
-  cursor: pointer;
-  padding: 4px 8px;
-  line-height: 1;
-}
-.mobile-nav-links {
-  padding: 12px 0;
-  flex: 1;
-}
-.mobile-nav-links a {
-  display: block;
-  color: #ddd;
-  font-family: 'Oswald', sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  padding: 13px 24px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-  text-decoration: none;
-  transition: background .15s;
-}
-.mobile-nav-links a:hover { background: rgba(255,255,255,.06); color: #fff; }
-.mobile-nav-links a.active { color: var(--gold, #c9a84c); }
-.mobile-nav-links a.highlight {
-  color: var(--gold, #c9a84c);
-  font-weight: 700;
-}
-.mobile-nav-footer {
-  padding: 16px 24px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  font-size: 11px;
-  color: #555;
-}
-
-@media (max-width: 768px) {
-  /* ── Header ──────────────────────────────────── */
-  .header-inner, .hi {
-    padding: 0 12px !important;
-    height: 54px !important;
-    gap: 12px !important;
-  }
-  .logo { font-size: 22px !important; }
-  header nav, header nav a { display: none !important; }
-  .burger { display: flex !important; }
-
-  /* ── Topbar ───────────────────────────────────── */
-  .topbar { display: none !important; }
-
-  /* ── Hero / Page hero ────────────────────────── */
-  .page-hero { padding: 20px 0 16px !important; }
-  .page-title, .section-title { font-size: 20px !important; }
-  .hero-inner { padding: 0 12px !important; }
-  .section-head {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 10px !important;
-    padding: 0 12px !important;
-    margin-bottom: 12px !important;
-  }
-
-  /* ── Filter bar ──────────────────────────────── */
-  .filter-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .filter-inner {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-    padding: 10px 12px !important;
-    min-width: max-content;
-  }
-  .filter-group { min-width: 120px; }
-  .filter-select { font-size: 12px !important; padding: 7px 8px !important; }
-
-  /* ── Date tabs ───────────────────────────────── */
-  .date-tabs {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    flex-wrap: nowrap !important;
-    padding: 0 12px !important;
-    gap: 6px !important;
-    scrollbar-width: none;
-  }
-  .date-tabs::-webkit-scrollbar { display: none; }
-  .date-tab { flex-shrink: 0 !important; padding: 6px 14px !important; }
-
-  /* ── City pills ──────────────────────────────── */
-  .city-pills-wrap {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none;
-    padding: 8px 12px !important;
-  }
-  .city-pills-wrap::-webkit-scrollbar { display: none; }
-  .city-pills {
-    flex-wrap: nowrap !important;
-    min-width: max-content;
-  }
-  .city-pill { flex-shrink: 0 !important; font-size: 11px !important; padding: 5px 12px !important; }
-
-  /* ── Grids ────────────────────────────────────── */
-  .concert-grid,
-  .concerts-grid,
-  .film-grid,
-  .events-grid,
-  .af-grid,
-  .ex-grid,
-  .kids-grid,
-  #concertGrid,
-  #cinemaGrid,
-  #exhibitsGrid,
-  #kidsGrid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-    padding: 0 10px !important;
-  }
-
-  /* ── Cards ────────────────────────────────────── */
-  .concert-card, .film-card, .cinema-card, .event-card, .ai-card {
-    font-size: 12px !important;
-  }
-  .c-poster, .film-poster, .cinema-poster {
-    aspect-ratio: 3/2 !important;
-    font-size: 36px !important;
-  }
-  .c-title, .film-title { font-size: 13px !important; }
-  .c-buy, .buy-btn { font-size: 11px !important; padding: 6px 8px !important; }
-  .c-price { font-size: 12px !important; }
-
-  /* ── Theater list ─────────────────────────────── */
-  #theaterList { padding: 0 10px !important; }
-  .show-card { padding: 12px !important; }
-  .show-poster { width: 60px !important; height: 80px !important; font-size: 24px !important; }
-  .show-title { font-size: 14px !important; }
-
-  /* ── Concert list view ────────────────────────── */
-  .cli-poster { width: 70px !important; }
-  .concert-list-item { padding: 10px !important; }
-
-  /* ── Sidebar ─────────────────────────────────── */
-  .sidebar { display: none !important; }
-
-  /* ── Main layout ─────────────────────────────── */
-  .main-layout, .layout {
-    grid-template-columns: 1fr !important;
-    padding: 0 10px !important;
-  }
-  .main { padding: 16px 10px !important; }
-
-  /* ── Section spacing ─────────────────────────── */
-  section { margin-bottom: 24px !important; }
-
-  /* ── View toggle (grid/list) ─────────────────── */
-  .view-toggle { display: none !important; }
-
-  /* ── Modal ────────────────────────────────────── */
-  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
-  .modal-box {
-    border-radius: 16px 16px 0 0 !important;
-    max-height: 92vh !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-y: auto !important;
-    margin: 0 !important;
-  }
-  .modal-poster, #mposter {
-    height: 180px !important;
-    font-size: 52px !important;
-  }
-  .modal-title, #mtitle { font-size: 18px !important; }
-  .modal-tabs { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
-  .modal-tabs::-webkit-scrollbar { display: none; }
-  .modal-tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 8px 12px !important; }
-
-  /* ── Ticket modal ────────────────────────────── */
-  .ck-modal-box {
-    position: fixed !important;
-    inset: 0 !important;
-    border-radius: 0 !important;
-    max-height: 100vh !important;
-  }
-
-  /* ── Floating buttons ────────────────────────── */
-  #addEventFloatBtn, #addVenueFloatBtn {
-    width: 48px !important;
-    height: 48px !important;
-    font-size: 20px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-  }
-  #addEventFloatBtn span:not(:first-child),
-  #addVenueFloatBtn span:not(:first-child) { display: none !important; }
-
-  /* ── Loyalty page ────────────────────────────── */
-  .user-loyalty-card { flex-direction: column !important; text-align: center !important; }
-  .tiers { grid-template-columns: 1fr !important; }
-  .hiw-steps { grid-template-columns: 1fr 1fr !important; }
-  .stats-inner { grid-template-columns: 1fr 1fr !important; }
-  .points-grid { grid-template-columns: 1fr 1fr !important; }
-
-  /* ── Articles ────────────────────────────────── */
-  .art-card { flex-direction: column !important; }
-  .art-cover { width: 100% !important; aspect-ratio: 16/6 !important; }
-
-  /* ── Admin panel ─────────────────────────────── */
-  .admin-layout { grid-template-columns: 1fr !important; }
-  .admin-sidebar { display: none !important; }
-  .field-row { grid-template-columns: 1fr !important; }
-}
-
-@media (max-width: 480px) {
-  /* ── Phone — single column ───────────────────── */
-  .concert-grid,
-  .concerts-grid,
-  .film-grid,
-  .events-grid,
-  .af-grid,
-  .ex-grid,
-  .kids-grid,
-  #concertGrid,
-  #cinemaGrid,
-  #exhibitsGrid,
-  #kidsGrid {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-  }
-
-  /* ── AI cards single col ─────────────────────── */
-  #aiGrid { grid-template-columns: 1fr !important; }
-
-  /* ── Theater shows ─────────────────────────── */
-  #theaterList .show-card {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-  }
-
-  /* ── Concert card horizontal on phone ──────── */
-  .concert-card {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: stretch !important;
-  }
-  .c-poster {
-    width: 90px !important;
-    flex-shrink: 0 !important;
-    aspect-ratio: auto !important;
-    min-height: 90px !important;
-    font-size: 28px !important;
-  }
-  .c-body { flex: 1 !important; }
-  .c-genre { font-size: 9px !important; }
-  .c-meta, .c-venue, .c-stars { display: none !important; }
-
-  /* ── Modal full screen on small phones ──────── */
-  .modal-box { max-height: 100vh !important; border-radius: 0 !important; }
-
-  /* ── Section title smaller ───────────────────── */
-  .section-title { font-size: 17px !important; }
-  .section-icon { font-size: 18px !important; }
-
-  /* ── Page hero compact ───────────────────────── */
-  .page-sub { font-size: 12px !important; }
-
-  /* ── Loyalty compact ─────────────────────────── */
-  .hiw-steps { grid-template-columns: 1fr !important; }
-  .points-grid { grid-template-columns: 1fr !important; }
-  .stat-item { padding: 12px 8px !important; }
-  .stat-num { font-size: 22px !important; }
-}
-
-
-/* ═══ МОБИЛЬНАЯ АДАПТАЦИЯ (улучшенная) ═════════════════════ */
-@media(max-width:768px) {
-  /* Aside → под контент */
-  .layout-main, .main-content, .content-wrap,
-  [style*="grid-template-columns:1fr 290px"],
-  [style*="grid-template-columns:1fr 220px"],
-  [style*="grid-template-columns:1fr 280px"],
-  [style*="grid-template-columns:1fr 300px"] {
-    grid-template-columns: 1fr !important;
-  }
-  /* Карточки концертов */
-  .concerts-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-  }
-  /* Площадки */
-  .venues-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 12px !important;
-  }
-  /* Модалы */
-  .modal-inner, .vm-inner, [class*="modal"] {
-    width: 100% !important;
-    max-width: 100vw !important;
-    border-radius: 14px 14px 0 0 !important;
-    margin: 0 !important;
-  }
-  /* Hero */
-  .hero-inner, .page-hero-inner {
-    padding: 0 !important;
-  }
-}
-@media(max-width:480px) {
-  /* Одна колонка */
-  .concerts-grid {
-    grid-template-columns: 1fr !important;
-  }
-  .venues-grid {
-    grid-template-columns: 1fr !important;
-  }
-  /* Карточка шире */
-  .concert-card, .venue-card {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-  /* Кнопки — больше touch target */
-  button, .btn, .btn-red, .c-buy {
-    min-height: 44px !important;
-    padding: 10px 16px !important;
-    font-size: 14px !important;
-  }
-  /* Tabs */
-  .mtab, .modal-tab {
-    padding: 8px 12px !important;
-    font-size: 11px !important;
-  }
-}
-</style>
-<!-- Яндекс.Метрика -->
-<script type="text/javascript">
-   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-   m[i].l=1*new Date();
-   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-   ym(2234293, "init", {
-        clickmap:true,
-        trackLinks:true,
-        accurateTrackBounce:true,
-        webvisor:true
-   });
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Яндекс.Метрика -->
-</head>
-
-<body>
-
-
-<script>
-// ── Аккаунт администратора (seed) ───────────────────────────────
-(function() {
-  try {
-    var KEY = 'afishi_accounts';
-    var accounts = [];
-    try { accounts = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) {}
-    var adminEmail = 'admin@afishi.ru';
-    var exists = accounts.some(function(a) { return a.email === adminEmail; });
-    if (!exists) {
-      accounts.unshift({
-        name:  'Администратор',
-        email: adminEmail,
-        pass:  'Afishi2018!',
-        city:  'Москва',
-        role:  'admin'
-      });
-      localStorage.setItem(KEY, JSON.stringify(accounts));
-    }
-  } catch(e) {}
-})();
-</script>
-
-
-<div class="topbar">
-  <div class="topbar-inner">
-    <div><a href="index.html">Афиши.ру</a> › <a href="concerts.html">Концерты</a> › Площадки</div>
-    <div id="afishiUserBtn" style="display:inline-block;"></div>
-  </div>
-</div>
-
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
@@ -721,237 +124,287 @@ footer{background:var(--dark);color:#666;font-size:12px;padding:20px 0;border-to
       </div>
     </div>
   </header>
-<div id="venue-type-tabs" style="background:#fff;border-bottom:2px solid var(--border);padding:8px 0;position:sticky;top:60px;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.04);">
-  <div style="max-width:1200px;margin:0 auto;padding:0 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-    <span style="font-size:11px;color:#888;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;flex-shrink:0;">Тип:</span>
-    <button onclick="setVenueFilter('concert',this)" class="vf-tab" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;background:#c8102e;color:#fff;transition:all .15s;">🎤 Концертные</button>
-    <button onclick="setVenueFilter('theater',this)" class="vf-tab" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;background:#f4f2ee;color:#444;transition:all .15s;">🎭 Театры</button>
-    <button onclick="setVenueFilter('museum',this)" class="vf-tab" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;background:#f4f2ee;color:#444;transition:all .15s;">🏛️ Музеи</button>
-    <button onclick="setVenueFilter('exhibition',this)" class="vf-tab" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;background:#f4f2ee;color:#444;transition:all .15s;">🖼️ Выставки</button>
-    <button onclick="setVenueFilter('circus',this)" class="vf-tab" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;background:#f4f2ee;color:#444;transition:all .15s;">🎪 Цирк</button>
-    <button onclick="setVenueFilter('all',this)" class="vf-tab" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;background:#f4f2ee;color:#444;transition:all .15s;">Все площадки</button>
+<section class="page-hero">
+  <h1>Площадки города</h1>
+  <p>Концертные залы, театры, музеи — вся культурная жизнь</p>
+</section>
+
+<div class="filter-bar">
+  <div class="filter-inner">
+    <span class="ftype">Тип:</span>
+    <button class="ftab active" onclick="filterVenues('all',this)">Все</button>
+    <button class="ftab" onclick="filterVenues('concert',this)">🎤 Концертные</button>
+    <button class="ftab" onclick="filterVenues('theater',this)">🎭 Театры</button>
+    <button class="ftab" onclick="filterVenues('museum',this)">🏛️ Музеи</button>
+    <button class="ftab" onclick="filterVenues('kids',this)">🎪 Цирк/Дети</button>
   </div>
 </div>
 
-<div class="city-strip">
-  <div class="city-strip-inner">
-    <span style="font-size:11px;color:#888;flex-shrink:0;">Город:</span>
-    <div class="city-pill" data-city="Москва"          onclick="switchCity('Москва',this)" id="pill_Москва">Москва</div>
-    <div class="city-pill" data-city="Санкт-Петербург"        onclick="switchCity('Санкт-Петербург',this)">Санкт-Петербург</div>
-    <div class="city-pill" data-city="Екатеринбург"           onclick="switchCity('Екатеринбург',this)">Екатеринбург</div>
-    <div class="city-pill" data-city="Казань"                 onclick="switchCity('Казань',this)">Казань</div>
-    <div class="city-pill" data-city="Новосибирск"            onclick="switchCity('Новосибирск',this)">Новосибирск</div>
-    <div class="city-pill" data-city="Краснодар"              onclick="switchCity('Краснодар',this)">Краснодар</div>
-    <div class="city-pill active" data-city="Волгоград"              onclick="switchCity('Волгоград',this)">Волгоград</div>
-    <div class="city-pill" data-city="Нижний Новгород"        onclick="switchCity('Нижний Новгород',this)">Нижний Новгород</div>
-    <div class="city-pill" data-city="Ростов-на-Дону"         onclick="switchCity('Ростов-на-Дону',this)">Ростов-на-Дону</div>
-    <div class="city-pill" data-city="Уфа"                    onclick="switchCity('Уфа',this)">Уфа</div>
-    <div class="city-pill" data-city="Пермь"                  onclick="switchCity('Пермь',this)">Пермь</div>
-    <div class="city-pill" data-city="Красноярск"             onclick="switchCity('Красноярск',this)">Красноярск</div>
-  </div>
+<div class="venues-wrap">
+  <div class="venues-grid" id="venuesGrid"></div>
 </div>
 
-<div class="page-hero">
-  <div class="page-hero-inner">
-    <h1>🎸 Концертные площадки <span id="heroCity">Волгограда</span></h1>
-    <div class="sub" id="heroSub">Загружаем...</div>
-  </div>
+<div class="modal-overlay" id="venueModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" id="modalContent"></div>
 </div>
-
-<div class="main-layout">
-  <div>
-    <div id="resultsInfo" style="font-size:13px;color:var(--light);margin-bottom:16px;"></div>
-    <div class="venues-grid" id="venuesGrid">
-      <div class="empty"><div class="empty-icon">🎸</div><div>Определяем ваш город...</div></div>
-    </div>
-  </div>
-
-  <aside>
-    <div class="sidebar-widget">
-      <div class="sw-head">📍 Ближайшие концерты</div>
-      <div class="sw-body" id="sidebarConcerts">
-        <div style="color:var(--light);font-size:13px;">Загружаем...</div>
-      </div>
-    </div>
-    <div class="sidebar-widget">
-      <div class="sw-head">🏙️ Другие города</div>
-      <div class="sw-body" id="sidebarCities"></div>
-    </div>
-  </aside>
-</div>
-
-<!-- VENUE MODAL -->
-<div class="modal-overlay" id="venueModal" onclick="if(event.target===this)closeVenueModal()">
-  <div class="modal-box">
-    <div class="modal-head" id="vmHead">
-      <button class="modal-close" onclick="closeVenueModal()">✕</button>
-      <div class="modal-poster" id="vmPoster"></div>
-      <div class="modal-info">
-        <div class="modal-cat" id="vmType"></div>
-        <div class="modal-title" id="vmName"></div>
-        <div class="modal-meta" id="vmMeta"></div>
-      </div>
-    </div>
-    <div class="modal-tabs">
-      <div class="mtab active" onclick="switchVMTab('concerts')">Концерты</div>
-      <div class="mtab" onclick="switchVMTab('info')">О площадке</div>
-      <div class="mtab" onclick="switchVMTab('contacts')">Контакты</div>
-      <div class="mtab" onclick="switchVMTab('map')">🗺️ Как добраться</div>
-      <div class="mtab" onclick="switchVMTab('reviews')">💬 Отзывы <span id="vmRevBadge" style="background:#e0e0e0;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:2px;color:#666;"></span></div>
-    </div>
-    <div class="mpane" id="mpane-info">
-      <div id="vmInfoContent"></div>
-    </div>
-    <div class="mpane active" id="mpane-concerts">
-      <div id="vmConcertsContent"></div>
-    </div>
-    <div class="mpane" id="mpane-contacts">
-      <div id="vmContactsContent"></div>
-    </div>
-    <div class="mpane" id="mpane-map">
-      <div id="vmMapContent"></div>
-    </div>
-    <div class="mpane" id="mpane-reviews">
-      <div id="vmRevContent"></div>
-    </div>
-  </div>
-</div>
-
 
 <script>
-// ── Данные площадок Волгограда ────────────────────────────────
-var currentCity = localStorage.getItem('afishi_city') || 'Волгоград';
-
-var VENUES_DB = {
+var VENUES = {
   'Волгоград': [
     {id:'ckz', name:'ЦКЗ Волгоградская Филармония', cat:'concert',
-     addr:'Набережная 62-й Армии, 4', phone:'+7 (8442) 38-20-83',
-     cap:1040, url:'venue-ckz-oktyabr-volgograd.html',
-     img:'https://cdn.kassir.ru/venue/1000x600/176.jpg',
-     desc:'Главная концертная площадка Волгограда. 1040 мест.'},
+     addr:'Набережная 62-й Армии, 4', phone:'+7 (8442) 38-20-83', cap:1040,
+     url:'venue-ckz-oktyabr-volgograd.html',
+     desc:'Главная концертная площадка Волгограда. 1040 мест. Оркестровые концерты, эстрада, джаз.',
+     icon:'🎵', color:'#0a1a2d',
+     shows:[
+       {title:'Оркестр Cagmo: Симфония МТВ', date:'4 июн', url:'venue-ckz-oktyabr-volgograd.html'},
+       {title:'Жизнь в музыке', date:'3 июн', url:'venue-ckz-oktyabr-volgograd.html'}
+     ]},
     {id:'krop', name:'Кроп Арена', cat:'concert',
-     addr:'ул. им. Маршала Чуйкова, 1', phone:'+7 (8442) 55-40-30',
-     cap:45000, url:'venue-krop-arena-volgograd.html',
-     img:'', desc:'Главный стадион Волгограда. Крупнейшие концерты.'},
+     addr:'ул. им. Маршала Чуйкова, 1', phone:'+7 (8442) 55-40-30', cap:45015,
+     url:'venue-krop-arena-volgograd.html',
+     desc:'Главный стадион Волгограда. Построен к ЧМ-2018 по футболу. Крупнейшие концерты.',
+     icon:'🏟️', color:'#0a2d0a',
+     shows:[
+       {title:'Концерт ко Дню Победы', date:'9 мая', url:'venue-krop-arena-volgograd.html'}
+     ]},
     {id:'dom', name:'Дом Офицеров', cat:'concert',
-     addr:'пр. Ленина, 10', phone:'+7 (8442) 93-80-18',
-     cap:600, url:'venue-dom-ofitserov-volgograd.html',
-     img:'', desc:'Концертный зал на 600 мест в центре Волгограда.'},
-    {id:'muzth', name:'Волгоградский Музыкальный театр', cat:'theater',
-     addr:'пр. Ленина, 28', phone:'+7 (8442) 93-40-73',
-     cap:850, url:'theater-volgogradskiy-muzykalnyy-teatr.html',
-     img:'', desc:'Оперетты, мюзиклы, концерты. 850 мест.'},
+     addr:'пр. Ленина, 10', phone:'+7 (8442) 93-80-18', cap:600,
+     url:'venue-dom-ofitserov-volgograd.html',
+     desc:'Камерный концертный зал в историческом центре Волгограда. 600 мест.',
+     icon:'🎸', color:'#1a0a2d',
+     shows:[
+       {title:'Рок-классика', date:'15 июн', url:'venue-dom-ofitserov-volgograd.html'}
+     ]},
+    {id:'expo', name:'Волгоград Экспо', cat:'concert',
+     addr:'ул. Рокоссовского, 62', phone:'+7 (8442) 55-82-00', cap:3000,
+     url:'venue-expo-volgograd.html',
+     desc:'Выставочный комплекс. Крупные концерты и корпоративные мероприятия.',
+     icon:'🎪', color:'#2d1a0a',
+     shows:[]},
     {id:'net', name:'Театр НЭТ', cat:'theater',
-     addr:'ул. Мира, 5', phone:'+7 (8442) 93-47-30',
-     cap:380, url:'theater-net-novyy-eksperimentalnyy.html',
-     img:'', desc:'Новый Экспериментальный Театр. Современные постановки.'},
-    {id:'tuz', name:'ТЮЗ Волгоград', cat:'theater',
-     addr:'пр-кт им. В.И. Ленина, 15', phone:'+7 (8442) 93-33-87',
-     cap:400, url:'theater-tyuz-volgograd.html',
-     img:'', desc:'Театр Юного Зрителя. Спектакли для детей и молодёжи.'},
+     addr:'ул. Мира, 5', phone:'+7 (8442) 93-47-30', cap:380,
+     url:'theater-net-novyy-eksperimentalnyy.html',
+     desc:'Новый Экспериментальный Театр. Современные постановки, авангард, классика.',
+     icon:'🎭', color:'#2d0a1a',
+     shows:[
+       {title:'Ромео и Джульетта', date:'15 июн', url:'theater-net-novyy-eksperimentalnyy.html'},
+       {title:'Три сестры', date:'22 июн', url:'theater-net-novyy-eksperimentalnyy.html'}
+     ]},
     {id:'opera', name:'Царицынская Опера', cat:'theater',
-     addr:'ул. Мира, 4', phone:'+7 (8442) 93-22-01',
-     cap:860, url:'venue-opera-volgograd.html',
-     img:'', desc:'Волгоградский театр оперы и балета.'},
+     addr:'ул. Мира, 4', phone:'+7 (8442) 93-22-01', cap:860,
+     url:'venue-opera-volgograd.html',
+     desc:'Театр оперы и балета. Классический репертуар, гастроли ведущих коллективов.',
+     icon:'🎶', color:'#0a2d2d',
+     shows:[
+       {title:'Лебединое озеро', date:'20 июн', url:'venue-opera-volgograd.html'}
+     ]},
+    {id:'tuz', name:'ТЮЗ Волгоград', cat:'theater',
+     addr:'пр-кт им. В.И. Ленина, 15', phone:'+7 (8442) 93-33-87', cap:400,
+     url:'theater-tyuz-volgograd.html',
+     desc:'Театр Юного Зрителя. Спектакли для детей и молодёжи.',
+     icon:'🌟', color:'#2d2d0a',
+     shows:[
+       {title:'Золушка', date:'7 июн', url:'theater-tyuz-volgograd.html'},
+       {title:'Буратино', date:'14 июн', url:'theater-tyuz-volgograd.html'}
+     ]},
+    {id:'muzth', name:'Музыкальный Театр', cat:'theater',
+     addr:'пр. Ленина, 28', phone:'+7 (8442) 93-40-73', cap:850,
+     url:'theater-volgogradskiy-muzykalnyy-teatr.html',
+     desc:'Оперетты, мюзиклы, концертные программы. 850 мест.',
+     icon:'🎼', color:'#0a0a2d',
+     shows:[{title:'Кошки (мюзикл)', date:'12 июн', url:'theater-volgogradskiy-muzykalnyy-teatr.html'}]},
     {id:'muzey', name:'Музей ИЗО им. Машкова', cat:'museum',
-     addr:'пр. Ленина, 21', phone:'+7 (8442) 38-24-44',
+     addr:'пр. Ленина, 21', phone:'+7 (8442) 38-24-44', cap:null,
      url:'exhibit-muzey-izo-volgograd.html',
-     img:'', desc:'Волгоградский музей изобразительных искусств.'},
+     desc:'Волгоградский музей изобразительных искусств. Постоянная и временные экспозиции.',
+     icon:'🖼️', color:'#1a2d0a',
+     shows:[{title:'Выставка современного искусства', date:'июнь', url:'exhibit-muzey-izo-volgograd.html'}]},
     {id:'kraeved', name:'Краеведческий музей', cat:'museum',
-     addr:'пр. им. В.И. Ленина, 31', phone:'+7 (8442) 38-00-96',
+     addr:'пр. им. В.И. Ленина, 31', phone:'+7 (8442) 38-00-96', cap:null,
      url:'exhibit-kraevedcheskiy-volgograd.html',
-     img:'', desc:'История Волгоградской области от древности до наших дней.'},
-    {id:'cirk', name:'Волгоградский Цирк', cat:'circus',
-     addr:'пр. Ленина, 65', phone:'+7 (8442) 94-16-30',
+     desc:'История Волгоградской области от древности до наших дней.',
+     icon:'🏛️', color:'#2d1a0a',
+     shows:[{title:'Сталинградская битва — постоянная экспозиция', date:'ежедневно', url:'exhibit-kraevedcheskiy-volgograd.html'}]},
+    {id:'cirk', name:'Волгоградский Цирк', cat:'kids',
+     addr:'пр. Ленина, 65', phone:'+7 (8442) 94-16-30', cap:2000,
      url:'venue-cirk-volgograd.html',
-     img:'', desc:'Программы для взрослых и детей.'},
+     desc:'Программы для взрослых и детей. Гастрольные коллективы.',
+     icon:'🤹', color:'#2d0a2d',
+     shows:[{title:'Новая цирковая программа', date:'июнь', url:'venue-cirk-volgograd.html'}]},
+    {id:'kukly', name:'Театр Кукол', cat:'kids',
+     addr:'пр. Ленина, 14', phone:'+7 (8442) 93-10-74', cap:300,
+     url:'theater-kukol-volgograd.html',
+     desc:'Волгоградский Театр Кукол. Спектакли для детей всех возрастов.',
+     icon:'🎭', color:'#0a2d1a',
+     shows:[{title:'Колобок', date:'8 июн', url:'theater-kukol-volgograd.html'}]},
   ]
 };
 
+var currentCity = localStorage.getItem('afishi_city') || 'Волгоград';
 var currentFilter = 'all';
-var currentVenues = [];
 
-function setVenueFilter(cat, btn) {
+function filterVenues(cat, btn) {
   currentFilter = cat;
-  document.querySelectorAll('.vf-tab').forEach(function(b) {
-    b.style.background = '#f4f2ee';
-    b.style.color = '#444';
+  document.querySelectorAll('.ftab').forEach(function(b){
+    b.classList.remove('active');
   });
-  if (btn) { btn.style.background = '#c8102e'; btn.style.color = '#fff'; }
+  if (btn) btn.classList.add('active');
   renderVenues();
 }
 
 function renderVenues() {
-  var city = currentCity || 'Волгоград';
-  var venues = VENUES_DB[city] || VENUES_DB['Волгоград'] || [];
+  var venues = (VENUES[currentCity] || VENUES['Волгоград'] || []);
   if (currentFilter !== 'all') {
-    venues = venues.filter(function(v) { return v.cat === currentFilter; });
+    venues = venues.filter(function(v){ return v.cat === currentFilter; });
   }
-  currentVenues = venues;
-  
   var grid = document.getElementById('venuesGrid');
-  if (!grid) return;
-  
   if (!venues.length) {
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888;">Площадки не найдены</div>';
+    grid.innerHTML = '<div class="empty">Площадки не найдены для выбранного фильтра</div>';
     return;
   }
-  
   grid.innerHTML = venues.map(function(v) {
-    return '<div class="venue-card" onclick="openVenueModal('' + v.id + '')" style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">' +
-      (v.img ? '<img src="' + v.img + '" style="width:100%;height:160px;object-fit:cover;" onerror="this.style.display='none'">' :
-       '<div style="background:linear-gradient(135deg,#1a1a1a,#333);height:120px;display:flex;align-items:center;justify-content:center;font-size:40px;">' +
-       (v.cat==='concert'?'🎤':v.cat==='theater'?'🎭':v.cat==='museum'?'🏛️':'🎪') + '</div>') +
-      '<div style="padding:16px;">' +
-        '<div style="font-weight:700;font-size:15px;margin-bottom:6px;">' + v.name + '</div>' +
-        '<div style="font-size:12px;color:#666;margin-bottom:8px;">📍 ' + (v.addr||'') + '</div>' +
-        (v.cap ? '<div style="font-size:12px;color:#888;">👥 ' + v.cap.toLocaleString('ru') + ' мест</div>' : '') +
-        '<a href="' + (v.url||'#') + '" onclick="event.stopPropagation()" style="display:inline-block;margin-top:12px;padding:6px 14px;background:#c8102e;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;">Афиша →</a>' +
+    var catLabel = {concert:'🎤 Концертный зал', theater:'🎭 Театр',
+                    museum:'🏛️ Музей', kids:'🎪 Цирк / Дети'}[v.cat] || '🎪';
+    var shows = (v.shows||[]).slice(0,3).map(function(s){
+      return '<a class="show-item" href="'+s.url+'" onclick="event.stopPropagation()">' +
+             '<span class="show-title">'+s.title+'</span>' +
+             '<span class="show-date">'+s.date+'</span></a>';
+    }).join('');
+    return '<div class="vcard" onclick="openModal(''+v.id+'')" style="background:#fff">' +
+      '<div class="vcard-head" style="background:linear-gradient(135deg,'+v.color+',#333)">' +
+        '<div class="vcard-cat">'+catLabel+'</div>' +
+        '<div class="vcard-name">'+v.name+'</div>' +
+        '<div class="vcard-addr">📍 '+(v.addr||'')+'</div>' +
+        (v.cap ? '<div class="vcard-cap">👥 '+v.cap.toLocaleString('ru')+' мест</div>' : '') +
+      '</div>' +
+      '<div class="vcard-body">' +
+        (shows || '<div style="color:#aaa;font-size:13px;padding:8px 0">Расписание уточняется</div>') +
+        '<a class="vcard-btn" href="'+(v.url||'#')+'" onclick="event.stopPropagation()">Афиша →</a>' +
       '</div>' +
     '</div>';
   }).join('');
 }
 
-function openVenueModal(id) {
-  var v = currentVenues.find(function(x) { return x.id === id; });
+function openModal(id) {
+  var venues = VENUES[currentCity] || VENUES['Волгоград'] || [];
+  var v = venues.find(function(x){ return x.id===id; });
   if (!v) return;
-  var modal = document.getElementById('venueModal');
-  if (!modal) return;
-  modal.innerHTML = '<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.remove()">' +
-    '<div style="background:#fff;border-radius:16px;max-width:500px;width:100%;padding:32px;max-height:80vh;overflow-y:auto;">' +
-      '<h2 style="margin:0 0 12px;font-size:22px;">' + v.name + '</h2>' +
-      '<p style="color:#666;margin:0 0 8px;">📍 ' + (v.addr||'') + '</p>' +
-      (v.phone ? '<p style="color:#666;margin:0 0 8px;">📞 ' + v.phone + '</p>' : '') +
-      (v.cap ? '<p style="color:#666;margin:0 0 16px;">👥 ' + v.cap.toLocaleString('ru') + ' мест</p>' : '') +
-      '<p style="margin:0 0 20px;line-height:1.6;">' + (v.desc||'') + '</p>' +
-      '<a href="' + (v.url||'#') + '" style="display:inline-block;padding:12px 24px;background:#c8102e;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;">Открыть афишу</a>' +
-      '<button onclick="this.closest('[style*=fixed]').remove()" style="margin-left:12px;padding:12px 20px;background:#f4f2ee;border:none;border-radius:8px;cursor:pointer;">Закрыть</button>' +
+  document.getElementById('modalContent').innerHTML =
+    '<button class="modal-close" onclick="closeModal()">✕</button>' +
+    '<div class="modal-title">'+(v.icon||'')+'  '+v.name+'</div>' +
+    '<div class="modal-meta">' +
+      '<b>📍 Адрес:</b> '+v.addr+'<br>' +
+      (v.phone ? '<b>📞 Тел:</b> '+v.phone+'<br>' : '') +
+      (v.cap ? '<b>👥 Вместимость:</b> '+v.cap.toLocaleString('ru')+' мест<br>' : '') +
     '</div>' +
-  '</div>';
-  document.body.appendChild(modal.firstChild || modal);
+    '<p style="color:#444;line-height:1.7;margin-bottom:20px">'+(v.desc||'')+'</p>' +
+    '<a href="'+(v.url||'#')+'" class="vcard-btn">Открыть афишу площадки</a>';
+  document.getElementById('venueModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
-// Обновить при смене города
+function closeModal() {
+  document.getElementById('venueModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+window.switchCity = function(city) {
+  try { localStorage.setItem('afishi_city', city); } catch(e) {}
+  currentCity = city;
+  renderVenues();
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  currentCity = localStorage.getItem('afishi_city') || 'Волгоград';
+  renderVenues();
+});
+</script>
+
+
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
 (function() {
   var orig = window._onGeoCity;
   window._onGeoCity = function(city) {
     if (orig) orig(city);
-    currentCity = city;
-    renderVenues();
-  };
-  var origSw = window.switchCity;
-  window.switchCity = function(city, btn) {
-    if (origSw) origSw(city, btn);
-    currentCity = city;
-    setTimeout(renderVenues, 100);
+    updateFooterVenues(city);
   };
 })();
-
-document.addEventListener('DOMContentLoaded', renderVenues);
 </script>
-
-</body>
-</html>
 
 <footer>
   <!-- CTA полоса -->

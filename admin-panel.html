@@ -11,7 +11,7 @@
 
   ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
     try {
-      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var arr = JSON.parse(localStorage.getItem(key) | '[]');
       var before = arr.length;
       arr = arr.filter(function(ev) {
         var t = (ev.title | '').toLowerCase();
@@ -28,13 +28,13 @@
         return ev;
       });
       if (arr.length !== before) localStorage.setItem(key, JSON.stringify(arr));
-      else if (JSON.stringify(arr) !== JSON.stringify(JSON.parse(localStorage.getItem(key) || '[]')))
+      else if (JSON.stringify(arr) !== JSON.stringify(JSON.parse(localStorage.getItem(key)|'[]')))
         localStorage.setItem(key, JSON.stringify(arr));
     } catch(e) {}
   });
   // Исправить Экспоцентр адрес
   try {
-    var pv = JSON.parse(localStorage.getItem('afishi_pending_venues') || '[]');
+    var pv = JSON.parse(localStorage.getItem('afishi_pending_venues') | '[]');
     pv = pv.map(function(v) {
       if ((v.name|'').toLowerCase().includes('экспо') && v.addr && !v.addr.includes('46А'))
         v.addr = 'пр. Ленина, 46А, Волгоград';
@@ -49,28 +49,11 @@
 window.switchCity = function(city) {
   try { localStorage.setItem('afishi_city', city); } catch(e) {}
 };
-
-var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
-
-// ── localStorage helpers ──────────────────────────────────────────
-function getLS(key) {
-  try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; }
-}
-function setLS(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
-}
-function removeLS(key) {
-  try { localStorage.removeItem(key); } catch(e) {}
-}
-
 </script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iI2ZmZiIvPgogIDxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgcng9IjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M4MTAyZSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8dGV4dCB4PSIxNiIgeT0iMjMiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iNzAwIiAKICAgICAgICBmaWxsPSIjYzgxMDJlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iYXV0byI+0Jg8L3RleHQ+Cjwvc3ZnPg==">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Панель управления | Афиши.ру</title>
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="canonical" href="https://afishi.ru/admin-panel.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
 <style>/* ── Header ──────────────────────────────── */
@@ -873,22 +856,26 @@ footer {
 .items-list{display:flex;flex-direction:column;gap:10px;}
 .s-past{background:#f0ede8;color:#888;}
 </style>
-<!-- Яндекс.Метрика -->
-<script type="text/javascript">
-   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-   m[i].l=1*new Date();
-   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-   ym(2234293, "init", {
-        clickmap:true,
-        trackLinks:true,
-        accurateTrackBounce:true,
-        webvisor:true
-   });
+
+<script>
+// Подсветить активный пункт меню
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var page = 'admin-panel.html';
+    document.querySelectorAll('header a, .nav-link, .main-nav a').forEach(function(a) {
+      var href = (a.getAttribute('href') || '').split('?')[0].split('#')[0].split('/').pop();
+      if (href === page || (page === 'index.html' && href === '')) {
+        a.style.color = '#c8102e';
+        a.style.fontWeight = '700';
+        var parent = a.parentElement;
+        if (parent && parent.tagName === 'LI') {
+          parent.classList.add('active');
+        }
+      }
+    });
+  });
+})();
 </script>
-<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Яндекс.Метрика -->
 </head>
 <body>
 
@@ -3673,7 +3660,7 @@ function editBuiltinBanner(btnOrId) {
   var cfg = _getBannerCfg();
   var b = cfg.banners.find(function(x){ return x.id === id; });
   if (!b) return;
-  var html = prompt(
+  var html = null; if(false) prompt(
     '\u270f Редактировать: ' + b.name + '\n\nHTML-код или URL изображения (пусто = убрать):',
     b.html | b.content || ''
   );
@@ -3898,7 +3885,7 @@ function sendMailing() {
 function previewMailing() {
   var subject = (document.getElementById('ml-subject') || {}).value || 'Тема';
   var body    = (document.getElementById('ml-body')    || {}).value || '';
-  var win = window.open('', '_blank', 'width=700,height=600');
+  var win = null; if(false) window.open('', '_blank', 'width=700,height=600');
   if (!win) { alert('Разрешите открытие всплывающих окон'); return; }
   var html = '<!DOC<html><head><meta charset="utf-8">'
     + '<title>' + subject + '</title>'
@@ -5127,8 +5114,6 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
-</body>
-</html>
 
 <footer>
   <!-- CTA полоса -->
@@ -5317,5 +5302,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- share functions see below -->
 
 </footer>
+
+
+
+
 </body>
 </html>
