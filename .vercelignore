@@ -1,0 +1,5 @@
+*.zip
+setup-env.bat
+afishiru-trailer-pipeline.md
+.github/
+node_modules/
