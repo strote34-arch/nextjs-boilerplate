@@ -7,6 +7,7 @@
 // ╚══════════════════════════════════════════════════════════════╝
 
 const RESEND_API_KEY = 're_BFQdjrsV_NFAqbeo5XkX8cQpj1xBzScsG';
+const IMGBB_KEY = '994561c921f16df55b32560fe5c09016';
 const YA_GEO_KEY    = '8bb575b7-f32a-4aff-b82d-9e45ed28963c';
 
 const ADMIN_EMAIL    = 'strote34@gmail.com';

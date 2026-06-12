@@ -715,29 +715,30 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-// ── Яндекс Геокодер — точные координаты площадок ─────────────
-const YA_GEOCODER = 'https://afishi-geo.strote34.workers.dev/api/geocode';
+<script>
+// Nominatim — бесплатный геокодер OpenStreetMap (без ключа)
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
-async function geocodeAndUpdateMarker(id, address) {
-  try {
-    const r = await fetch(YA_GEOCODER + '?address=' + encodeURIComponent(address));
-    const d = await r.json();
-    if (d.lat && window._venueMarkers && window._venueMarkers[id]) {
-      window._venueMarkers[id].setLatLng([d.lat, d.lng]);
-      console.log('📍 Геокодировано:', address, '->', d.lat, d.lng);
-    }
-  } catch(e) {}
+async function geocodeAddress(address) {
+  const url = NOMINATIM_URL + '?q=' + encodeURIComponent(address + ', Волгоград, Россия') + '&format=json&limit=1&accept-language=ru';
+  const r = await fetch(url, { headers: { 'User-Agent': 'afishi.ru/1.0 (afishi@bk.ru)' } });
+  const data = await r.json();
+  if (data && data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  return null;
 }
 
-// Запустить геокодинг через 3 сек после загрузки карты
+// Обновить координаты площадок при загрузке
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
+  setTimeout(async function() {
     var venues = document.querySelectorAll('[data-venue-addr][data-venue-id]');
-    venues.forEach(function(v, i) {
-      setTimeout(function() {
-        geocodeAndUpdateMarker(v.dataset.venueId, v.dataset.venueAddr);
-      }, i * 300);
-    });
+    for (var i = 0; i < venues.length; i++) {
+      var v = venues[i];
+      var coords = await geocodeAddress(v.dataset.venueAddr);
+      if (coords && window._venueMarkers && window._venueMarkers[v.dataset.venueId]) {
+        window._venueMarkers[v.dataset.venueId].setLatLng([coords.lat, coords.lng]);
+      }
+      await new Promise(r => setTimeout(r, 1000)); // 1 запрос/сек — лимит Nominatim
+    }
   }, 3000);
 });
 </script>

@@ -241,13 +241,11 @@ export default async function handler(req, res) {
   }
   
   // В production проверяем CRON_SECRET
-  // Проверка Cron авторизации (Vercel автоматически добавляет Bearer)
-  // При ручном запросе через браузер авторизация пропускается для теста
-  if (process.env.NODE_ENV === 'production' && !verifyCron(req)) {
-    // Разрешить без авторизации только GET запросы (для ручного тестирования)
-    if (req.method !== 'GET') {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  // Авторизация: Vercel Cron автоматически добавляет Bearer токен
+  // GET запросы разрешены без авторизации (для тестирования)
+  const isAuthorized = verifyCron(req) || req.method === 'GET';
+  if (!isAuthorized && process.env.NODE_ENV === 'production') {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
   
   console.log(`[TrailerSync] Запуск: ${new Date().toISOString()}`);
