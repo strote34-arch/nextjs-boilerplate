@@ -3,28 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Карта площадок Волгограда | Афиши.ру</title>
+<title>Карта мероприятий — Афиши.ру</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-<style>
-:root{--red:#c8102e;--dark:#1a1a1a;--bg:#f4f2ee;--border:#e0e0e0;}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);display:flex;flex-direction:column;min-height:100vh;}
-.map-hero{background:linear-gradient(135deg,#1a1a1a,#2d0a0a);padding:28px 20px;text-align:center;color:#fff;}
-.map-hero h1{font-family:'Oswald',sans-serif;font-size:clamp(20px,4vw,36px);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
-.map-hero p{color:rgba(255,255,255,.6);font-size:14px;margin-top:6px;}
-.venues-list{max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
-.venue-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;transition:box-shadow .2s;}
-.venue-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.1);}
-.vc-name{font-weight:700;font-size:15px;margin-bottom:6px;font-family:'Oswald',sans-serif;}
-.vc-addr{font-size:13px;color:#666;margin-bottom:8px;}
-.vc-phone{font-size:12px;color:#888;margin-bottom:12px;}
-.vc-map-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:background .15s;}
-.vc-map-btn:hover{background:#1558b0;}
-.vc-afisha-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--red);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;margin-left:8px;}
-.section-title{max-width:1200px;margin:8px auto 0;padding:0 16px;font-family:'Oswald',sans-serif;font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;}
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="theme-color" content="#c8102e">
+<link rel="manifest" href="/manifest.json">
+<!-- Leaflet.js — бесплатная карта без API ключа -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>/* ── Header ── */
+header {
+  background: var(--white);
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 28px; height: 64px;
+}
+.header-inner { gap: 12px; }
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--red); letter-spacing: -1px;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.logo span { color: var(--black); }
+.logo { font-size: 24px; }
+.logo{font-size:18px !important;}
+nav { display: flex; gap: 0; flex: 1; }
+nav a {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 0 13px; height: 64px;
+  display: flex; align-items: center;
+  color: var(--mid);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover, nav a.active { color: var(--red); border-bottom-color: var(--red); }
+nav a { padding: 0 8px; font-size: 12px; }
+.city-strip-inner{gap:6px !important;}
+.city-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.city-strip-inner::-webkit-scrollbar { display: none; }
+.city-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-pill {
+  padding: 6px 16px; border: 1.5px solid var(--border);
+  border-radius: 20px; font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--white); color: var(--mid); transition: all .15s;
+}
+.city-pill:hover { border-color: var(--red); color: var(--red); }
+.city-pill.active { background: var(--red); border-color: var(--red); color: var(--white); }
+.city-pill{font-size:11px !important;padding:4px 10px !important;}
+
+:root{--red:#c8102e;--dark:#0a0a0a;--white:#fff;--border:#e8e6e2;--mid:#666;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* Шапка */
+
+.header-inner{max-width:100%;padding:0 20px;height:52px;display:flex;align-items:center;gap:16px;}
+
+
+
+
+
+/* Панель фильтров */
+.map-toolbar{background:#fff;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:500;flex-shrink:0;}
+.map-toolbar select{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;cursor:pointer;}
+.cat-btn{padding:5px 12px;border:1px solid var(--border);border-radius:20px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:Oswald,sans-serif;transition:.15s;white-space:nowrap;}
+.cat-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+.map-count{margin-left:auto;font-size:12px;color:var(--mid);white-space:nowrap;}
+
+/* Карта */
+#map{flex:1;z-index:0;}
+
+/* Попап */
+.leaflet-popup-content-wrapper{border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);border:none;padding:0;overflow:hidden;}
+.leaflet-popup-content{margin:0;min-width:260px;}
+.popup-
+.popup-venue{font-family:Oswald,sans-serif;font-weight:900;font-size:16px;margin-bottom:2px;}
+.popup-addr{font-size:11px;color:rgba(255,255,255,.6);}
+.popup-events{padding:10px 0;}
+.popup-event{display:flex;align-items:flex-start;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;transition:.1s;}
+.popup-event:last-child{border-bottom:none;}
+.popup-event:hover{background:#f5f4f0;}
+.popup-event-date{font-family:Oswald,sans-serif;font-weight:700;font-size:14px;color:var(--red);min-width:50px;}
+.popup-event-title{font-size:13px;font-weight:600;line-height:1.3;}
+.popup-event-meta{font-size:11px;color:var(--mid);margin-top:2px;}
+.popup-footer{padding:10px 16px;display:flex;gap:8px;}
+.popup-btn{flex:1;padding:8px;border-radius:8px;background:var(--red);color:#fff;border:none;font-family:Oswald,sans-serif;font-weight:700;font-size:13px;cursor:pointer;text-align:center;text-decoration:none;display:block;}
+.popup-btn.outline{background:transparent;border:1px solid var(--border);color:#111;}
+
+/* Sidebar результатов */
+.sidebar{position:absolute;right:0;top:0;bottom:0;width:300px;background:#fff;z-index:400;border-left:1px solid var(--border);overflow-y:auto;transform:translateX(100%);transition:.3s;}
+.sidebar.open{transform:translateX(0);}
+
+/* Легенда */
+.legend{position:absolute;bottom:24px;left:16px;z-index:400;background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 2px 12px rgba(0,0,0,.15);font-size:12px;}
+.legend-title{font-family:Oswald,sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);margin-bottom:8px;}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 </style>
-</head>
-<body>
+
 <script>
 // switchCity global stub — available immediately for onclick handlers
 window.switchCity = function(city, btn) {
@@ -61,29 +169,44 @@ window.switchCity = function(city, btn) {
     }
   }, 0);
 };
-
-// ── Яндекс.Метрика: трекинг клика на билет ──
-function trackTicketClick(url, title) {
-  try { ym(2234293, 'reachGoal', 'ticket_click', {url: url, title: title}); } catch(e) {}
-  try { if(window.gtag) gtag('event', 'ticket_click', {event_category: 'tickets', event_label: title}); } catch(e) {}
-}
-
-
-// ── Инициализация города из localStorage ───────────────────────
+</script>
+<!-- Яндекс.Метрика -->
+<script type="text/javascript">
+(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");ym(2234293,"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/2234293" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Яндекс.Метрика -->
+<script>
+var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
+</script>
+<script>
+// ── Активная навигация (красная подсветка текущей страницы) ──
 (function() {
-  var savedCity = null;
-  try { savedCity = localStorage.getItem('afishi_city'); } catch(e) {}
-  if (savedCity) {
-    // Обновить все cityLabel элементы
-    document.addEventListener('DOMContentLoaded', function() {
-      var lbl = document.getElementById('cityLabel');
-      if (lbl && lbl.textContent.trim() === 'Москва') lbl.textContent = savedCity;
-      var topLbl = document.getElementById('cityTopLabel');
-      if (topLbl && topLbl.textContent.trim() === 'Москва') topLbl.textContent = savedCity;
+  var PAGE_NAMES = {"index.html": "Главная", "concerts.html": "Концерты", "theater.html": "Театр", "cinema.html": "Кино", "exhibits.html": "Выставки", "kids.html": "Детям", "map.html": "Карта", "search.html": "Поиск", "about.html": "О сайте", "loyalty.html": "АфишиПлюс", "profile.html": "Профиль", "reviews.html": "Рецензии", "articles.html": "Статьи", "jobs.html": "Вакансии", "advertise.html": "Реклама", "partners.html": "Партнёры", "film-database.html": "База фильмов", "event-add.html": "Добавить"};
+  var fname = location.pathname.split('/').pop() || 'index.html';
+  if (!fname.includes('.')) fname = 'index.html';
+  var pageName = PAGE_NAMES[fname];
+  if (!pageName) return;
+  document.addEventListener('DOMContentLoaded', function() {
+    // Найти все nav ссылки
+    var links = document.querySelectorAll('header nav a, .nav-link, .header-nav a, .mobile-nav a');
+    links.forEach(function(a) {
+      var href = (a.getAttribute('href') || '').split('/').pop().split('?')[0];
+      if (href === fname || a.textContent.trim() === pageName) {
+        a.style.color = '#c8102e';
+        a.style.fontWeight = '900';
+        a.setAttribute('aria-current', 'page');
+      }
     });
-  }
+    // Также обновить title в шапке если есть breadcrumb
+    var bc = document.getElementById('pageBreadcrumb');
+    if (bc) bc.textContent = pageName;
+  });
 })();
 </script>
+</head>
+<body>
+
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
@@ -106,178 +229,219 @@ function trackTicketClick(url, title) {
       </div>
     </div>
   </header>
-<section class="map-hero">
-  <h1>📍 Площадки Волгограда</h1>
-  <p>Нажмите «На карте» чтобы открыть заведение в 2GIS</p>
-</section>
 
-<div class="section-title">🎤 Концертные залы</div>
-<div class="venues-list">
-<div class="section-title">🎤 Концертные залы</div>
-<div class="venues-list"><div class="venue-card">
-  <div class="vc-name">ЦКЗ Волгоградская Филармония</div>
-  <div class="vc-addr">📍 Набережная 62-й Армии, 4</div>
-  <div class="vc-phone">📞 +7 (8442) 38-20-83</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%A6%D0%9A%D0%97%20%D0%A4%D0%B8%D0%BB%D0%B0%D1%80%D0%BC%D0%BE%D0%BD%D0%B8%D1%8F%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="venue-ckz-oktyabr-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Дом Офицеров</div>
-  <div class="vc-addr">📍 пр. Ленина, 10</div>
-  <div class="vc-phone">📞 +7 (8442) 93-80-18</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%94%D0%BE%D0%BC%20%D0%BE%D1%84%D0%B8%D1%86%D0%B5%D1%80%D0%BE%D0%B2%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="venue-dom-ofitserov-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Кроп Арена (Волгоград Арена)</div>
-  <div class="vc-addr">📍 ул. Маршала Чуйкова, 1</div>
-  <div class="vc-phone">📞 +7 (8442) 55-40-30</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%20%D0%90%D1%80%D0%B5%D0%BD%D0%B0" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="venue-krop-arena-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Волгоград Экспо</div>
-  <div class="vc-addr">📍 ул. Рокоссовского, 62</div>
-  <div class="vc-phone">📞 +7 (8442) 55-82-00</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%AD%D0%BA%D1%81%D0%BF%D0%BE%D1%86%D0%B5%D0%BD%D1%82%D1%80%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="venue-expo-volgograd.html">Афиша →</a>
-</div></div>
-<div class="section-title">🎭 Театры</div>
-<div class="venues-list"><div class="venue-card">
-  <div class="vc-name">Театр НЭТ</div>
-  <div class="vc-addr">📍 ул. Мира, 5</div>
-  <div class="vc-phone">📞 +7 (8442) 93-47-30</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%9D%D0%AD%D0%A2%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="theater-net-novyy-eksperimentalnyy.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Царицынская Опера</div>
-  <div class="vc-addr">📍 ул. Мира, 4</div>
-  <div class="vc-phone">📞 +7 (8442) 93-22-01</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%A6%D0%B0%D1%80%D0%B8%D1%86%D1%8B%D0%BD%D1%81%D0%BA%D0%B0%D1%8F%20%D0%BE%D0%BF%D0%B5%D1%80%D0%B0" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="venue-opera-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">ТЮЗ Волгоград</div>
-  <div class="vc-addr">📍 пр-кт им. В.И. Ленина, 15</div>
-  <div class="vc-phone">📞 +7 (8442) 93-33-87</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%A2%D0%AE%D0%97%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="theater-tyuz-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Волгоградский Музыкальный Театр</div>
-  <div class="vc-addr">📍 пр. Ленина, 28</div>
-  <div class="vc-phone">📞 +7 (8442) 93-40-73</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%9C%D1%83%D0%B7%D1%8B%D0%BA%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9%20%D1%82%D0%B5%D0%B0%D1%82%D1%80%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="theater-volgogradskiy-muzykalnyy-teatr.html">Афиша →</a>
-</div></div>
-<div class="section-title">🏛️ Музеи</div>
-<div class="venues-list"><div class="venue-card">
-  <div class="vc-name">Музей ИЗО им. Машкова</div>
-  <div class="vc-addr">📍 пр. Ленина, 21</div>
-  <div class="vc-phone">📞 +7 (8442) 38-24-44</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%9C%D1%83%D0%B7%D0%B5%D0%B9%20%D0%98%D0%97%D0%9E%20%D0%9C%D0%B0%D1%88%D0%BA%D0%BE%D0%B2%D0%B0" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="exhibit-muzey-izo-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Краеведческий музей</div>
-  <div class="vc-addr">📍 пр. им. В.И. Ленина, 31</div>
-  <div class="vc-phone">📞 +7 (8442) 38-00-96</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%9A%D1%80%D0%B0%D0%B5%D0%B2%D0%B5%D0%B4%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9%20%D0%BC%D1%83%D0%B7%D0%B5%D0%B9%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="exhibit-kraevedcheskiy-volgograd.html">Афиша →</a>
-</div></div>
-<div class="section-title">🎪 Цирк и детские</div>
-<div class="venues-list"><div class="venue-card">
-  <div class="vc-name">Волгоградский Цирк</div>
-  <div class="vc-addr">📍 пр. Ленина, 65</div>
-  <div class="vc-phone">📞 +7 (8442) 94-16-30</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%A6%D0%B8%D1%80%D0%BA%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="venue-cirk-volgograd.html">Афиша →</a>
-</div><div class="venue-card">
-  <div class="vc-name">Театр Кукол</div>
-  <div class="vc-addr">📍 пр. Ленина, 14</div>
-  <div class="vc-phone">📞 +7 (8442) 93-10-74</div>
-  <a class="vc-map-btn" href="https://2gis.ru/volgograd/search/%D0%A2%D0%B5%D0%B0%D1%82%D1%80%20%D0%9A%D1%83%D0%BA%D0%BE%D0%BB%20%D0%92%D0%BE%D0%BB%D0%B3%D0%BE%D0%B3%D1%80%D0%B0%D0%B4" target="_blank" rel="noopener">🗺 На карте 2GIS</a>
-  <a class="vc-afisha-btn" href="theater-kukol-volgograd.html">Афиша →</a>
-</div></div>
+<div class="map-toolbar">
+  <select id="citySelect">
+    <option value="Волгоград">🌆 Волгоград</option>
+    <option value="Москва">🌆 Москва</option>
+    <option value="Санкт-Петербург">🌆 Санкт-Петербург</option>
+    <option value="Екатеринбург">🌆 Екатеринбург</option>
+    <option value="Казань">🌆 Казань</option>
+    <option value="Краснодар">🌆 Краснодар</option>
+  </select>
+  <button class="cat-btn active" data-cat="all">Все</button>
+  <button class="cat-btn" data-cat="concert">🎸</button>
+  <button class="cat-btn" data-cat="theater">🎭</button>
+  <button class="cat-btn" data-cat="cinema">🎬</button>
+  <button class="cat-btn" data-cat="exhibit">🖼</button>
+  <button class="cat-btn" data-cat="kids">🧸</button>
+  <span class="map-count" id="mapCount">Загрузка…</span>
+</div>
 
+<div id="map"></div>
 
 <script>
-// ── Footer: площадки по городу ───────────────────────────────
-var FOOTER_VENUES = {
+// ── Данные площадок по городам ────────────────────────────────────
+var VENUES = {
   'Волгоград': [
-    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
-    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
-    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
-    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
-    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
-    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
-    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+    {id:'ckz',   name:'ЦКЗ Волгоградская Филармония', lat:48.7054, lng:44.5225, addr:'ул. Набережная 62-ой Армии, 4',  cat:'concert',
+     events:[
+       {title:'Оркестр Cagmo: Симфония МТВ',  date:'4 июн', icon:'🎻', url:'venue-ckz-oktyabr-volgograd.html'},
+       {title:'Жизнь в музыке',               date:'3 июн', icon:'🎵', url:'venue-ckz-oktyabr-volgograd.html'},
+     ]},
+    {id:'krop',  name:'Кроп Арена',                    lat:48.6174, lng:44.3764, addr:'Университетский просп., 107 (ТЦ «Акварель»)', cat:'concert',
+     events:[
+       {title:'Джон Гарик — тур 2026', date:'6 июл', icon:'🎤', url:'venue-krop-arena-volgograd.html'},
+       {title:'Lida',                   date:'19 авг',icon:'🎤', url:'venue-krop-arena-volgograd.html'},
+       {title:'DK',                     date:'21 окт',icon:'🎤', url:'venue-krop-arena-volgograd.html'},
+       {title:'Сектор газа',            date:'8 ноя', icon:'🎸', url:'venue-krop-arena-volgograd.html'},
+     ]},
+    {id:'dom',   name:'Дом офицеров',                  lat:48.7030, lng:44.5162, addr:'пр-кт им. В.И. Ленина, 31', cat:'concert',
+     events:[
+       {title:'Концерт джазового оркестра', date:'20 июн', icon:'🎷', url:'venue-dom-ofitserov-volgograd.html'},
+     ]},
+    {id:'net',   name:'Театр НЭТ',                     lat:48.7081, lng:44.5129, addr:'ул. Мира, 1 (м/р-н Центральный)', cat:'theater',
+     events:[
+       {title:'Спектакль «Ромео и Джульетта»', date:'15 июн', icon:'🎭', url:'venue-net-volgograd.html'},
+     ]},
+    {id:'tuz',   name:'ТЮЗ Волгоград',                 lat:48.7100, lng:44.5158, addr:'пр-кт им. В.И. Ленина, 15', cat:'kids',
+     events:[
+       {title:'«Золушка» — детский спектакль', date:'7 июн', icon:'🧸', url:'venue-tuz-volgograd.html'},
+     ]},
+    {id:'kinomax',name:'Киномакс',                     lat:48.5124, lng:44.4143, addr:'ул. Рабоче-Крестьянская, 10', cat:'cinema',
+     events:[
+       {title:'Грязные деньги',              date:'с 15 июн',icon:'🎬', url:'cinema.html'},
+       {title:'Не одна дома 3',              date:'с 5 июн', icon:'🎬', url:'cinema.html'},
+     ]},
+    {id:'sinemapark',name:'Синема Парк',               lat:48.5269, lng:44.3795, addr:'просп. Ленина, 54б (ТРК «Европа Сити»)', cat:'cinema',
+     events:[
+       {title:'Майкл (байопик)',             date:'с июля',  icon:'🎬', url:'cinema.html'},
+       {title:'Экипаж',                      date:'с 12 июн',icon:'🎬', url:'cinema.html'},
+     ]},
+
+    {id:'tsarop',  name:'Царицынская опера',             lat:48.7092, lng:44.5190, addr:'пр-кт им. В.И. Ленина, 97', cat:'theater',
+     events:[
+       {title:'Опера «Евгений Онегин»',   date:'21 июн', icon:'🎵', url:'theater.html'},
+       {title:'Балет «Лебединое озеро»',  date:'28 июн', icon:'🩰', url:'theater.html'},
+     ]},
+    {id:'muzth',   name:'Волгоградский музыкальный театр', lat:48.7070, lng:44.5170, addr:'пр-кт им. В.И. Ленина, 78', cat:'theater',
+     events:[
+       {title:'Мюзикл «Кошки»',          date:'15 июн', icon:'🎭', url:'theater.html'},
+     ]},
+    {id:'muzeyizo', name:'Музей ИЗО',                  lat:48.7120, lng:44.5185, addr:'пл. Куйбышева, 6', cat:'exhibit',
+     events:[
+       {title:'Выставка «Волгоград в красках»', date:'июнь', icon:'🖼', url:'exhibit-muzey-izo-volgograd.html'},
+     ]},
+    {id:'kraeved', name:'Краеведческий музей',         lat:48.7098, lng:44.5178, addr:'пр. им. Ленина, 75', cat:'exhibit',
+     events:[
+       {title:'Экспозиция «История края»',   date:'постоянно',icon:'🏛', url:'exhibit-kraevedcheskiy-volgograd.html'},
+     ]},
   ],
   'Москва': [
-    {name:'Олимпийский',       href:'concerts.html'},
-    {name:'Лужники',           href:'concerts.html'},
-    {name:'Крокус Сити Холл',  href:'concerts.html'},
-    {name:'Большой театр',     href:'theater.html'},
-    {name:'МХТ им. Чехова',    href:'theater.html'},
-    {name:'Мультиплекс',       href:'cinema.html'}
+    {id:'msk_luzh', name:'БСА Лужники',  lat:55.7156, lng:37.5517, addr:'Лужнецкая наб., 24', cat:'concert',
+     events:[
+       {title:'Группа КИНО',             date:'21 июн', icon:'🎸', url:'concerts.html'},
+       {title:'Легенды дискотек',        date:'26 июн', icon:'🕺', url:'concerts.html'},
+       {title:'Руки Вверх!',             date:'25 июл', icon:'🙌', url:'concerts.html'},
+     ]},
+    {id:'msk_mts',  name:'МТС Live Арена', lat:55.6939, lng:37.3575, addr:'Международное ш., 28', cat:'concert',
+     events:[
+       {title:'Ленинград',               date:'12 июн', icon:'🎸', url:'concerts.html'},
+     ]},
+    {id:'msk_krok', name:'Крокус Сити Холл', lat:55.8275, lng:37.3674, addr:'МКАД 65-66 км, Красногорск', cat:'concert',
+     events:[
+       {title:'Григорий Лепс',          date:'16 июл', icon:'🎤', url:'concerts.html'},
+     ]},
   ],
-  'Санкт-Петербург': [
-    {name:'СКК Петербургский', href:'concerts.html'},
-    {name:'Ледовый дворец',    href:'concerts.html'},
-    {name:'Мариинский театр',  href:'theater.html'},
-    {name:'БДТ им. Товстоногова', href:'theater.html'},
-    {name:'Эрмитаж',           href:'exhibits.html'}
-  ],
-  'Екатеринбург': [
-    {name:'Уральский рок-клуб', href:'concerts.html'},
-    {name:'Екатеринбург Арена', href:'concerts.html'},
-    {name:'Коляда-театр',       href:'theater.html'},
-    {name:'Театр оперы и балета', href:'theater.html'}
-  ],
-  'Казань': [
-    {name:'Казань Арена',       href:'concerts.html'},
-    {name:'УНИКС',              href:'concerts.html'},
-    {name:'Татарский театр им. Камала', href:'theater.html'},
-    {name:'Театр им. Качалова', href:'theater.html'}
-  ],
-  'Новосибирск': [
-    {name:'Новосибирск Арена',  href:'concerts.html'},
-    {name:'ДКЖ',               href:'concerts.html'},
-    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
-    {name:'Красный факел',      href:'theater.html'}
-  ],
-  'Краснодар': [
-    {name:'Краснодар Арена',    href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
-  ],
-  'Ростов-на-Дону': [
-    {name:'ДонБасс Арена',      href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
-  ]
 };
 
-function updateFooterVenues(city) {
-  var el = document.getElementById('footerVenuesList');
-  if (!el) return;
-  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
-  el.innerHTML = venues.map(function(v){
-    return '<a href="' + v.href + '">' + v.name + '</a>';
-  }).join('');
+// ── Цвета по категориям ───────────────────────────────────────────
+var CAT_COLORS = {concert:'#c8102e', theater:'#6a0dad', cinema:'#1565c0', exhibit:'#e65100', kids:'#2e7d32', all:'#c8102e'};
+var _city = localStorage.getItem('afishi_city') || 'Волгоград';
+var _cat  = 'all';
+
+// ── Инициализация карты ───────────────────────────────────────────
+var CITY_CENTERS = {
+  'Волгоград':      [48.7080, 44.5133],
+  'Москва':         [55.7558, 37.6173],
+  'Санкт-Петербург':[59.9343, 30.3351],
+  'Екатеринбург':   [56.8389, 60.6057],
+  'Казань':         [55.7887, 49.1221],
+  'Краснодар':      [45.0448, 38.9760],
+};
+
+var map = L.map('map', {zoomControl: true}).setView(CITY_CENTERS[_city] || [48.7080, 44.5133], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 18
+}).addTo(map);
+
+// ── Маркеры ───────────────────────────────────────────────────────
+var markers = [];
+var markerLayer = L.layerGroup().addTo(map);
+
+function createIcon(cat, count) {
+  var color = CAT_COLORS[cat] || CAT_COLORS.all;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 50" width="36" height="50">'
+    + '<path d="M18 0C8 0 0 8 0 18c0 13 18 32 18 32S36 31 36 18C36 8 28 0 18 0z" fill="' + color + '"/>'
+    + '<circle cx="18" cy="18" r="11" fill="rgba(255,255,255,0.95)"/>'
+    + '<text x="18" y="23" text-anchor="middle" font-size="12" font-weight="900" fill="' + color + '" font-family="Oswald,sans-serif">' + count + '</text>'
+    + '</svg>';
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [36, 50],
+    iconAnchor: [18, 50],
+    popupAnchor: [0, -48],
+  });
 }
 
-// Запустить при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  var city = (typeof currentCity !== 'undefined' && currentCity)
-    ? currentCity
-    : (localStorage.getItem('afishi_city') || 'Волгоград');
-  updateFooterVenues(city);
+function buildPopup(venue) {
+  var evHtml = '';
+  venue.events.forEach(function(ev) {
+    evHtml += '<a class="popup-event" href="' + ev.url + '">'
+      + '<div class="popup-event-date">' + ev.date + '</div>'
+      + '<div><div class="popup-event-title">' + ev.icon + ' ' + ev.title + '</div></div>'
+      + '</a>';
+  });
+  return '<div class="popup-header"><div class="popup-venue">' + venue.name + '</div>'
+    + '<div class="popup-addr">📍 ' + venue.addr + '</div></div>'
+    + '<div class="popup-events">' + evHtml + '</div>'
+    + '<div class="popup-footer">'
+    + '<a class="popup-btn" href="' + (venue.events[0] && venue.events[0].url || '#') + '">Смотреть события</a>'
+    + '</div>';
+}
+
+function renderMarkers() {
+  markerLayer.clearLayers();
+  markers = [];
+  var venues = VENUES[_city] || [];
+  var shown = 0;
+
+  venues.forEach(function(venue) {
+    if (_cat !== 'all' && venue.cat !== _cat) return;
+    var icon = createIcon(venue.cat, venue.events.length);
+    var m = L.marker([venue.lat, venue.lng], {icon: icon})
+      .bindPopup(buildPopup(venue), {maxWidth: 300})
+      .addTo(markerLayer);
+    markers.push(m);
+    shown++;
+  });
+
+  document.getElementById('mapCount').textContent = 'Площадок: ' + shown;
+}
+
+// ── Переключение города ───────────────────────────────────────────
+document.getElementById('citySelect').addEventListener('change', function() {
+  _city = this.value;
+  localStorage.setItem('afishi_city', _city);
+  var center = CITY_CENTERS[_city];
+  if (center) map.setView(center, 12);
+  renderMarkers();
 });
 
-// Перехватить смену города
-(function() {
-  var orig = window._onGeoCity;
-  window._onGeoCity = function(city) {
-    if (orig) orig(city);
-    updateFooterVenues(city);
+// Установить текущий город
+document.getElementById('citySelect').value = _city;
+
+// ── Фильтры категорий ────────────────────────────────────────────
+document.querySelectorAll('.cat-btn').forEach(function(btn) {
+  btn.onclick = function() {
+    document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    _cat = btn.dataset.cat;
+    renderMarkers();
   };
-})();
+});
+
+// ── Легенда ───────────────────────────────────────────────────────
+var legendEl = document.createElement('div');
+legendEl.className = 'legend';
+legendEl.style.position = 'absolute';
+legendEl.style.bottom = '24px';
+legendEl.style.left = '16px';
+legendEl.style.zIndex = '400';
+legendEl.innerHTML = '<div class="legend-title">Категории</div>'
+  + Object.entries(CAT_COLORS).filter(function(e){ return e[0]!=='all'; }).map(function(e){
+    var labels = {concert:'Концерты',theater:'Театр',cinema:'Кино',exhibit:'Выставки',kids:'Детям'};
+    return '<div class="legend-item"><div class="legend-dot" style="background:'+e[1]+'"></div><span>'+labels[e[0]]+'</span></div>';
+  }).join('');
+document.getElementById('map').appendChild(legendEl);
+
+// ── Начальный рендер ──────────────────────────────────────────────
+renderMarkers();
 </script>
+
 
 <footer>
   <!-- CTA полоса -->
@@ -466,5 +630,88 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- share functions see below -->
 
 </footer>
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
 </body>
 </html>

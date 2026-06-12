@@ -41,6 +41,78 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .modal-close{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:#999;margin-top:-4px;}
 .empty{padding:60px 20px;text-align:center;color:#aaa;font-size:16px;grid-column:1/-1;}
 </style>
+
+<script>
+// ── Активная навигация (красная подсветка текущей страницы) ──
+(function() {
+  var PAGE_NAMES = {"index.html": "Главная", "concerts.html": "Концерты", "theater.html": "Театр", "cinema.html": "Кино", "exhibits.html": "Выставки", "kids.html": "Детям", "map.html": "Карта", "search.html": "Поиск", "about.html": "О сайте", "loyalty.html": "АфишиПлюс", "profile.html": "Профиль", "reviews.html": "Рецензии", "articles.html": "Статьи", "jobs.html": "Вакансии", "advertise.html": "Реклама", "partners.html": "Партнёры", "film-database.html": "База фильмов", "event-add.html": "Добавить"};
+  var fname = location.pathname.split('/').pop() || 'index.html';
+  if (!fname.includes('.')) fname = 'index.html';
+  var pageName = PAGE_NAMES[fname];
+  if (!pageName) return;
+  document.addEventListener('DOMContentLoaded', function() {
+    // Найти все nav ссылки
+    var links = document.querySelectorAll('header nav a, .nav-link, .header-nav a, .mobile-nav a');
+    links.forEach(function(a) {
+      var href = (a.getAttribute('href') || '').split('/').pop().split('?')[0];
+      if (href === fname || a.textContent.trim() === pageName) {
+        a.style.color = '#c8102e';
+        a.style.fontWeight = '900';
+        a.setAttribute('aria-current', 'page');
+      }
+    });
+    // Также обновить title в шапке если есть breadcrumb
+    var bc = document.getElementById('pageBreadcrumb');
+    if (bc) bc.textContent = pageName;
+  });
+})();
+</script>
+
+
+<script>
+// ── Инициализация города и рендеринга при загрузке ───────────
+(function() {
+  var city = 'Волгоград';
+  try { city = localStorage.getItem('afishi_city') || 'Волгоград'; } catch(e) {}
+  window.currentCity = city;
+  
+  // Обновить cityLabel в шапке
+  function updateCityLabels(c) {
+    ['cityLabel','cityTopLabel','cityHint'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && el.textContent.trim() === 'Москва') el.textContent = c;
+    });
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    updateCityLabels(city);
+    // Вызвать рендер если функции доступны
+    if (typeof renderCityPills === 'function') renderCityPills();
+    if (typeof renderTheaters === 'function') renderTheaters(city);
+    if (typeof renderVenues === 'function') renderVenues();
+    if (typeof renderExhibits === 'function') renderExhibits(city);
+    if (typeof renderFilms === 'function') renderFilms(city);
+    if (typeof renderPage === 'function') renderPage(city);
+    if (typeof initPage === 'function') initPage(city);
+  });
+  
+  // Переопределить switchCity
+  var origSw = window.switchCity;
+  window.switchCity = function(city2, btn) {
+    window.currentCity = city2;
+    try { localStorage.setItem('afishi_city', city2); } catch(e) {}
+    updateCityLabels(city2);
+    if (origSw) origSw(city2, btn);
+    if (typeof renderCityPills === 'function') renderCityPills();
+    if (typeof renderTheaters === 'function') renderTheaters(city2);
+    if (typeof renderVenues === 'function') renderVenues();
+    if (typeof renderExhibits === 'function') renderExhibits(city2);
+    if (typeof renderFilms === 'function') renderFilms(city2);
+    if (typeof renderPage === 'function') renderPage(city2);
+  };
+})();
+</script>
+
 </head>
 <body>
 <script>
