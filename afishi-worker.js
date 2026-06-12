@@ -12,7 +12,7 @@ const YA_GEO_KEY    = '8bb575b7-f32a-4aff-b82d-9e45ed28963c';
 
 const ADMIN_EMAIL    = 'strote34@gmail.com';
 const FROM_EMAIL     = 'afishi.ru <onboarding@resend.dev>';
-const SITE_URL       = 'https://afishiru-v14.vercel.app';
+const SITE_URL       = 'https://afishiru-v12.vercel.app';
 
 // ── CORS заголовки ─────────────────────────────────────────────
 const CORS = {
