@@ -161,6 +161,78 @@ async function saveTrailerData(results) {
   return res.ok;
 }
 
+
+// ── Синк трейлеров для film-database ─────────────────────────
+async function syncFilmDatabaseTrailers() {
+  // Фильмы из TMDB — поиск, ныне идущие + предстоящие + популярные
+  const urls = [
+    `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`,
+    `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`,
+    `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`,
+    `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&language=ru-RU&page=1`,
+  ];
+  
+  const allFilms = [];
+  const seen = new Set();
+  
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      const d = await r.json();
+      for (const m of (d.results || [])) {
+        if (!seen.has(m.id)) {
+          seen.add(m.id);
+          allFilms.push(m);
+        }
+      }
+    } catch(e) {}
+  }
+  
+  console.log(`[FilmDB] Фильмов из TMDB: ${allFilms.length}`);
+  
+  // Для каждого фильма найти трейлер
+  const filmResults = [];
+  const channelId = AFISHIRU_CH_ID;
+  let channelVideos = [];
+  
+  try {
+    const chUrl = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&channelId=${channelId}&part=snippet&type=video&maxResults=50&order=date`;
+    const chRes = await fetch(chUrl);
+    const chData = await chRes.json();
+    channelVideos = (chData.items || []).map(item => ({
+      video_id: item.id.videoId,
+      title: item.snippet.title,
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`
+    }));
+    console.log(`[FilmDB] Видео на @afishiru: ${channelVideos.length}`);
+  } catch(e) {}
+  
+  for (const movie of allFilms) {
+    // Проверить @afishiru
+    const chTrailer = findTrailerOnChannel(movie, channelVideos);
+    let trailer = chTrailer ? { ...chTrailer, source: 'afishiru_channel' } : null;
+    
+    if (!trailer) {
+      trailer = await findRussianTrailer(movie);
+      await new Promise(r => setTimeout(r, 300));
+    }
+    
+    filmResults.push({
+      tmdb_id: movie.id,
+      title_ru: movie.title,
+      title_original: movie.original_title,
+      release_date: movie.release_date,
+      poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+      overview: movie.overview,
+      rating: movie.vote_average,
+      genre_ids: movie.genre_ids || [],
+      trailer: trailer
+    });
+  }
+  
+  return filmResults;
+}
+
 // ── MAIN ───────────────────────────────────────────────────────
 export default async function handler(req, res) {
   // Проверка что это Cron или авторизованный вызов
@@ -230,6 +302,10 @@ export default async function handler(req, res) {
     
     // Шаг 4: Сохранить результаты
     await saveTrailerData(results);
+    
+    // Также синхронизировать film-database
+    const filmDbResults = await syncFilmDatabaseTrailers();
+    await saveTrailerData({ trailers: results, films: filmDbResults, updated_at: new Date().toISOString() });
     
     const stats = {
       total: results.length,

@@ -604,5 +604,58 @@ function renderFilmDatabase() {
 document.addEventListener('DOMContentLoaded', renderFilmDatabase);
 </script>
 
+
+<script>
+// ── Загрузка трейлеров из API (trailer-sync cron) ────────────
+async function loadTrailersForFilmDB() {
+  try {
+    const r = await fetch('/api/trailers/get');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.films) return;
+    
+    // Обновить кнопки трейлеров в карточках фильмов
+    data.films.forEach(function(film) {
+      if (!film.trailer || !film.trailer.video_id) return;
+      const titleLower = (film.title_ru || '').toLowerCase();
+      document.querySelectorAll('.film-card, [data-film-id]').forEach(function(card) {
+        const cardTitle = (card.querySelector('h3,h2,.title')?.textContent || '').toLowerCase();
+        if (cardTitle.includes(titleLower.slice(0,10))) {
+          const existing = card.querySelector('.trailer-btn');
+          if (!existing) {
+            const btn = document.createElement('a');
+            btn.href = film.trailer.url;
+            btn.target = '_blank';
+            btn.rel = 'noopener';
+            btn.className = 'trailer-btn';
+            btn.innerHTML = '▶ Трейлер';
+            btn.style.cssText = 'display:inline-block;margin-top:8px;padding:5px 14px;background:#c8102e;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:700;';
+            card.appendChild(btn);
+          }
+          if (film.poster && !card.querySelector('img.poster')) {
+            const img = document.createElement('img');
+            img.src = film.poster;
+            img.className = 'poster';
+            img.style.cssText = 'width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:8px;';
+            img.onerror = function(){ this.remove(); };
+            card.insertBefore(img, card.firstChild);
+          }
+        }
+      });
+    });
+    
+    // Сохранить в localStorage для оффлайн доступа
+    try { localStorage.setItem('afishi_films_cache', JSON.stringify(data.films)); } catch(e) {}
+  } catch(e) {
+    // Фоллбэк из localStorage
+    try {
+      const cached = JSON.parse(localStorage.getItem('afishi_films_cache') || 'null');
+      if (cached) console.log('[FilmDB] Используем кэш:', cached.length, 'фильмов');
+    } catch(e2) {}
+  }
+}
+document.addEventListener('DOMContentLoaded', loadTrailersForFilmDB);
+</script>
+
 </body>
 </html>
