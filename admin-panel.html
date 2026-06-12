@@ -3920,7 +3920,49 @@ function previewMailing() {
     + 'h2{color:#c8102e;}</style></head><body>'
     + '<h2>' + subject + '</h2>'
     + '<p>' + body.replace(/\n/g, '<br>') + '</p>'
-    + '</body></html>';
+    + '
+<script>
+// ── Загрузка фото через Cloudflare Worker + ImgBB ───────────
+// Вместо base64 в localStorage — храним URL
+async function uploadPhotoToCloud(file) {
+  const WORKER = 'https://afishi-geo.strote34.workers.dev';
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = async function(e) {
+      const base64 = e.target.result.split(',')[1];
+      try {
+        const r = await fetch(WORKER + '/api/img/upload', {
+          method: 'POST',
+          body: (() => { const f = new FormData(); f.append('image', base64); f.append('name', file.name); return f; })()
+        });
+        const d = await r.json();
+        if (d.ok) resolve(d.url);
+        else reject(new Error(d.error));
+      } catch(e) { reject(e); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Сохранить событие в Cloudflare KV ───────────────────────
+async function saveEventToKV(event) {
+  const WORKER = 'https://afishi-geo.strote34.workers.dev';
+  const key = 'event_' + (event.id || Date.now());
+  try {
+    await fetch(WORKER + '/api/kv/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Cron-Secret': 'afishi2026secret' },
+      body: JSON.stringify({ key, value: event })
+    });
+    return key;
+  } catch(e) {
+    console.warn('KV save failed:', e.message);
+    return null;
+  }
+}
+</script>
+
+</body></html>';
   win.document.write(html);
   win.document.close();
 }
