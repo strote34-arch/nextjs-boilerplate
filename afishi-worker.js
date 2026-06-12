@@ -7,6 +7,8 @@
 // ╚══════════════════════════════════════════════════════════════╝
 
 const RESEND_API_KEY = 're_BFQdjrsV_NFAqbeo5XkX8cQpj1xBzScsG';
+const YA_GEO_KEY    = '8bb575b7-f32a-4aff-b82d-9e45ed28963c';
+
 const ADMIN_EMAIL    = 'strote34@gmail.com';
 const FROM_EMAIL     = 'afishi.ru <onboarding@resend.dev>';
 const SITE_URL       = 'https://afishiru-v14.vercel.app';
@@ -220,6 +222,33 @@ async function handleEmail(request) {
   }
 }
 
+
+async function handleGeocode(request) {
+  const url = new URL(request.url);
+  const address = url.searchParams.get('address') || '';
+  if (!address) return corsResponse({ error: 'address required' }, 400);
+  
+  const geoUrl = `https://geocode-maps.yandex.ru/1.x/?apikey=${YA_GEO_KEY}&geocode=${encodeURIComponent(address + ', Россия')}&format=json&results=1&lang=ru_RU`;
+  
+  try {
+    const r = await fetch(geoUrl);
+    const data = await r.json();
+    const member = data?.response?.GeoObjectCollection?.featureMember?.[0];
+    if (!member) return corsResponse({ error: 'not found' }, 404);
+    
+    const point = member.GeoObject?.Point?.pos;
+    const name  = member.GeoObject?.name;
+    const desc  = member.GeoObject?.description;
+    
+    if (!point) return corsResponse({ error: 'no coords' }, 404);
+    const [lng, lat] = point.split(' ').map(Number);
+    
+    return corsResponse({ lat, lng, name, description: desc, source: 'yandex' });
+  } catch(err) {
+    return corsResponse({ error: err.message }, 500);
+  }
+}
+
 // ── Главный обработчик ─────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -238,6 +267,10 @@ export default {
 
     if (path === '/api/geo/set' && method === 'POST') {
       return handleGeoSet(request);
+    }
+
+    if (path === '/api/geocode' && method === 'GET') {
+      return handleGeocode(request);
     }
 
     if (path === '/api/email' && method === 'POST') {

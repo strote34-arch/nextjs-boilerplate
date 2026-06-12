@@ -713,5 +713,34 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+
+<script>
+// ── Яндекс Геокодер — точные координаты площадок ─────────────
+const YA_GEOCODER = 'https://afishi-geo.strote34.workers.dev/api/geocode';
+
+async function geocodeAndUpdateMarker(id, address) {
+  try {
+    const r = await fetch(YA_GEOCODER + '?address=' + encodeURIComponent(address));
+    const d = await r.json();
+    if (d.lat && window._venueMarkers && window._venueMarkers[id]) {
+      window._venueMarkers[id].setLatLng([d.lat, d.lng]);
+      console.log('📍 Геокодировано:', address, '->', d.lat, d.lng);
+    }
+  } catch(e) {}
+}
+
+// Запустить геокодинг через 3 сек после загрузки карты
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var venues = document.querySelectorAll('[data-venue-addr][data-venue-id]');
+    venues.forEach(function(v, i) {
+      setTimeout(function() {
+        geocodeAndUpdateMarker(v.dataset.venueId, v.dataset.venueAddr);
+      }, i * 300);
+    });
+  }, 3000);
+});
+</script>
+
 </body>
 </html>
