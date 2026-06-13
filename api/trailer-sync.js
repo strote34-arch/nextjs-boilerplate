@@ -21,11 +21,11 @@ function verifyCron(req) {
 
 // ── 1. TMDB: фильмы сейчас в кино в России ────────────────────
 async function getMoviesInCinemas() {
-  const url = `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`;
+  const url = `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=ru-RU&page=1`;
   const res = await fetch(url);
   const data = await res.json();
   
-  const upcoming_url = `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`;
+  const upcoming_url = `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=ru-RU&page=1`;
   const upcoming_res = await fetch(upcoming_url);
   const upcoming_data = await upcoming_res.json();
   
@@ -166,9 +166,9 @@ async function saveTrailerData(results) {
 async function syncFilmDatabaseTrailers() {
   // Фильмы из TMDB — поиск, ныне идущие + предстоящие + популярные
   const urls = [
-    `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`,
-    `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`,
-    `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}&language=ru-RU&region=RU&page=1`,
+    `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=ru-RU&page=1`,
+    `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=ru-RU&page=1`,
+    `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}&language=ru-RU&page=1`,
     `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&language=ru-RU&page=1`,
   ];
   
