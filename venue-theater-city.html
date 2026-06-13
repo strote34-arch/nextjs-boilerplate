@@ -244,37 +244,26 @@ window.switchCity = function(city, btn) {
 })();
 </script>
 
+
+
 <script>
-// ── Активная навигация v2 (только текущая страница) ──────────
-(function() {
-  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
-  if (!fname || !fname.includes('.')) fname = 'index.html';
-  document.addEventListener('DOMContentLoaded', function() {
-    // Убрать все старые active классы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      a.classList.remove('active');
-      a.style.color = '';
-      a.style.fontWeight = '';
-    });
-    // Найти ссылку текущей страницы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
-      if (href === fname) {
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current','page');
-      }
-    });
-  });
+(function(){
+  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
+  if(!fn||!fn.includes('.'))fn='index.html';
+  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
+    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
+    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
+    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  });}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
 })();
 </script>
-
 </head>
 <body>
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" >Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -506,73 +495,6 @@ window.switchCity = function(city, btn) {
 <!-- share functions see below -->
 
 </footer>
-
-<script>
-const VENUES_DB = {
-  'Волгоград': [
-    {id:'vlg_net',   name:'НЭТ — Новый Экспериментальный Театр', type:'🎭 Драматический театр', emoji:'🎭', bg:'#0a001a', addr:'ул. Мира, 5, Волгоград',           venueUrl:'venue-net-volgograd.html'},
-    {id:'vlg_opera', name:'Царицынская опера',                   type:'🎶 Оперный театр',        emoji:'🎶', bg:'#1a000a', addr:'просп. Ленина, 97, Волгоград',      venueUrl:'venue-opera-volgograd.html'},
-    {id:'vlg_tuz',   name:'ТЮЗ — Театр юного зрителя',          type:'🎭 Театр для молодёжи',   emoji:'🎭', bg:'#0a1a0a', addr:'ул. Рабоче-Крестьянская, 16, Волгоград', venueUrl:'venue-tuz-volgograd.html'},
-    
-    
-      ]
-};
-
-const GEN = {'Москва':'Москвы','Санкт-Петербург':'Санкт-Петербурга','Екатеринбург':'Екатеринбурга','Казань':'Казани','Краснодар':'Краснодара','Волгоград':'Волгограда','Нижний Новгород':'Нижнего Новгорода'};
-
-let currentCity = 'Волгоград';
-
-function switchCity(city, btn) {
-  currentCity = city;
-  document.querySelectorAll('.city-pill').forEach(p => p.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderPage(city);
-  try { localStorage.setItem('afishi_city', city); } catch(e) {}
-}
-
-function renderPage(city) {
-  var gen = GEN[city] || city;
-  document.getElementById('heroCity').textContent = gen;
-  document.getElementById('footerCity').textContent = city;
-  document.title = 'Театральные площадки: ' + gen + ' — Афиши.ру';
-  
-  var venues = (VENUES_DB[city] || []);
-  var grid = document.getElementById('venuesGrid');
-  var info = document.getElementById('infoLine');
-  info.textContent = venues.length + ' площадок в ' + gen;
-  
-  if (!venues.length) {
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:#aaa;"><div style="font-size:48px;margin-bottom:12px;">🎭</div><div>В ' + gen + ' нет площадок этого типа</div></div>';
-    return;
-  }
-  
-  grid.innerHTML = '';
-  venues.forEach(function(v) {
-    var card = document.createElement('div');
-    card.className = 'venue-card';
-    card.innerHTML = '<div class="vc-img" style="background:' + (v.bg||'#1a0a2e') + '">' + (v.emoji||'🎭') + '</div>'
-      + '<div class="vc-body"><div class="vc-type">' + v.type + '</div>'
-      + '<div class="vc-name">' + v.name + '</div>'
-      + '<div class="vc-addr">📍 ' + (v.addr||'') + '</div>'
-      + (v.venueUrl ? '<a href="' + v.venueUrl + '" class="vc-btn">Подробнее →</a>' : '')
-      + '</div>';
-    if (v.venueUrl) card.onclick = function() { location.href = v.venueUrl; };
-    grid.appendChild(card);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  var saved = localStorage.getItem('afishi_city');
-  if (saved) {
-    currentCity = saved;
-    document.querySelectorAll('.city-pill').forEach(p => {
-      p.classList.toggle('active', (p.dataset.city || p.textContent.trim()) === saved);
-    });
-  }
-  renderPage(currentCity);
-});
-</script>
-
 <script>
 // ── Footer: площадки по городу ───────────────────────────────
 var FOOTER_VENUES = {

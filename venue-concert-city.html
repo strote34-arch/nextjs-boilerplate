@@ -624,6 +624,18 @@ footer{background:var(--dark);color:#666;font-size:12px;padding:20px 0;border-to
   }
 }
 </style>
+<script>
+(function(){
+  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
+  if(!fn||!fn.includes('.'))fn='index.html';
+  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
+    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
+    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
+    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  });}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
+})();
+</script>
 </head>
 
 <body>
@@ -674,7 +686,7 @@ footer{background:var(--dark);color:#666;font-size:12px;padding:20px 0;border-to
   <div id="restDropdownEvents" style="padding:0 8px;">
     <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
   </div>
-  <a href="venue-arena-volgograd.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
+  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
 </div></nav>
       <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
       <div class="search-box">

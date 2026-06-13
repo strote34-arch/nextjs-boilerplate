@@ -413,31 +413,20 @@ window.switchCity = function(city, btn) {
 })();
 </script>
 
+
+
 <script>
-// ── Активная навигация v2 (только текущая страница) ──────────
-(function() {
-  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
-  if (!fname || !fname.includes('.')) fname = 'index.html';
-  document.addEventListener('DOMContentLoaded', function() {
-    // Убрать все старые active классы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      a.classList.remove('active');
-      a.style.color = '';
-      a.style.fontWeight = '';
-    });
-    // Найти ссылку текущей страницы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
-      if (href === fname) {
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current','page');
-      }
-    });
-  });
+(function(){
+  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
+  if(!fn||!fn.includes('.'))fn='index.html';
+  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
+    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
+    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
+    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  });}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
 })();
 </script>
-
 </head>
 <body>
 
@@ -447,7 +436,7 @@ window.switchCity = function(city, btn) {
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" >Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -885,341 +874,88 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- share functions see below -->
 
 </footer>
-
-
-
 <script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
 
-// ══ Featured Announce — редактируемый анонс ══════════════════
-
-function featuredCardClick() {
-  var feat = null;
-  try { feat = JSON.parse(localStorage.getItem('afishi_featured') || 'null'); } catch(e) {}
-  if (feat && feat.id && typeof openModal === 'function') {
-    openModal(feat.id);
-  }
-}
-
-function initFeatured() {
-  // Показать кнопку редактирования только admin
-  var editBtn = document.getElementById('featuredEditBtn');
-  if (editBtn) {
-    try {
-      var u = JSON.parse(localStorage.getItem('afishi_user') || 'null');
-      if (u && (u.role === 'admin' || u.role === 'moderator')) {
-        editBtn.style.display = 'block';
-      }
-    } catch(e) {}
-  }
-  // Загрузить сохранённый анонс
-  renderFeatured();
-  renderHeroAside();
-}
-
-function renderFeatured() {
-  var feat = null;
-  try { feat = JSON.parse(localStorage.getItem('afishi_featured') || 'null'); } catch(e) {}
-  var card = document.getElementById('featuredCard');
-  if (!card) return;
-  if (!feat || !feat.title) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  var bg = document.getElementById('featuredBg');
-  if (bg && feat.photo) { bg.style.backgroundImage = 'url(' + feat.photo + ')'; bg.style.opacity = '.4'; }
-  var el = function(id) { return document.getElementById(id); };
-  if (el('featuredGenre'))  el('featuredGenre').textContent = feat.genre || '';
-  if (el('featuredTitle'))  el('featuredTitle').textContent = feat.title || '';
-  if (el('featuredMeta'))   el('featuredMeta').textContent  = feat.meta || '';
-  if (el('featuredBadge'))  el('featuredBadge').textContent = feat.badge || '🔥 Анонс редакции';
-}
-
-// ── Hero aside cards (2 маленьких анонса) ─────────────────
-function renderHeroAside() {
-  var container = document.getElementById('heroAsideContainer');
-  if (!container) return;
-  var cards = [];
-  var _cityHero = localStorage.getItem('afishi_city') || 'Волгоград';
-  var _allHeroIdx = {};
-  try { _allHeroIdx = JSON.parse(localStorage.getItem('afishi_hero_aside_cities') || '{}'); } catch(e) {}
-  cards = _allHeroIdx[_cityHero] || [];
-  // Фоллбэк
-  if (!cards.length) { try { cards = JSON.parse(localStorage.getItem('afishi_hero_aside') || '[]'); } catch(e) {} }
-  if (!cards.length) {
-    cards = [
-      {badge:'Театр',title:'«Мастер и Маргарита» — МХТ им. Чехова',
-       meta:'1 июля · 19:00 · от 1 200 ₽',bg:'linear-gradient(135deg,#0d1b2a,#1b4f72)',
-       icon:'🎭',link:'theater.html'},
-      {badge:'Выставка',title:'Айвазовский & Куинджи — Третьяковка',
-       meta:'до 20 августа · от 400 ₽',bg:'linear-gradient(135deg,#0b3d0b,#1e7a1e)',
-       icon:'🖼️',link:'exhibits.html'}
-    ];
-  }
-  container.innerHTML = cards.slice(0,2).map(function(c) {
-    var card = document.createElement('div');
-    card.className = 'hero-aside-card';
-    card.style.cssText = 'background:'+c.bg+';height:162px;cursor:'+(c.link?'pointer':'default')+';';
-    if (c.link) card.onclick = function(){ location.href = c.link; };
-    card.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.4;">'+c.icon+'</div>'
-      + '<div class="hero-aside-overlay">'
-      + '<div class="hero-badge" style="font-size:10px;">'+c.badge+'</div>'
-      + '<div class="hero-aside-title">'+c.title+'</div>'
-      + '<div style="font-size:11px;opacity:.75;margin-top:3px;">'+c.meta+'</div>'
-      + '</div>';
-    return card.outerHTML;
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
   }).join('');
 }
 
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
 
-function openFeaturedEditor() {
-  document.getElementById('featuredModal').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  // Предзаполнить поля
-  var feat = null;
-  try { feat = JSON.parse(localStorage.getItem('afishi_featured') || 'null'); } catch(e) {}
-  if (feat) {
-    var s = function(id, v) { var e=document.getElementById(id); if(e && v) e.value=v; };
-    s('feat_title', feat.title); s('feat_genre', feat.genre);
-    s('feat_meta', feat.meta); s('feat_photo', feat.photo);
-  }
-  // Загрузить список мероприятий
-  loadFeaturedList();
-}
-
-function closeFeaturedModal() {
-  document.getElementById('featuredModal').style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-function loadFeaturedList() {
-  var list = document.getElementById('featuredList');
-  if (!list) return;
-  // Собрать все мероприятия
-  var events = [];
-  if (typeof CONCERTS !== 'undefined') {
-    CONCERTS.forEach(function(c) {
-      if (c && c.title) events.push({
-        id: c.id, title: c.title, genre: c.genre, photo: c.photo,
-        meta: (c.date || c.dateShort||'') + (c.venues&&c.venues[0] ? ' · '+c.venues[0].name : ''),
-        type: 'concert'
-      });
-    });
-  }
-  // Из LS events
-  try {
-    var lsEv = JSON.parse(localStorage.getItem('afishi_pending_events')|| '[]');
-    lsEv.filter(function(e){return e&&e.status==='approved';}).forEach(function(e){
-      events.push({id:e.id,title:e.title,genre:e.cat || e.genre||'',photo:e.photo||'',meta:(e.dateStart||'')+(e.venue?' · '+e.venue:''),type:'event'});
-    });
-  } catch(ex) {}
-  
-  window._featuredEvents = events;
-  renderFeaturedList(events);
-}
-
-function renderFeaturedList(events) {
-  var list = document.getElementById('featuredList');
-  if (!list) return;
-  var feat = null;
-  try { feat = JSON.parse(localStorage.getItem('afishi_featured')||'null'); } catch(e) {}
-  var selectedId = feat && feat.id;
-  
-  list.innerHTML = '';
-  events.slice(0, 30).forEach(function(ev) {
-    var item = document.createElement('div');
-    item.className = 'feat-item' + (String(ev.id) === String(selectedId) ? ' selected' : '');
-    item.innerHTML =
-      '<img loading="lazy" class="feat-thumb" src="' + (ev.photo||'') + '">' +
-      '<div class="feat-info">' +
-        '<div class="feat-name">' + (ev.title||'') + '</div>' +
-        '<div class="feat-sub">' + (ev.genre||'') + (ev.meta ? ' · '+ev.meta : '') + '</div>' +
-      '</div>' +
-      '<button onclick="selectFeatured(' + JSON.stringify(ev).replace(/</g,'\u003c') + ')" style="background:#c8102e;color:#fff;border:none;border-radius:5px;padding:6px 12px;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;">Выбрать</button>';
-    list.appendChild(item);
-  });
-  if (!events.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;">Мероприятий не найдено</div>';
-  }
-}
-
-function filterFeaturedList() {
-  var q = ((document.getElementById('featuredSearch')|| {}).value||'').toLowerCase();
-  var events = (window._featuredEvents || []).filter(function(e){ return (e.title||'').toLowerCase().includes(q); });
-  renderFeaturedList(events);
-}
-
-function selectFeatured(ev) {
-  try { localStorage.setItem('afishi_featured', JSON.stringify(ev)); } catch(e) {}
-  renderFeatured();
-  closeFeaturedModal();
-  var t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border-radius:6px;z-index:9999;';
-  t.textContent = '✅ Анонс обновлён: ' + ev.title;
-  document.body.appendChild(t);
-  setTimeout(function(){t.remove();}, 3000);
-}
-
-function saveFeaturedManual() {
-  var g = function(id){ return (document.getElementById(id)|| {}).value||''; };
-  var feat = { title:g('feat_title'), genre:g('feat_genre'), meta:g('feat_meta'), photo:g('feat_photo'), id:null };
-  if (!feat.title) { alert('Введите заголовок'); return; }
-  try { localStorage.setItem('afishi_featured', JSON.stringify(feat)); } catch(e) {}
-  renderFeatured();
-  closeFeaturedModal();
-}
-
-function clearFeatured() {
-  if (!confirm('Убрать анонс с главной?')) return;
-  try { localStorage.removeItem('afishi_featured'); } catch(e) {}
-  var card = document.getElementById('featuredCard');
-  if (card) card.style.display = 'none';
-  closeFeaturedModal();
-}
-
-
-function toggleRestDropdown(e) {
-  e.preventDefault();
-  var dd = document.getElementById('restDropdown');
-  if (!dd) return;
-  var isOpen = dd.style.display !== 'none';
-  dd.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) {
-    renderRestDropdownEvents();
-    // Закрыть при клике вне
-    setTimeout(function() {
-      document.addEventListener('click', function closeDD(ev) {
-        if (!dd.contains(ev.target)) {
-          dd.style.display = 'none';
-          document.removeEventListener('click', closeDD);
-        }
-      });
-    }, 10);
-  }
-}
-
-function renderRestDropdownEvents() {
-  var el = document.getElementById('restDropdownEvents');
-  if (!el) return;
-  var allDB = window.CONCERTS_DB || [];
-  var restEvents = allDB.filter(function(ev) {
-    var v = (ev.venue || '').toLowerCase();
-    return v.indexOf('ресторан') >= 0 || v.indexOf('restvlg') >= 0;
-  });
-  if (!restEvents.length) {
-    el.innerHTML = '<div style="padding:12px;color:#aaa;font-size:12px;text-align:center">Нет мероприятий</div>';
-    return;
-  }
-  var html = '';
-  restEvents.slice(0,3).forEach(function(ev) {
-    var card = document.createElement('a');
-    card.href = 'concerts.html';
-    card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px;color:#333;font-size:12px;text-decoration:none;border-radius:4px;';
-    card.onmouseover = function(){ this.style.background='#f9f7f4'; };
-    card.onmouseout  = function(){ this.style.background=''; };
-    card.innerHTML = '<span style="font-size:16px;">'+(ev.icon||'🎵')+'</span>'
-      + '<div><div style="font-weight:700;">'+(ev.artist || ev.title||'')+'</div>'
-      + '<div style="color:#888;font-size:11px;">'+(ev.date||'')+' · '+(ev.venue||'')+'</div></div>';
-    el.appendChild(card);
-  });
-}
-
-
-// ── Концерты в ресторанах ─────────────────────────────────
-function renderRestaurantConcerts(city) {
-  var grid = document.getElementById('restConcertsGrid');
-  var section = document.getElementById('section-rest-concerts');
-  if (!grid || !section) return;
-  city = city || window.currentCity || 'Волгоград';
-  var today = new Date(); today.setHours(0,0,0,0);
-  var restDB = (window.CONCERTS_DB || []).filter(function(ev) {
-    var v = (ev.venue || '').toLowerCase();
-    var d = new Date(ev.dateISO || '');
-    return !isNaN(d) && d >= today
-      && (v.indexOf('ресторан') >= 0 || v.indexOf('restvlg') >= 0)
-      && (!ev.city || ev.city === city);
-  });
-  if (!restDB.length) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-  var title = document.getElementById('restConcertsTitle');
-  if (title) title.textContent = '🍷 Концерты в ресторанах · ' + city;
-  grid.innerHTML = '';
-  restDB.slice(0,4).forEach(function(ev) {
-    var card = document.createElement('div');
-    card.className = 'concert-card';
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', function(){ location.href = 'concerts.html'; });
-    var price = ev.price ? ('от ' + ((ev.price)||0).toLocaleString('ru') + ' ₽') : '';
-    card.innerHTML = '<div class="cc-img" style="background:' + ev.color
-      + ';background-image:url(' + ev.photo + ');background-size:cover;background-position:center;">'
-      + '<div class="cc-badge">' + (ev.genre||'') + '</div></div>'
-      + '<div class="cc-body">'
-      + '<div class="cc-title">' + (ev.title||'') + '</div>'
-      + '<div class="cc-meta">📅 ' + ev.date + ' · ' + ev.venue + '</div>'
-      + (price ? '<div class="cc-price">' + price + '</div>' : '')
-      + '</div>';
-    grid.appendChild(card);
-  });
-}
-
-
-// ── Share Panel ────────────────────────────────────────────
-var _sharePanelURL = '';
-var _sharePanelTitle = '';
-
-function openSharePanel(title, url) {
-  _sharePanelURL   = url || window.location.href;
-  _sharePanelTitle = title || document.title;
-  var el = document.getElementById('spTitle');
-  if (el) el.textContent = '📤 Поделиться: ' + (_sharePanelTitle.length > 30 ? _sharePanelTitle.slice(0,30) + '…' : _sharePanelTitle);
-  var ov = document.getElementById('sharePanelOverlay');
-  if (ov) { ov.style.display = 'flex'; ov.classList.add('open'); }
-  document.body.style.overflow = 'hidden';
-}
-
-function closeSharePanel() {
-  var ov = document.getElementById('sharePanelOverlay');
-  if (ov) { ov.style.display = 'none'; ov.classList.remove('open'); }
-  document.body.style.overflow = '';
-}
-
-function shareTo(platform) {
-  var url   = encodeURIComponent(_sharePanelURL);
-  var title = encodeURIComponent(_sharePanelTitle);
-  var links = {
-    vk:       'https://vk.com/share.php?url=' + url + '&title=' + title,
-    ok:       'https://connect.ok.ru/offer?url=' + url + '&title=' + title,
-    telegram: 'https://t.me/share/url?url=' + url + '&text=' + title,
-    whatsapp: 'https://api.whatsapp.com/send?text=' + title + '%20' + url,
-    dzen:     'https://dzen.ru/editor?url=' + url,
-    rutube:   'https://rutube.ru/share/?url=' + url,
-    yandex:   'https://yandex.ru/search/?text=' + title + '&source=share',
-    max:      'https://max.ru/share?url=' + url + '&text=' + title
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
   };
-  var href = links[platform];
-  if (href) {
-    window.open(href, '_blank', 'noopener,noreferrer,width=600,height=500');
-  }
-}
-
-function copyShareLink() {
-  var url = _sharePanelURL;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(function() {
-      var btn = document.querySelector('.sp-copy');
-      if (btn) { btn.textContent = '✅ Скопировано!'; setTimeout(function(){ btn.textContent = '📋 Скопировать ссылку'; }, 2000); }
-    }).catch(function(){});
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = url; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch(e){}
-    ta.remove();
-  }
-  closeSharePanel();
-}
-
-// Переопределить shareToFriend чтобы использовал панель
-window._showSharePanel = function(title, url) {
-  openSharePanel(title || document.title, url || window.location.href);
-};
-
+})();
 </script>
 </body>
 </html>

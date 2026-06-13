@@ -701,31 +701,20 @@ window.switchCity = function(city, btn) {
 })();
 </script>
 
+
+
 <script>
-// ── Активная навигация v2 (только текущая страница) ──────────
-(function() {
-  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
-  if (!fname || !fname.includes('.')) fname = 'index.html';
-  document.addEventListener('DOMContentLoaded', function() {
-    // Убрать все старые active классы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      a.classList.remove('active');
-      a.style.color = '';
-      a.style.fontWeight = '';
-    });
-    // Найти ссылку текущей страницы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
-      if (href === fname) {
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current','page');
-      }
-    });
-  });
+(function(){
+  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
+  if(!fn||!fn.includes('.'))fn='index.html';
+  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
+    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
+    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
+    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  });}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
 })();
 </script>
-
 </head>
 <body>
 
@@ -744,7 +733,7 @@ window.switchCity = function(city, btn) {
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" >Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -1203,216 +1192,6 @@ window.switchCity = function(city, btn) {
 <!-- share functions see below -->
 
 </footer>
-
-<script>
-function sv(){
-  var d={name:fn.value,cap:fc.value,phone:fp.value,addr:fa.value,desc:fd.value};
-  try{var s=JSON.parse(localStorage.getItem('afishi_venue_edits') || '{}');s['dom_oficer']=d;localStorage.setItem('afishi_venue_edits',JSON.stringify(s));}catch(e){}
-  document.getElementById('em').classList.remove('open');document.body.style.overflow='';
-  var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;padding:12px 28px;border-radius:6px;z-index:9999;';t.textContent='✅ Сохранено';document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
-}
-</script>
-
-<script>
-
-// ── Вкладки модала редактирования ──────────────────────────
-function switchETab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
-  if (btn) btn.classList.add('active');
-  var pane = document.getElementById('etab-' + name);
-  if (pane) pane.classList.add('active');
-}
-
-// ── Главное фото площадки ──────────────────────────────────
-function handleMainPhoto(input) {
-  if (!input.files | !input.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var dataUrl = e.target.result;
-    // Сохранить в localStorage
-    try {
-      var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-      photos['dom_oficer'] = photos['dom_oficer'] || {};
-      photos['dom_oficer'].main = dataUrl;
-      localStorage.setItem('afishi_venue_photos', JSON.stringify(photos));
-    } catch(ex) {}
-    // Обновить превью в модале
-    var prev = document.getElementById('main-photo-preview');
-    if (prev) {
-      prev.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:6px;">' +
-        '<div style="font-size:12px;color:#28a745;margin-top:6px;">✅ Фото загружено</div>';
-    }
-    // Обновить главное фото на странице
-    var heroImg = document.querySelector('.venue-hero-img, .hero-img, img.main-venue-photo');
-    if (heroImg) { heroImg.src = dataUrl; }
-    showVenueToast('✅ Главное фото обновлено!');
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function setMainPhotoUrl() {
-  var urlInput = document.getElementById('main-photo-url');
-  if (!urlInput | !urlInput.value.trim()) return;
-  var url = urlInput.value.trim();
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    photos['dom_oficer'] = photos['dom_oficer'] || {};
-    photos['dom_oficer'].main = url;
-    localStorage.setItem('afishi_venue_photos', JSON.stringify(photos));
-  } catch(ex) {}
-  var prev = document.getElementById('main-photo-preview');
-  if (prev) {
-    prev.innerHTML = '<img src="' + url + '" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:6px;"><br><span style="font-size:12px;color:green;">URL сохранён</span>';
-  }
-  var heroImg = document.querySelector('.venue-hero-img, .hero-img');
-  if (heroImg) { heroImg.src = url; }
-  showVenueToast('✅ Главное фото обновлено!');
-}
-
-// ── Галерея фотографий ──────────────────────────────────────
-function handleGalleryPhoto(input) {
-  if (!input.files | !input.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var dataUrl = e.target.result;
-    try {
-      var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-      photos['dom_oficer'] = photos['dom_oficer'] || {};
-      photos['dom_oficer'].gallery = photos['dom_oficer'].gallery || [];
-      photos['dom_oficer'].gallery.push(dataUrl);
-      localStorage.setItem('afishi_venue_photos', JSON.stringify(photos));
-    } catch(ex) {}
-    renderGalleryEdit();
-    showVenueToast('✅ Фото добавлено в галерею!');
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function addGalleryUrl() {
-  var urlInput = document.getElementById('gallery-url-input');
-  if (!urlInput | !urlInput.value.trim()) return;
-  var url = urlInput.value.trim();
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    photos['dom_oficer'] = photos['dom_oficer'] || {};
-    photos['dom_oficer'].gallery = photos['dom_oficer'].gallery || [];
-    photos['dom_oficer'].gallery.push(url);
-    localStorage.setItem('afishi_venue_photos', JSON.stringify(photos));
-  } catch(ex) {}
-  urlInput.value = '';
-  renderGalleryEdit();
-  showVenueToast('✅ Фото добавлено в галерею!');
-}
-
-function deleteGalleryPhoto(idx) {
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    if (photos['dom_oficer'] && photos['dom_oficer'].gallery) {
-      photos['dom_oficer'].gallery.splice(idx, 1);
-      localStorage.setItem('afishi_venue_photos', JSON.stringify(photos));
-    }
-  } catch(ex) {}
-  renderGalleryEdit();
-  renderMainGallery();
-}
-
-function renderGalleryEdit() {
-  var grid = document.getElementById('gallery-edit-grid');
-  if (!grid) return;
-  var gallery = [];
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    gallery = (photos['dom_oficer'] && photos['dom_oficer'].gallery) || [];
-  } catch(ex) {}
-
-  grid.innerHTML = '';
-  gallery.forEach(function(src, i) {
-    var item = document.createElement('div');
-    item.className = 'gal-edit-item';
-    item.innerHTML = '<img src="' + src + '" alt=""><button class="del-btn" onclick="deleteGalleryPhoto(' + i + ')">✕</button>'
-    grid.appendChild(item);
-  });
-
-  // Кнопка добавления
-  var addBtn = document.createElement('div');
-  addBtn.className = 'gal-add-btn';
-  addBtn.title = 'Добавить фото';
-  addBtn.innerHTML = '<span>+</span><input type="file" accept="image/*" onchange="handleGalleryPhoto(this)">';
-  grid.appendChild(addBtn);
-}
-
-function renderMainGallery() {
-  // Обновить публичную галерею на странице из localStorage
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    var gallery = (photos['dom_oficer'] && photos['dom_oficer'].gallery) || [];
-    var mainPhoto = (photos['dom_oficer'] && photos['dom_oficer'].main) || '';
-
-    // Обновить главное фото героя
-    if (mainPhoto) {
-      var heroImg = document.querySelector('.venue-hero-img');
-      if (heroImg) heroImg.src = mainPhoto;
-    }
-
-    // Обновить галерею — найти .gal контейнер
-    var galEl = document.querySelector('.gal');
-    if (!galEl | !gallery.length) return;
-    var galMain = galEl.querySelector('.gal-main');
-    var galItems = galEl.querySelectorAll('.gal-item');
-
-    // Обновить gal-main первым фото из галереи
-    if (galMain && gallery[0]) {
-      var mainImg = galMain.querySelector('img');
-      if (mainImg) mainImg.src = gallery[0];
-    }
-    // Остальные фото
-    galItems.forEach(function(item, i) {
-      var img = item.querySelector('img');
-      if (img && gallery[i+1]) img.src = gallery[i+1];
-    });
-  } catch(ex) {}
-}
-
-function showVenueToast(msg) {
-  var t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border-radius:6px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(function(){t.remove();}, 2500);
-}
-
-// Загрузить сохранённые фото при открытии страницы
-document.addEventListener('DOMContentLoaded', function() {
-  renderMainGallery();
-});
-
-// Инициализировать превью при открытии модала
-function openEditModal() {
-  document.getElementById('em').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  // Загрузить текущее главное фото
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    var mainSrc = (photos['dom_oficer'] && photos['dom_oficer'].main) || '';
-    var prev = document.getElementById('main-photo-preview');
-    if (prev) {
-      if (mainSrc) {
-        prev.innerHTML = '<img src="' + mainSrc + '" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:6px;">' +
-          '<div style="font-size:12px;color:#28a745;margin-top:6px;">✅ Текущее фото</div>';
-      } else {
-        prev.innerHTML = '<div class="puz-label"><span>🖼</span>Нет фото</div>';
-      }
-    }
-  } catch(ex) {}
-  // Инициализировать галерею
-  renderGalleryEdit();
-  // Активировать первую вкладку
-  switchETab('info', document.querySelector('.tab-btn.active') | document.querySelector('.tab-btn'));
-}
-
-</script>
-
 <script>
 // ── Footer: площадки по городу ───────────────────────────────
 var FOOTER_VENUES = {

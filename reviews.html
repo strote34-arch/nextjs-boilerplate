@@ -571,31 +571,21 @@ footer {
 })();
 </script>
 
+
+
+
 <script>
-// ── Активная навигация v2 (только текущая страница) ──────────
-(function() {
-  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
-  if (!fname || !fname.includes('.')) fname = 'index.html';
-  document.addEventListener('DOMContentLoaded', function() {
-    // Убрать все старые active классы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      a.classList.remove('active');
-      a.style.color = '';
-      a.style.fontWeight = '';
-    });
-    // Найти ссылку текущей страницы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
-      if (href === fname) {
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current','page');
-      }
-    });
-  });
+(function(){
+  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
+  if(!fn||!fn.includes('.'))fn='index.html';
+  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
+    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
+    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
+    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  });}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
 })();
 </script>
-
 </head>
 <body>
 
@@ -615,7 +605,7 @@ footer {
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" >Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -3792,7 +3782,6 @@ window._onGeoCity = function(city, source) {
 <!-- share functions see below -->
 
 </footer>
-
 <script>
 // ── Footer: площадки по городу ───────────────────────────────
 var FOOTER_VENUES = {

@@ -684,31 +684,20 @@ window.switchCity = function(city, btn) {
 })();
 </script>
 
+
+
 <script>
-// ── Активная навигация v2 (только текущая страница) ──────────
-(function() {
-  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
-  if (!fname || !fname.includes('.')) fname = 'index.html';
-  document.addEventListener('DOMContentLoaded', function() {
-    // Убрать все старые active классы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      a.classList.remove('active');
-      a.style.color = '';
-      a.style.fontWeight = '';
-    });
-    // Найти ссылку текущей страницы
-    document.querySelectorAll('header nav a, header a').forEach(function(a){
-      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
-      if (href === fname) {
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current','page');
-      }
-    });
-  });
+(function(){
+  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
+  if(!fn||!fn.includes('.'))fn='index.html';
+  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
+    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
+    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
+    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  });}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
 })();
 </script>
-
 </head>
 <body>
 
@@ -727,7 +716,7 @@ window.switchCity = function(city, btn) {
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" >Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -1096,109 +1085,6 @@ window.switchCity = function(city, btn) {
 <!-- share functions see below -->
 
 </footer>
-
-<script>
-function saveVenue(id){
-  var d={name:ef_name.value,cap:ef_cap.value,phone:ef_phone.value,addr:ef_addr.value,ticket:ef_ticket.value,desc:ef_desc.value};
-  try{var s=JSON.parse(localStorage.getItem('afishi_venue_edits') || '{}');s[id]=d;localStorage.setItem('afishi_venue_edits',JSON.stringify(s));}catch(e){}
-  document.getElementById('editM').classList.remove('open');document.body.style.overflow='';
-  var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;padding:12px 28px;border-radius:6px;z-index:9999;';t.textContent='✅ Сохранено';document.body.appendChild(t);setTimeout(function(){t.remove();},2500);
-}
-(function(){try{var d=(JSON.parse(localStorage.getItem('afishi_venue_edits') || '{}'))['krop'];if(!d)return;if(d.name)ef_name.value=d.name;if(d.cap)ef_cap.value=d.cap;if(d.phone)ef_phone.value=d.phone;if(d.addr)ef_addr.value=d.addr;if(d.ticket)ef_ticket.value=d.ticket;if(d.desc)ef_desc.value=d.desc;}catch(e){}}());
-</script>
-
-<script>
-
-function switchETab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
-  if (btn) btn.classList.add('active');
-  var pane = document.getElementById('etab-' + name);
-  if (pane) pane.classList.add('active');
-}
-function openEditModal() {
-  document.getElementById('editM').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  try {
-    var photos = JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    var mainSrc = (photos['krop_arena'] && photos['krop_arena'].main) || '';
-    var prev = document.getElementById('main-photo-preview');
-    if (prev) prev.innerHTML = mainSrc ?
-      '<img src="'+mainSrc+'" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:6px;"><div style="font-size:12px;color:#28a745;margin-top:6px;">✅ Текущее фото</div>' :
-      '<div style="color:#aaa;font-size:13px;padding:20px;">Нет фото</div>';
-  } catch(ex) {}
-  renderGalleryEdit();
-  switchETab('info', document.querySelector('.tab-btn'));
-}
-function handleMainPhoto(input) {
-  if (!input.files | !input.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var dataUrl = e.target.result;
-    try { var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}'); p['krop_arena']=p['krop_arena']|{}; p['krop_arena'].main=dataUrl; localStorage.setItem('afishi_venue_photos',JSON.stringify(p)); } catch(ex) {}
-    var prev=document.getElementById('main-photo-preview');
-    if(prev) prev.innerHTML='<img src="'+dataUrl+'" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:6px;"><div style="font-size:12px;color:#28a745;margin-top:6px;">✅ Фото загружено</div>';
-    var h=document.querySelector('.venue-hero-img');if(h)h.src=dataUrl;
-    showVenueToast('✅ Главное фото обновлено!');
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-function setMainPhotoUrl() {
-  var u=(document.getElementById('main-photo-url')|{}).value || ''; if(!u.trim())return;
-  try { var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}'); p['krop_arena']=p['krop_arena']|{}; p['krop_arena'].main=u; localStorage.setItem('afishi_venue_photos',JSON.stringify(p)); } catch(ex) {}
-  var prev=document.getElementById('main-photo-preview');
-  if(prev) prev.innerHTML='<img src="'+u+'" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:6px;"><div style="font-size:12px;color:#28a745;margin-top:6px;">✅ URL сохранён</div>';
-  var h=document.querySelector('.venue-hero-img');if(h)h.src=u;
-  showVenueToast('✅ Главное фото обновлено!');
-}
-function handleGalleryPhoto(input) {
-  if (!input.files|!input.files[0]) return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    try { var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}'); p['krop_arena']=p['krop_arena']|{}; p['krop_arena'].gallery=p['krop_arena'].gallery || []; p['krop_arena'].gallery.push(e.target.result); localStorage.setItem('afishi_venue_photos',JSON.stringify(p)); } catch(ex) {}
-    renderGalleryEdit(); showVenueToast('✅ Фото добавлено!');
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-function addGalleryUrl() {
-  var u=(document.getElementById('gallery-url-input')|{}).value || ''; if(!u.trim())return;
-  try { var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}'); p['krop_arena']=p['krop_arena']|{}; p['krop_arena'].gallery=p['krop_arena'].gallery || []; p['krop_arena'].gallery.push(u); localStorage.setItem('afishi_venue_photos',JSON.stringify(p)); } catch(ex) {}
-  document.getElementById('gallery-url-input').value='';
-  renderGalleryEdit(); showVenueToast('✅ URL добавлен в галерею!');
-}
-function deleteGalleryPhoto(i) {
-  try { var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}'); if(p['krop_arena']&&p['krop_arena'].gallery) p['krop_arena'].gallery.splice(i,1); localStorage.setItem('afishi_venue_photos',JSON.stringify(p)); } catch(ex) {}
-  renderGalleryEdit();
-}
-function renderGalleryEdit() {
-  var grid=document.getElementById('gallery-edit-grid'); if(!grid)return;
-  var gal=[];
-  try {var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');gal=(p['krop_arena']&&p['krop_arena'].gallery)|[];} catch(ex){}
-  grid.innerHTML='';
-  gal.forEach(function(src,i){
-    var d=document.createElement('div'); d.className='gal-edit-item';
-    d.innerHTML='<img src="'+src+'" alt=""><button class="del-btn" onclick="deleteGalleryPhoto('+i+')">✕</button>';
-    grid.appendChild(d);
-  });
-  var btn=document.createElement('div'); btn.className='gal-add-btn'; btn.title='Добавить фото';
-  btn.innerHTML='<span>+</span><input type="file" accept="image/*" onchange="handleGalleryPhoto(this)">';
-  grid.appendChild(btn);
-}
-function showVenueToast(msg) {
-  var t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border-radius:6px;z-index:9999;';
-  t.textContent=msg; document.body.appendChild(t); setTimeout(function(){t.remove();},2500);
-}
-document.addEventListener('DOMContentLoaded', function() {
-  try {
-    var p=JSON.parse(localStorage.getItem('afishi_venue_photos') || '{}');
-    var m=(p['krop_arena']&&p['krop_arena'].main)|'';
-    if(m){ var h=document.querySelector('.venue-hero-img');if(h)h.src=m; }
-  } catch(ex){}
-});
-
-</script>
-
 <script>
 // ── Footer: площадки по городу ───────────────────────────────
 var FOOTER_VENUES = {
@@ -1283,48 +1169,4 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 </body>
-</html<div class="mb">
-
-      <!-- Вкладки модала -->
-      <div class="tab-row" style="margin-top:8px;">
-        <button class="tab-btn active" onclick="switchETab('info',this)">📋 Информация</button>
-        <button class="tab-btn" onclick="switchETab('mainphoto',this)">🖼 Главное фото</button>
-        <button class="tab-btn" onclick="switchETab('gallery',this)">📸 Галерея</button>
-      </div>
-
-
-      <div id="etab-info" class="tab-pane active">
-        <div class="fg"><label>Название</label><input id="fn" value="Кроп Арена"></div>
-        <div class="fg2">
-          <div class="fg"><label>Вместимость</label><input id="fc" value="2000"></div>
-          <div class="fg"><label>Телефон</label><input id="fp" value=""></div>
-        </div>
-        <div class="fg"><label>Адрес</label><input id="fa" value="Университетский просп., 107"></div>
-        <div class="fg"><label>Сайт</label><input id="fs" placeholder="https://..."></div>
-        <div class="fg"><label>Описание</label><textarea id="fd" rows="3"></textarea></div>
-      </div>
-      <div id="etab-mainphoto" class="tab-pane">
-        <div style="font-size:12px;color:#666;margin-bottom:10px;line-height:1.6;">Главное фото шапки страницы площадки.</div>
-        <div id="main-photo-preview" style="margin-bottom:14px;min-height:60px;text-align:center;"><div style="color:#aaa;font-size:13px;">Нет фото</div></div>
-        <div class="photo-upload-zone" style="margin-bottom:12px;">
-          <div class="puz-label"><span>📁</span><strong>Загрузить файл</strong><span style="font-size:11px;">JPG, PNG, WEBP</span></div>
-          <input type="file" accept="image/*" onchange="handleMainPhoto(this)">
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="url" id="main-photo-url" class="photo-url-input" placeholder="Или URL фото...">
-          <button onclick="setMainPhotoUrl()" style="background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;white-space:nowrap;">Применить</button>
-        </div>
-      </div>
-      <div id="etab-gallery" class="tab-pane">
-        <div style="font-size:12px;color:#666;margin-bottom:10px;">Фото галереи площадки.</div>
-        <div class="gallery-edit-grid" id="gallery-edit-grid"></div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border,#e8e4de);">
-          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Добавить по URL</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="url" id="gallery-url-input" class="photo-url-input" placeholder="https://example.com/photo.jpg">
-            <button onclick="addGalleryUrl()" style="background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;white-space:nowrap;">+ Добавить</button>
-          </div>
-        </div>
-      </div>
-
-    >
+</html>
