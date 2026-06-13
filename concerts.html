@@ -7427,5 +7427,42 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+
+<script>
+// ── Функции поделиться ─────────────────────────────────────────
+function shareToVK()       { window.open('https://vk.com/share.php?url='+encodeURIComponent(location.href),'_blank'); }
+function shareToOK()       { window.open('https://connect.ok.ru/offer?url='+encodeURIComponent(location.href),'_blank'); }
+function shareToTelegram() { window.open('https://t.me/share/url?url='+encodeURIComponent(location.href)+'&text='+encodeURIComponent(document.title),'_blank'); }
+function shareToWhatsApp() { window.open('https://wa.me/?text='+encodeURIComponent(document.title+' '+location.href),'_blank'); }
+function shareToDzen()     { window.open('https://dzen.ru/','_blank'); }
+function shareToRutube()   { window.open('https://rutube.ru/','_blank'); }
+function shareToYandex()   { window.open('https://yandex.ru/news/','_blank'); }
+function shareToMAX()      { window.open('https://more.tv/','_blank'); }
+function copyPageLink(btn) {
+  navigator.clipboard.writeText(location.href).then(function(){
+    var span=btn.querySelector('span');
+    if(span){var old=span.textContent;span.textContent='Скопировано!';setTimeout(function(){span.textContent=old;},2000);}
+  }).catch(function(){});
+}
+function openSharePanel(title, url) {
+  var u = encodeURIComponent(url || location.href);
+  var t = encodeURIComponent(title || document.title);
+  var panel = document.createElement('div');
+  panel.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:9999;display:flex;gap:10px;flex-wrap:wrap;max-width:380px;';
+  var btns = [
+    ['VK','https://vk.com/share.php?url='+u+'&title='+t,'#4a76a8'],
+    ['Telegram','https://t.me/share/url?url='+u+'&text='+t,'#2ca5e0'],
+    ['WhatsApp','https://wa.me/?text='+t+'%20'+u,'#25d366'],
+    ['ОК','https://connect.ok.ru/offer?url='+u,'#ee8208'],
+  ];
+  panel.innerHTML = btns.map(function(b){
+    return '<a href="'+b[1]+'" target="_blank" style="padding:9px 16px;background:'+b[2]+';color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">'+b[0]+'</a>';
+  }).join('') + '<button onclick="this.parentNode.remove()" style="padding:9px 14px;background:#eee;border:none;border-radius:8px;cursor:pointer;font-size:16px;margin-left:auto;">✕</button>';
+  document.body.appendChild(panel);
+  setTimeout(function(){if(panel.parentNode)panel.remove();},7000);
+}
+function shareEvent(title, url) { openSharePanel(title, url); }
+</script>
+
 </body>
 </html>
