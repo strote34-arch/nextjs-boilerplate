@@ -1,70 +1,65 @@
-// /api/kudago.js — KudaGo API прокси (бесплатные события)
-// Документация: https://kudago.com/public-api/v1.4/
-
+// /api/kudago.js — Реальные события Волгограда из KudaGo
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=3600');
-  
-  const city   = req.query.city   || 'volgograd';
-  const cats   = req.query.cats   || 'concert,theater,exhibition,kids';
-  const page   = req.query.page   || 1;
-  const count  = Math.min(parseInt(req.query.count) || 20, 50);
-  const today  = Math.floor(Date.now() / 1000);
-  
-  const CITY_MAP = {
-    'Волгоград': 'volgograd', 'Москва': 'msk',
-    'Санкт-Петербург': 'spb', 'Екатеринбург': 'ekb',
-    'volgograd': 'volgograd', 'msk': 'msk', 'spb': 'spb'
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+
+  const city    = req.query.city    || 'volgograd';
+  const cat     = req.query.cat     || '';  // concerts, theaters, cinemas, exhibitions, kids
+  const pageSize = parseInt(req.query.page_size) || 20;
+  const page    = parseInt(req.query.page) || 1;
+
+  // Карта городов KudaGo
+  const cityMap = {
+    'Волгоград': 'volgograd', 'Москва': 'msk', 'Санкт-Петербург': 'spb',
+    'Екатеринбург': 'ekb', 'Казань': 'kzn', 'Краснодар': 'krd',
   };
-  const citySlug = CITY_MAP[city] || 'volgograd';
-  
-  const url = [
-    'https://kudago.com/public-api/v1.4/events/',
-    '?location=' + citySlug,
-    '&actual_since=' + today,
-    '&fields=id,title,description,short_title,dates,images,place,categories,price,age_restriction,tags',
-    '&expand=images,place',
-    '&categories=' + cats,
-    '&page_size=' + count,
-    '&page=' + page,
-    '&lang=ru',
-    '&order_by=dates',
-  ].join('');
-  
+  const slug = cityMap[city] || city;
+
+  // Параметры запроса
+  const today = Math.floor(Date.now() / 1000);
+  const weekLater = today + 30 * 24 * 3600; // 30 дней вперёд
+
+  const params = new URLSearchParams({
+    location: slug,
+    actual_since: today,
+    actual_until: weekLater,
+    page_size: pageSize,
+    page: page,
+    fields: 'id,title,description,place,dates,images,price,categories,age_restriction,is_free,site_url',
+    expand: 'images,place,dates',
+    order_by: 'publication_date',
+    lang: 'ru',
+  });
+  if (cat) params.set('categories', cat);
+
   try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('KudaGo: ' + r.status);
+    const r = await fetch(`https://kudago.com/public-api/v1.4/events/?${params}`);
+    if (!r.ok) throw new Error(`KudaGo: ${r.status}`);
     const data = await r.json();
-    
-    // Преобразовать в формат afishiru
-    const events = (data.results || []).map(ev => ({
-      id: 'kudago_' + ev.id,
-      title: ev.short_title || ev.title,
-      description: ev.description?.replace(/<[^>]+>/g, '').slice(0, 300) || '',
-      date:     ev.dates?.[0]?.start ? new Date(ev.dates[0].start * 1000).toLocaleDateString('ru-RU') : '',
-      dateISO:  ev.dates?.[0]?.start ? new Date(ev.dates[0].start * 1000).toISOString().slice(0,10) : '',
-      dateEnd:  ev.dates?.[0]?.end   ? new Date(ev.dates[0].end   * 1000).toISOString().slice(0,10) : '',
-      venue:    ev.place?.title   || '',
-      address:  ev.place?.address || '',
-      lat:      ev.place?.coords?.lat  || null,
-      lng:      ev.place?.coords?.lon  || null,
-      image:    ev.images?.[0]?.image || ev.images?.[0]?.thumbnails?.['640x384'] || '',
-      price:    ev.price || 'Уточняйте',
-      ageLimit: ev.age_restriction ? ev.age_restriction + '+' : '',
-      tags:     ev.tags || [],
-      categories: ev.categories || [],
-      url:      ev.site_url || ('https://kudago.com/' + citySlug + '/event/' + ev.id),
-      source:   'kudago'
+
+    const events = (data.results || []).map(e => ({
+      id:          e.id,
+      title:       e.title,
+      description: (e.description || '').replace(/<[^>]+>/g,'').slice(0,300),
+      category:    (e.categories || []).join(','),
+      place:       e.place ? {name: e.place.title, address: e.place.address} : null,
+      date_start:  e.dates?.[0]?.start || null,
+      date_end:    e.dates?.[0]?.end   || null,
+      image:       e.images?.[0]?.image || null,
+      price:       e.price || (e.is_free ? 'Бесплатно' : ''),
+      age:         e.age_restriction || 0,
+      url:         e.site_url || `https://kudago.com/${slug}/event/${e.id}/`,
     }));
-    
+
     return res.status(200).json({
-      count: data.count,
-      results: events,
-      next: data.next,
-      city: citySlug,
-      updated_at: new Date().toISOString()
+      ok: true,
+      city: slug,
+      count: events.length,
+      total: data.count || 0,
+      events,
+      fetched_at: new Date().toISOString(),
     });
-  } catch(e) {
-    return res.status(500).json({ error: e.message });
+  } catch(err) {
+    return res.status(200).json({ ok: false, error: err.message, events: [] });
   }
 }
