@@ -5,7 +5,7 @@
 // ║  Что делает:                                                 ║
 // ║  1. TMDB → фильмы в кинотеатрах РФ                         ║
 // ║  2. YouTube → проверить @afishiru канал                     ║
-// ║  3. Если нет → найти русский трейлер на YouTube              ║
+// ║  3. Если нет на @afishiru → оставить без трейлера            ║
 // ║  4. Сохранить результат → Workers KV                        ║
 // ╚══════════════════════════════════════════════════════════════╝
 
@@ -105,54 +105,8 @@ function findTrailerOnChannel(movie, channelVideos) {
 
 // ── 5. Найти русский трейлер на YouTube ───────────────────────
 async function findRussianTrailer(movie) {
-  // Сначала попробовать официальный TMDB трейлер
-  const tmdbVideosUrl = `https://api.themoviedb.org/3/movie/${movie.tmdb_id}/videos?api_key=${TMDB_KEY}&language=ru-RU`;
-  const tmdbRes = await fetch(tmdbVideosUrl);
-  const tmdbData = await tmdbRes.json();
-  
-  const ruTrailer = (tmdbData.results || []).find(v => 
-    v.site === 'YouTube' && 
-    (v.type === 'Trailer' || v.type === 'Teaser') &&
-    v.iso_639_1 === 'ru'
-  );
-  if (ruTrailer) {
-    return {
-      video_id: ruTrailer.key,
-      title: ruTrailer.name,
-      url: `https://www.youtube.com/watch?v=${ruTrailer.key}`,
-      source: 'tmdb_ru'
-    };
-  }
-  
-  // Любой трейлер из TMDB
-  const anyTrailer = (tmdbData.results || []).find(v => 
-    v.site === 'YouTube' && v.type === 'Trailer'
-  );
-  if (anyTrailer) {
-    return {
-      video_id: anyTrailer.key,
-      title: anyTrailer.name,
-      url: `https://www.youtube.com/watch?v=${anyTrailer.key}`,
-      source: 'tmdb_any'
-    };
-  }
-  
-  // YouTube поиск: "{название фильма} трейлер русский"
-  const query = encodeURIComponent(`${movie.title_ru} трейлер 2026`);
-  const ytSearchUrl = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&q=${query}&part=snippet&type=video&maxResults=3&relevanceLanguage=ru&videoCategoryId=1`;
-  const ytRes = await fetch(ytSearchUrl);
-  const ytData = await ytRes.json();
-  
-  if (ytData.items && ytData.items[0]) {
-    const item = ytData.items[0];
-    return {
-      video_id: item.id.videoId,
-      title: item.snippet.title,
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      source: 'youtube_search'
-    };
-  }
-  
+  // ОТКЛЮЧЕНО: трейлеры только с @afishiru канала
+  // YouTube поиск убран по требованию владельца
   return null;
 }
 
@@ -320,7 +274,7 @@ export default async function handler(req, res) {
       total: results.length,
       afishiru: results.filter(r => r.trailer?.source === 'afishiru_channel').length,
       tmdb: results.filter(r => r.trailer?.source?.startsWith('tmdb')).length,
-      youtube: results.filter(r => r.trailer?.source === 'youtube_search').length,
+      youtube: 0, // YouTube поиск отключён — только @afishiru
       no_trailer: results.filter(r => !r.trailer).length
     };
     
