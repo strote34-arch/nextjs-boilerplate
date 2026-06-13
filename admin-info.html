@@ -283,27 +283,26 @@ window.switchCity = function(city, btn) {
 </script>
 
 <script>
-// ── Активная навигация (красная подсветка текущей страницы) ──
+// ── Активная навигация v2 (только текущая страница) ──────────
 (function() {
-  var PAGE_NAMES = {"index.html": "Главная", "concerts.html": "Концерты", "theater.html": "Театр", "cinema.html": "Кино", "exhibits.html": "Выставки", "kids.html": "Детям", "map.html": "Карта", "search.html": "Поиск", "about.html": "О сайте", "loyalty.html": "АфишиПлюс", "profile.html": "Профиль", "reviews.html": "Рецензии", "articles.html": "Статьи", "jobs.html": "Вакансии", "advertise.html": "Реклама", "partners.html": "Партнёры", "film-database.html": "База фильмов", "event-add.html": "Добавить"};
-  var fname = location.pathname.split('/').pop() || 'index.html';
-  if (!fname.includes('.')) fname = 'index.html';
-  var pageName = PAGE_NAMES[fname];
-  if (!pageName) return;
+  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
+  if (!fname || !fname.includes('.')) fname = 'index.html';
   document.addEventListener('DOMContentLoaded', function() {
-    // Найти все nav ссылки
-    var links = document.querySelectorAll('header nav a, .nav-link, .header-nav a, .mobile-nav a');
-    links.forEach(function(a) {
-      var href = (a.getAttribute('href') || '').split('/').pop().split('?')[0];
-      if (href === fname || a.textContent.trim() === pageName) {
+    // Убрать все старые active классы
+    document.querySelectorAll('header nav a, header a').forEach(function(a){
+      a.classList.remove('active');
+      a.style.color = '';
+      a.style.fontWeight = '';
+    });
+    // Найти ссылку текущей страницы
+    document.querySelectorAll('header nav a, header a').forEach(function(a){
+      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
+      if (href === fname) {
         a.style.color = '#c8102e';
         a.style.fontWeight = '900';
-        a.setAttribute('aria-current', 'page');
+        a.setAttribute('aria-current','page');
       }
     });
-    // Также обновить title в шапке если есть breadcrumb
-    var bc = document.getElementById('pageBreadcrumb');
-    if (bc) bc.textContent = pageName;
   });
 })();
 </script>
@@ -314,7 +313,7 @@ window.switchCity = function(city, btn) {
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">

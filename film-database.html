@@ -3,171 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>База фильмов — Афиши.ру</title>
-<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>База фильмов — Афиша Волгограда</title>
+<link rel="icon" href="favicon.ico">
 <style>
-:root{--red:#c8102e;--dark:#1a1a1a;--bg:#f4f2ee;--border:#e0e0e0;--gold:#c9a84c;}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
-.hero{background:linear-gradient(135deg,#1a1a1a,#0a0a2d);padding:36px 20px;text-align:center;color:#fff;}
-.hero h1{font-family:'Oswald',sans-serif;font-size:clamp(24px,5vw,42px);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
-.hero p{color:rgba(255,255,255,.6);font-size:14px;}
-.controls{max-width:1200px;margin:20px auto;padding:0 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
-.search-input{flex:1;min-width:200px;padding:10px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;outline:none;}
-.search-input:focus{border-color:var(--red);}
-.genre-select{padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;cursor:pointer;}
-.films-grid{max-width:1200px;margin:0 auto 40px;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;}
-.film-card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border);transition:box-shadow .2s,transform .2s;cursor:pointer;}
-.film-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(-3px);}
-.film-poster{height:200px;background:linear-gradient(135deg,#1a1a2d,#2d1a0a);display:flex;align-items:center;justify-content:center;font-size:60px;position:relative;}
-.film-rating{position:absolute;top:10px;right:10px;background:var(--gold);color:#1a1a1a;font-weight:700;font-size:13px;padding:3px 8px;border-radius:6px;}
-.film-body{padding:16px;}
-.film-title{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;line-height:1.2;}
-.film-meta{font-size:12px;color:#888;margin-bottom:8px;}
-.film-genre{display:inline-block;background:#f0f0f0;color:#444;font-size:11px;padding:3px 8px;border-radius:10px;margin-bottom:10px;}
-.film-desc{font-size:13px;color:#666;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.film-btns{display:flex;gap:8px;flex-wrap:wrap;}
-.btn-trailer{padding:7px 14px;background:var(--red);color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;}
-.btn-cinema{padding:7px 14px;background:#f4f2ee;color:#444;border:1px solid var(--border);border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;}
-.no-results{grid-column:1/-1;text-align:center;padding:60px 20px;color:#888;font-size:16px;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f4;color:#1a1a1a}
+.films-hero{background:linear-gradient(135deg,#1a1a1a,#2d2d2d);color:#fff;padding:48px 16px;text-align:center}
+.films-hero h1{font-size:32px;font-family:Oswald,sans-serif;margin-bottom:8px}
+.films-hero p{color:rgba(255,255,255,.7);font-size:15px}
+.films-controls{background:#fff;padding:16px;border-bottom:1px solid #e0e0e0;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:10}
+.films-controls input{flex:1;min-width:200px;padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px}
+.films-controls select{padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff}
+.films-grid{max-width:1400px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
+.film-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s,box-shadow .2s;cursor:pointer}
+.film-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.film-poster{width:100%;aspect-ratio:2/3;background:linear-gradient(135deg,#1a1a1a,#333);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+.film-poster img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
+.film-age{position:absolute;top:8px;right:8px;background:#c8102e;color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px}
+.film-info{padding:12px}
+.film-title{font-weight:700;font-size:14px;margin-bottom:4px;line-height:1.3}
+.film-meta{font-size:12px;color:#888;margin-bottom:8px}
+.film-rating{display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.film-rating .star{color:#f0a500}
+.film-rating span{font-weight:700;font-size:13px}
+.film-actions{display:flex;gap:6px}
+.btn-trailer{flex:1;padding:6px 10px;background:#c8102e;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center}
+.btn-info{padding:6px 10px;background:#f4f4f4;color:#333;border:none;border-radius:6px;font-size:12px;cursor:pointer}
+.films-count{text-align:center;padding:8px;color:#888;font-size:13px}
+.genre-tag{display:inline-block;background:#f0f0f0;color:#555;font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:6px}
 </style>
-
-<script>
-// ── Активная навигация (красная подсветка текущей страницы) ──
-(function() {
-  var PAGE_NAMES = {"index.html": "Главная", "concerts.html": "Концерты", "theater.html": "Театр", "cinema.html": "Кино", "exhibits.html": "Выставки", "kids.html": "Детям", "map.html": "Карта", "search.html": "Поиск", "about.html": "О сайте", "loyalty.html": "АфишиПлюс", "profile.html": "Профиль", "reviews.html": "Рецензии", "articles.html": "Статьи", "jobs.html": "Вакансии", "advertise.html": "Реклама", "partners.html": "Партнёры", "film-database.html": "База фильмов", "event-add.html": "Добавить"};
-  var fname = location.pathname.split('/').pop() || 'index.html';
-  if (!fname.includes('.')) fname = 'index.html';
-  var pageName = PAGE_NAMES[fname];
-  if (!pageName) return;
-  document.addEventListener('DOMContentLoaded', function() {
-    // Найти все nav ссылки
-    var links = document.querySelectorAll('header nav a, .nav-link, .header-nav a, .mobile-nav a');
-    links.forEach(function(a) {
-      var href = (a.getAttribute('href') || '').split('/').pop().split('?')[0];
-      if (href === fname || a.textContent.trim() === pageName) {
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current', 'page');
-      }
-    });
-    // Также обновить title в шапке если есть breadcrumb
-    var bc = document.getElementById('pageBreadcrumb');
-    if (bc) bc.textContent = pageName;
-  });
-})();
-</script>
-
-
-<script>
-// ── Инициализация города и рендеринга при загрузке ───────────
-(function() {
-  var city = 'Волгоград';
-  try { city = localStorage.getItem('afishi_city') || 'Волгоград'; } catch(e) {}
-  window.currentCity = city;
-  
-  // Обновить cityLabel в шапке
-  function updateCityLabels(c) {
-    ['cityLabel','cityTopLabel','cityHint'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && el.textContent.trim() === 'Москва') el.textContent = c;
-    });
-  }
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    updateCityLabels(city);
-    // Вызвать рендер если функции доступны
-    if (typeof renderCityPills === 'function') renderCityPills();
-    if (typeof renderTheaters === 'function') renderTheaters(city);
-    if (typeof renderVenues === 'function') renderVenues();
-    if (typeof renderExhibits === 'function') renderExhibits(city);
-    if (typeof renderFilms === 'function') renderFilms(city);
-    if (typeof renderPage === 'function') renderPage(city);
-    if (typeof initPage === 'function') initPage(city);
-  });
-  
-  // Переопределить switchCity
-  var origSw = window.switchCity;
-  window.switchCity = function(city2, btn) {
-    window.currentCity = city2;
-    try { localStorage.setItem('afishi_city', city2); } catch(e) {}
-    updateCityLabels(city2);
-    if (origSw) origSw(city2, btn);
-    if (typeof renderCityPills === 'function') renderCityPills();
-    if (typeof renderTheaters === 'function') renderTheaters(city2);
-    if (typeof renderVenues === 'function') renderVenues();
-    if (typeof renderExhibits === 'function') renderExhibits(city2);
-    if (typeof renderFilms === 'function') renderFilms(city2);
-    if (typeof renderPage === 'function') renderPage(city2);
-  };
-})();
-</script>
-
-</head>
-<body>
-<script>
-// switchCity global stub — available immediately for onclick handlers
-window.switchCity = function(city, btn) {
-  // Update pills immediately (visual feedback)
-  document.querySelectorAll('.city-pill').forEach(function(p) {
-    p.classList.remove('active');
-  });
-  if (btn) btn.classList.add('active');
-  // Update city label immediately
-  var lbl = document.getElementById('cityLabel');
-  if (lbl) lbl.textContent = city;
-  var hint = document.getElementById('cityHint');
-  if (hint) {
-    var gen = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Казань':'Казани','Новосибирск':'Новосибирске','Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде','Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми','Красноярск':'Красноярске','Воронеж':'Воронеже','Самара':'Самаре','Омск':'Омске','Тюмень':'Тюмени','Иркутск':'Иркутске','Владивосток':'Владивостоке'};
-    hint.textContent = gen[city] || city;
-  }
-  // Delegate to GeoCity when ready, or queue
-  if (window.GeoCity && window.GeoCity.setCity) {
-    window.GeoCity.setCity(city, 'manual');
-  } else {
-    window._pendingCity = city;
-  }
-  // Also update currentCity if defined on the page
-  if (typeof currentCity !== 'undefined') window.currentCity = city;
-  if (typeof applyFilters === 'function') setTimeout(applyFilters, 0);
-  // Save to localStorage immediately
-  try { localStorage.setItem('afishi_city', city); } catch(e) {}
-  // Перерисовать страницу
-  setTimeout(function() {
-    if (typeof renderPage === 'function') {
-      renderPage(city);
-    } else if (typeof window._onGeoCity === 'function') {
-      window._onGeoCity(city);
-    }
-  }, 0);
-};
-
-// ── Яндекс.Метрика: трекинг клика на билет ──
-function trackTicketClick(url, title) {
-  try { ym(2234293, 'reachGoal', 'ticket_click', {url: url, title: title}); } catch(e) {}
-  try { if(window.gtag) gtag('event', 'ticket_click', {event_category: 'tickets', event_label: title}); } catch(e) {}
-}
-
-
-// ── Инициализация города из localStorage ───────────────────────
-(function() {
-  var savedCity = null;
-  try { savedCity = localStorage.getItem('afishi_city'); } catch(e) {}
-  if (savedCity) {
-    // Обновить все cityLabel элементы
-    document.addEventListener('DOMContentLoaded', function() {
-      var lbl = document.getElementById('cityLabel');
-      if (lbl && lbl.textContent.trim() === 'Москва') lbl.textContent = savedCity;
-      var topLbl = document.getElementById('cityTopLabel');
-      if (topLbl && topLbl.textContent.trim() === 'Москва') topLbl.textContent = savedCity;
-    });
-  }
-})();
-</script>
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -186,161 +54,26 @@ function trackTicketClick(url, title) {
       </div>
     </div>
   </header>
-<section class="hero">
+<div class="films-hero">
   <h1>🎬 База фильмов</h1>
-  <p>Фильмы в прокате и предстоящие релизы</p>
-</section>
-
-<div class="controls">
-  <input class="search-input" id="filmSearch" type="search" placeholder="🔍 Поиск по названию, жанру, режиссёру..." oninput="filterFilms()">
-  <select class="genre-select" id="genreFilter" onchange="filterFilms()">
-    <option value="">Все жанры</option>
-    <option>Боевик/Экшн</option>
-    <option>Драма</option>
-    <option>Мелодрама/Спорт</option>
-    <option>Фантастика</option>
-    <option>Мультфильм</option>
-    <option>Биография/Драма</option>
-    <option>Семейный</option>
-    <option>Приключения/Фантастика</option>
-    <option>Драма/Фэнтези</option>
-  </select>
+  <p>Трейлеры, описания и история кино в Волгограде</p>
 </div>
-
+<div class="films-controls">
+  <input type="text" id="filmSearch" placeholder="🔍 Поиск фильма..." oninput="filterFilms()">
+  <select id="genreFilter" onchange="filterFilms()">
+    <option value="">Все жанры</option>
+    <option>Боевик</option><option>Комедия</option><option>Драма</option>
+    <option>Фантастика</option><option>Ужасы</option><option>Мультфильм</option>
+    <option>Триллер</option><option>Мелодрама</option><option>Приключения</option>
+  </select>
+  <select id="yearFilter" onchange="filterFilms()">
+    <option value="">Все годы</option>
+    <option>2026</option><option>2025</option><option>2024</option>
+    <option>2023</option><option>2022</option><option>2021</option>
+  </select>
+  <div class="films-count" id="filmsCount"></div>
+</div>
 <div class="films-grid" id="filmsGrid"></div>
-
-<script>
-var FILMS = [{"id": "f1", "title": "Майор Гром: Игра", "genre": "Боевик/Экшн", "year": 2025, "country": "Россия", "director": "Олег Трофим", "rating": 7.8, "poster": "", "desc": "Культовый супергерой снова в деле.", "trailer": "", "cinema": "киномакс"}, {"id": "f2", "title": "Мастер и Маргарита", "genre": "Драма/Фэнтези", "year": 2024, "country": "Россия", "director": "Михаил Локшин", "rating": 7.5, "poster": "", "desc": "Экранизация романа Булгакова.", "trailer": "", "cinema": "синема парк"}, {"id": "f3", "title": "Чебурашка", "genre": "Семейный", "year": 2023, "country": "Россия", "director": "Дмитрий Дьяченко", "rating": 7.2, "poster": "", "desc": "Любимый персонаж возвращается.", "trailer": "", "cinema": "все"}, {"id": "f4", "title": "Дюна: Часть вторая", "genre": "Фантастика", "year": 2024, "country": "США", "director": "Дени Вильнёв", "rating": 8.5, "poster": "", "desc": "Продолжение эпической саги.", "trailer": "https://www.youtube.com/watch?v=Way9Dexny3w", "cinema": "синема парк"}, {"id": "f5", "title": "Оппенгеймер", "genre": "Биография/Драма", "year": 2023, "country": "США", "director": "Кристофер Нолан", "rating": 8.9, "poster": "", "desc": "История создателя ядерной бомбы.", "trailer": "https://www.youtube.com/watch?v=uYPbbksJxIg", "cinema": "все"}, {"id": "f6", "title": "Кунг-фу Панда 4", "genre": "Мультфильм", "year": 2024, "country": "США", "director": "Майк Митчелл", "rating": 6.5, "poster": "", "desc": "По Снежный Леопард в новых приключениях.", "trailer": "", "cinema": "все"}, {"id": "f7", "title": "Лёд 3", "genre": "Мелодрама/Спорт", "year": 2024, "country": "Россия", "director": "Михаил Локшин", "rating": 6.8, "poster": "", "desc": "Третья часть ледовой саги.", "trailer": "", "cinema": "все"}, {"id": "f8", "title": "Сто лет тому вперёд", "genre": "Приключения/Фантастика", "year": 2024, "country": "Россия", "director": "Александр Андрющенко", "rating": 7.0, "poster": "", "desc": "Путешествие во времени.", "trailer": "", "cinema": "все"}];
-
-function getEmoji(genre) {
-  var map = {'Боевик':'🎯','Экшн':'💥','Драма':'🎭','Фантастика':'🚀',
-             'Мультфильм':'🎨','Семейный':'👨‍👩‍👧','Биография':'📖','Мелодрама':'❤️','Приключения':'🌍'};
-  for (var k in map) { if (genre.includes(k)) return map[k]; }
-  return '🎬';
-}
-
-function filterFilms() {
-  var q = (document.getElementById('filmSearch').value || '').toLowerCase();
-  var genre = document.getElementById('genreFilter').value;
-  var filtered = FILMS.filter(function(f) {
-    var matchQ = !q || f.title.toLowerCase().includes(q) || 
-                 (f.genre||'').toLowerCase().includes(q) ||
-                 (f.director||'').toLowerCase().includes(q);
-    var matchG = !genre || f.genre === genre;
-    return matchQ && matchG;
-  });
-  renderFilms(filtered);
-}
-
-function renderFilms(films) {
-  var grid = document.getElementById('filmsGrid');
-  if (!films.length) {
-    grid.innerHTML = '<div class="no-results">Фильмы не найдены</div>';
-    return;
-  }
-  grid.innerHTML = films.map(function(f) {
-    var emoji = getEmoji(f.genre||'');
-    var trailerBtn = f.trailer ? '<a class="btn-trailer" href="'+f.trailer+'" target="_blank" rel="noopener">▶ Трейлер</a>' : '<span style="font-size:12px;color:#ccc">Трейлер скоро</span>';
-    return '<div class="film-card">' +
-      '<div class="film-poster">'+emoji+'<span class="film-rating">⭐ '+f.rating+'</span></div>' +
-      '<div class="film-body">' +
-        '<div class="film-title">'+f.title+'</div>' +
-        '<div class="film-meta">'+f.year+' · '+f.country+' · реж. '+f.director+'</div>' +
-        '<span class="film-genre">'+f.genre+'</span>' +
-        '<div class="film-desc">'+f.desc+'</div>' +
-        '<div class="film-btns">'+trailerBtn+'<a class="btn-cinema" href="cinema.html">🎟 В кино</a></div>' +
-      '</div></div>';
-  }).join('');
-}
-
-document.addEventListener('DOMContentLoaded', function() { renderFilms(FILMS); });
-</script>
-
-
-<script>
-// ── Footer: площадки по городу ───────────────────────────────
-var FOOTER_VENUES = {
-  'Волгоград': [
-    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
-    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
-    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
-    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
-    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
-    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
-    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
-  ],
-  'Москва': [
-    {name:'Олимпийский',       href:'concerts.html'},
-    {name:'Лужники',           href:'concerts.html'},
-    {name:'Крокус Сити Холл',  href:'concerts.html'},
-    {name:'Большой театр',     href:'theater.html'},
-    {name:'МХТ им. Чехова',    href:'theater.html'},
-    {name:'Мультиплекс',       href:'cinema.html'}
-  ],
-  'Санкт-Петербург': [
-    {name:'СКК Петербургский', href:'concerts.html'},
-    {name:'Ледовый дворец',    href:'concerts.html'},
-    {name:'Мариинский театр',  href:'theater.html'},
-    {name:'БДТ им. Товстоногова', href:'theater.html'},
-    {name:'Эрмитаж',           href:'exhibits.html'}
-  ],
-  'Екатеринбург': [
-    {name:'Уральский рок-клуб', href:'concerts.html'},
-    {name:'Екатеринбург Арена', href:'concerts.html'},
-    {name:'Коляда-театр',       href:'theater.html'},
-    {name:'Театр оперы и балета', href:'theater.html'}
-  ],
-  'Казань': [
-    {name:'Казань Арена',       href:'concerts.html'},
-    {name:'УНИКС',              href:'concerts.html'},
-    {name:'Татарский театр им. Камала', href:'theater.html'},
-    {name:'Театр им. Качалова', href:'theater.html'}
-  ],
-  'Новосибирск': [
-    {name:'Новосибирск Арена',  href:'concerts.html'},
-    {name:'ДКЖ',               href:'concerts.html'},
-    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
-    {name:'Красный факел',      href:'theater.html'}
-  ],
-  'Краснодар': [
-    {name:'Краснодар Арена',    href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
-  ],
-  'Ростов-на-Дону': [
-    {name:'ДонБасс Арена',      href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
-  ]
-};
-
-function updateFooterVenues(city) {
-  var el = document.getElementById('footerVenuesList');
-  if (!el) return;
-  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
-  el.innerHTML = venues.map(function(v){
-    return '<a href="' + v.href + '">' + v.name + '</a>';
-  }).join('');
-}
-
-// Запустить при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  var city = (typeof currentCity !== 'undefined' && currentCity)
-    ? currentCity
-    : (localStorage.getItem('afishi_city') || 'Волгоград');
-  updateFooterVenues(city);
-});
-
-// Перехватить смену города
-(function() {
-  var orig = window._onGeoCity;
-  window._onGeoCity = function(city) {
-    if (orig) orig(city);
-    updateFooterVenues(city);
-  };
-})();
-</script>
-
 <footer>
   <!-- CTA полоса -->
   <div class="footer-top">
@@ -528,151 +261,173 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- share functions see below -->
 
 </footer>
-
 <script>
-// ── База фильмов с рендерингом ────────────────────────────────
-var FILMS_DATA = [
-  {id:'f1', title:'Мастер и Маргарита', genre:'Фантастика/Драма', year:2024,
-   director:'Михаил Локшин', rating:7.6, ageLimit:'18+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=JqQo5FfXPEg',
-   desc:'Экранизация романа Булгакова с Августом Дилем в роли Воланда.'},
-  {id:'f2', title:'Дюна: Часть вторая', genre:'Научная фантастика', year:2024,
-   director:'Дени Вильнёв', rating:8.5, ageLimit:'12+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=Way9Dexny3w',
-   desc:'Продолжение эпической саги о планете Арракис.'},
-  {id:'f3', title:'Чебурашка', genre:'Семейный', year:2023,
-   director:'Дмитрий Дьяченко', rating:7.2, ageLimit:'0+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=sriRPidh7lE',
-   desc:'Самый кассовый российский фильм.'},
-  {id:'f4', title:'Сто лет тому вперёд', genre:'Приключения/Фантастика', year:2024,
-   director:'Александр Андрющенко', rating:6.8, ageLimit:'6+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=CJ3nOiX_kSI',
-   desc:'Экранизация повести Кира Булычёва об Алисе Селезнёвой.'},
-  {id:'f5', title:'Оппенгеймер', genre:'Биографический/Драма', year:2023,
-   director:'Кристофер Нолан', rating:8.9, ageLimit:'18+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=CIjdvJmIBW8',
-   desc:'История создателя атомной бомбы.'},
-  {id:'f6', title:'Барби', genre:'Комедия/Фэнтези', year:2023,
-   director:'Грета Гервиг', rating:7.4, ageLimit:'12+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=pBk4NYhWNMM',
-   desc:'Барби отправляется в реальный мир.'},
-,
-  {id:'f7', title:'Вызов', genre:'Драма/Приключения', year:2023,
-   director:'Клим Шипенко', rating:6.5, ageLimit:'6+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=pBk4NYhWNMM',
-   desc:'Первый художественный фильм, снятый в открытом космосе.'},
-  {id:'f8', title:'Кот Баюн', genre:'Семейный/Фэнтези', year:2024,
-   director:'Кирилл Белевич', rating:6.2, ageLimit:'6+',
-   poster:'', trailer:'',
-   desc:'Сказочная история о добром коте-волшебнике.'},
-  {id:'f9', title:'Гладиатор II', genre:'Боевик/Драма', year:2024,
-   director:'Ридли Скотт', rating:7.5, ageLimit:'18+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=N7aOl6FLr8Q',
-   desc:'Продолжение культового фильма о Риме.'},
-  {id:'f10', title:'Моана 2', genre:'Мультфильм/Музыкальный', year:2024,
-   director:'Дэйв Дерик мл.', rating:7.0, ageLimit:'0+',
-   poster:'', trailer:'https://www.youtube.com/watch?v=H7m-9WBsDCM',
-   desc:'Продолжение анимационного хита Disney.'},
-];
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
 
-var currentGenre = 'all';
-var searchQuery = '';
-
-function renderFilmDatabase() {
-  var films = FILMS_DATA;
-  if (currentGenre !== 'all') films = films.filter(function(f) { return f.genre.toLowerCase().includes(currentGenre); });
-  if (searchQuery) films = films.filter(function(f) {
-    var q = searchQuery.toLowerCase();
-    return f.title.toLowerCase().includes(q) || f.director.toLowerCase().includes(q) || f.genre.toLowerCase().includes(q);
-  });
-  var container = document.getElementById('filmsGrid') ||
-    document.querySelector('.films-grid,.film-list,.films-container');
-  if (!container) {
-    var main = document.querySelector('main,.main-content,.page-content') || document.body;
-    container = document.createElement('div');
-    container.id = 'filmsGrid';
-    container.style.cssText = 'max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;';
-    main.appendChild(container);
-  }
-  if (!films.length) {
-    container.innerHTML = '<div style="padding:48px;text-align:center;color:#888;grid-column:1/-1">Фильмы не найдены</div>';
-    return;
-  }
-  container.innerHTML = films.map(function(f) {
-    var stars = Math.round(f.rating / 2);
-    return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);">' +
-      '<div style="background:linear-gradient(135deg,#1a1a1a,#2d2d2d);height:160px;display:flex;align-items:center;justify-content:center;font-size:48px;">🎬</div>' +
-      '<div style="padding:14px;">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">' +
-          '<div style="font-weight:700;font-size:15px;flex:1;">' + f.title + '</div>' +
-          '<div style="background:#c8102e;color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:8px;white-space:nowrap;">' + f.ageLimit + '</div>' +
-        '</div>' +
-        '<div style="font-size:12px;color:#888;margin-bottom:6px;">' + f.genre + ' · ' + f.year + ' · ' + f.director + '</div>' +
-        '<div style="font-size:13px;color:#444;margin-bottom:10px;line-height:1.4;">' + f.desc + '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;">' +
-          '<span style="color:#f0a500;font-size:13px;">★</span>' +
-          '<span style="font-weight:700;font-size:14px;">' + f.rating + '</span>' +
-          (f.trailer ? '<a href="' + f.trailer + '" target="_blank" style="margin-left:auto;padding:5px 12px;background:#c8102e;color:#fff;border-radius:5px;text-decoration:none;font-size:12px;font-weight:700;">▶ Трейлер</a>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div>';
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
   }).join('');
 }
-document.addEventListener('DOMContentLoaded', renderFilmDatabase);
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
 </script>
-
-
 <script>
-// ── Загрузка трейлеров из API (trailer-sync cron) ────────────
-async function loadTrailersForFilmDB() {
-  try {
-    const r = await fetch('/api/trailers/get');
-    if (!r.ok) return;
-    const data = await r.json();
-    if (!data.films) return;
-    
-    // Обновить кнопки трейлеров в карточках фильмов
-    data.films.forEach(function(film) {
-      if (!film.trailer || !film.trailer.video_id) return;
-      const titleLower = (film.title_ru || '').toLowerCase();
-      document.querySelectorAll('.film-card, [data-film-id]').forEach(function(card) {
-        const cardTitle = (card.querySelector('h3,h2,.title')?.textContent || '').toLowerCase();
-        if (cardTitle.includes(titleLower.slice(0,10))) {
-          const existing = card.querySelector('.trailer-btn');
-          if (!existing) {
-            const btn = document.createElement('a');
-            btn.href = film.trailer.url;
-            btn.target = '_blank';
-            btn.rel = 'noopener';
-            btn.className = 'trailer-btn';
-            btn.innerHTML = '▶ Трейлер';
-            btn.style.cssText = 'display:inline-block;margin-top:8px;padding:5px 14px;background:#c8102e;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:700;';
-            card.appendChild(btn);
-          }
-          if (film.poster && !card.querySelector('img.poster')) {
-            const img = document.createElement('img');
-            img.src = film.poster;
-            img.className = 'poster';
-            img.style.cssText = 'width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:8px;';
-            img.onerror = function(){ this.remove(); };
-            card.insertBefore(img, card.firstChild);
-          }
-        }
-      });
-    });
-    
-    // Сохранить в localStorage для оффлайн доступа
-    try { localStorage.setItem('afishi_films_cache', JSON.stringify(data.films)); } catch(e) {}
-  } catch(e) {
-    // Фоллбэк из localStorage
-    try {
-      const cached = JSON.parse(localStorage.getItem('afishi_films_cache') || 'null');
-      if (cached) console.log('[FilmDB] Используем кэш:', cached.length, 'фильмов');
-    } catch(e2) {}
-  }
-}
-document.addEventListener('DOMContentLoaded', loadTrailersForFilmDB);
-</script>
+var FILMS = [
+  {id:1,title:"Мастер и Маргарита",year:2024,genre:"Фантастика/Драма",rating:7.6,age:"18+",director:"Михаил Локшин",poster:"",trailer:"https://www.youtube.com/watch?v=JqQo5FfXPEg",desc:"Экранизация романа Булгакова с Августом Дилем в роли Воланда"},
+  {id:2,title:"Дюна: Часть вторая",year:2024,genre:"Фантастика",rating:8.5,age:"12+",director:"Дени Вильнёв",poster:"",trailer:"https://www.youtube.com/watch?v=Way9Dexny3w",desc:"Продолжение эпической саги о планете Арракис"},
+  {id:3,title:"Чебурашка",year:2023,genre:"Семейный",rating:7.2,age:"0+",director:"Дмитрий Дьяченко",poster:"",trailer:"https://www.youtube.com/watch?v=sriRPidh7lE",desc:"Самый кассовый российский фильм"},
+  {id:4,title:"Сто лет тому вперёд",year:2024,genre:"Приключения",rating:6.8,age:"6+",director:"Александр Андрющенко",poster:"",trailer:"https://www.youtube.com/watch?v=CJ3nOiX_kSI",desc:"Экранизация повести Кира Булычёва об Алисе Селезнёвой"},
+  {id:5,title:"Оппенгеймер",year:2023,genre:"Драма",rating:8.9,age:"18+",director:"Кристофер Нолан",poster:"",trailer:"https://www.youtube.com/watch?v=CIjdvJmIBW8",desc:"История создателя атомной бомбы"},
+  {id:6,title:"Барби",year:2023,genre:"Комедия",rating:7.4,age:"12+",director:"Грета Гервиг",poster:"",trailer:"https://www.youtube.com/watch?v=pBk4NYhWNMM",desc:"Барби отправляется в реальный мир"},
+  {id:7,title:"Гладиатор II",year:2024,genre:"Боевик",rating:7.5,age:"18+",director:"Ридли Скотт",poster:"",trailer:"https://www.youtube.com/watch?v=N7aOl6FLr8Q",desc:"Продолжение культового фильма о Риме"},
+  {id:8,title:"Моана 2",year:2024,genre:"Мультфильм",rating:7.0,age:"0+",director:"Дэйв Дерик мл.",poster:"",trailer:"https://www.youtube.com/watch?v=H7m-9WBsDCM",desc:"Продолжение анимационного хита Disney"},
+  {id:9,title:"Вызов",year:2023,genre:"Драма",rating:6.5,age:"6+",director:"Клим Шипенко",poster:"",trailer:"",desc:"Первый художественный фильм снятый в открытом космосе"},
+  {id:10,title:"Кот Баюн",year:2024,genre:"Семейный",rating:6.2,age:"6+",director:"Кирилл Белевич",poster:"",trailer:"",desc:"Сказочная история о добром коте-волшебнике"},
+  {id:11,title:"Интерстеллар",year:2014,genre:"Фантастика",rating:8.6,age:"12+",director:"Кристофер Нолан",poster:"",trailer:"https://www.youtube.com/watch?v=zSWdZVtXT7E",desc:"Путешествие сквозь пространство и время для спасения человечества"},
+  {id:12,title:"Начало",year:2010,genre:"Триллер",rating:8.8,age:"12+",director:"Кристофер Нолан",poster:"",trailer:"https://www.youtube.com/watch?v=YoHD9XEInc0",desc:"Вор проникает в сны людей чтобы похитить секреты"},
+  {id:13,title:"Аватар 2: Путь воды",year:2022,genre:"Фантастика",rating:7.8,age:"12+",director:"Джеймс Кэмерон",poster:"",trailer:"https://www.youtube.com/watch?v=d9MyW72ELq0",desc:"Семья Салли скрывается среди народа Меткайина"},
+  {id:14,title:"Человек-паук: Нет пути домой",year:2021,genre:"Боевик",rating:8.2,age:"12+",director:"Джон Уоттс",poster:"",trailer:"https://www.youtube.com/watch?v=JfVOs4VSpmA",desc:"Питер Паркер открывает мультивселенную злодеев"},
+  {id:15,title:"Форрест Гамп",year:1994,genre:"Драма",rating:8.9,age:"12+",director:"Роберт Земекис",poster:"",trailer:"https://www.youtube.com/watch?v=bLvqoHBptjg",desc:"История необычного человека в ключевых моментах истории США"},
+  {id:16,title:"Бойцовский клуб",year:1999,genre:"Триллер",rating:8.7,age:"18+",director:"Дэвид Финчер",poster:"",trailer:"https://www.youtube.com/watch?v=qtRKdVHc-cE",desc:"Офисный клерк создаёт подпольный бойцовский клуб"},
+  {id:17,title:"Зелёная книга",year:2018,genre:"Драма",rating:8.2,age:"12+",director:"Питер Фаррелли",poster:"",trailer:"https://www.youtube.com/watch?v=QkZxoko_HC0",desc:"История дружбы музыканта и его телохранителя"},
+  {id:18,title:"1+1",year:2011,genre:"Мелодрама",rating:8.8,age:"12+",director:"Оливье Накаш",poster:"",trailer:"https://www.youtube.com/watch?v=YPL4CiYFPSQ",desc:"Богатый аристократ и выходец из трущоб становятся друзьями"},
+  {id:19,title:"Матрица",year:1999,genre:"Фантастика",rating:8.6,age:"16+",director:"Вачовски",poster:"",trailer:"https://www.youtube.com/watch?v=vKQi3bBA1y8",desc:"Программист узнаёт правду о реальном мире"},
+  {id:20,title:"Холодное сердце",year:2013,genre:"Мультфильм",rating:7.5,age:"0+",director:"Крис Бак",poster:"",trailer:"https://www.youtube.com/watch?v=TbQm5doF_Uc",desc:"Принцесса Эльза случайно покрывает королевство льдом"},
+];
 
-</body>
+// Загрузить трейлеры с @afishiru через API
+async function loadAfishaTrailers() {
+  try {
+    var r = await fetch('/api/trailers/get');
+    if (!r.ok) return;
+    var d = await r.json();
+    if (!d.trailers || !d.trailers.length) return;
+    d.trailers.forEach(function(t) {
+      var film = FILMS.find(function(f){
+        return f.title.toLowerCase().includes((t.title_ru||'').toLowerCase().slice(0,8)) ||
+               (t.title_ru||'').toLowerCase().includes(f.title.toLowerCase().slice(0,8));
+      });
+      if (film && !film.trailer && t.trailer && t.trailer.url) {
+        film.trailer = t.trailer.url;
+        film.poster = film.poster || (t.poster||'');
+      }
+    });
+    renderFilms(FILMS);
+  } catch(e) {}
+}
+
+function renderFilms(films) {
+  var grid = document.getElementById('filmsGrid');
+  var cnt = document.getElementById('filmsCount');
+  cnt.textContent = 'Найдено: ' + films.length + ' фильмов';
+  if (!films.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#888">Фильмы не найдены</div>';
+    return;
+  }
+  grid.innerHTML = films.map(function(f){
+    var trailerBtn = f.trailer
+      ? '<a class="btn-trailer" href="'+f.trailer+'" target="_blank">▶ Трейлер</a>'
+      : '<span class="btn-info" style="flex:1;text-align:center;color:#aaa">Трейлер скоро</span>';
+    var poster = f.poster
+      ? '<img src="'+f.poster+'" alt="'+f.title+'" onerror="this.remove()">'
+      : '<span style="font-size:36px">🎬</span>';
+    return '<div class="film-card"><div class="film-poster">'+poster+'<span class="film-age">'+f.age+'</span></div>'
+      +'<div class="film-info"><div class="genre-tag">'+f.genre+'</div>'
+      +'<div class="film-title">'+f.title+'</div>'
+      +'<div class="film-meta">'+f.year+' · '+f.director+'</div>'
+      +'<div class="film-rating"><span class="star">★</span><span>'+f.rating+'</span></div>'
+      +'<div class="film-actions">'+trailerBtn+'</div></div></div>';
+  }).join('');
+}
+
+function filterFilms() {
+  var q = (document.getElementById('filmSearch').value||'').toLowerCase();
+  var genre = document.getElementById('genreFilter').value;
+  var year = document.getElementById('yearFilter').value;
+  var res = FILMS.filter(function(f){
+    return (!q || f.title.toLowerCase().includes(q) || f.director.toLowerCase().includes(q))
+        && (!genre || f.genre.includes(genre))
+        && (!year || String(f.year)===year);
+  });
+  renderFilms(res);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  renderFilms(FILMS);
+  loadAfishaTrailers();
+});
+</script>
 </html>

@@ -271,27 +271,26 @@ window.switchCity = function(city, btn) {
 </script>
 
 <script>
-// ── Активная навигация (красная подсветка текущей страницы) ──
+// ── Активная навигация v2 (только текущая страница) ──────────
 (function() {
-  var PAGE_NAMES = {"index.html": "Главная", "concerts.html": "Концерты", "theater.html": "Театр", "cinema.html": "Кино", "exhibits.html": "Выставки", "kids.html": "Детям", "map.html": "Карта", "search.html": "Поиск", "about.html": "О сайте", "loyalty.html": "АфишиПлюс", "profile.html": "Профиль", "reviews.html": "Рецензии", "articles.html": "Статьи", "jobs.html": "Вакансии", "advertise.html": "Реклама", "partners.html": "Партнёры", "film-database.html": "База фильмов", "event-add.html": "Добавить"};
-  var fname = location.pathname.split('/').pop() || 'index.html';
-  if (!fname.includes('.')) fname = 'index.html';
-  var pageName = PAGE_NAMES[fname];
-  if (!pageName) return;
+  var fname = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
+  if (!fname || !fname.includes('.')) fname = 'index.html';
   document.addEventListener('DOMContentLoaded', function() {
-    // Найти все nav ссылки
-    var links = document.querySelectorAll('header nav a, .nav-link, .header-nav a, .mobile-nav a');
-    links.forEach(function(a) {
-      var href = (a.getAttribute('href') || '').split('/').pop().split('?')[0];
-      if (href === fname || a.textContent.trim() === pageName) {
+    // Убрать все старые active классы
+    document.querySelectorAll('header nav a, header a').forEach(function(a){
+      a.classList.remove('active');
+      a.style.color = '';
+      a.style.fontWeight = '';
+    });
+    // Найти ссылку текущей страницы
+    document.querySelectorAll('header nav a, header a').forEach(function(a){
+      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0];
+      if (href === fname) {
         a.style.color = '#c8102e';
         a.style.fontWeight = '900';
-        a.setAttribute('aria-current', 'page');
+        a.setAttribute('aria-current','page');
       }
     });
-    // Также обновить title в шапке если есть breadcrumb
-    var bc = document.getElementById('pageBreadcrumb');
-    if (bc) bc.textContent = pageName;
   });
 })();
 </script>
@@ -302,7 +301,7 @@ window.switchCity = function(city, btn) {
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html" class="active">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
 <div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
   <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
   <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
@@ -642,5 +641,88 @@ window.switchCity = function(city, btn) {
 <!-- share functions see below -->
 
 </footer>
+<script>
+// ── Footer: площадки по городу ───────────────────────────────
+var FOOTER_VENUES = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
+    {name:'Стадион Волгоград Арена',       href:'venue-arena.html'},
+    {name:'Дом Офицеров',                  href:'venue-dom-ofitserov-volgograd.html'},
+    {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
+    {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
+  ],
+  'Москва': [
+    {name:'Олимпийский',       href:'concerts.html'},
+    {name:'Лужники',           href:'concerts.html'},
+    {name:'Крокус Сити Холл',  href:'concerts.html'},
+    {name:'Большой театр',     href:'theater.html'},
+    {name:'МХТ им. Чехова',    href:'theater.html'},
+    {name:'Мультиплекс',       href:'cinema.html'}
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК Петербургский', href:'concerts.html'},
+    {name:'Ледовый дворец',    href:'concerts.html'},
+    {name:'Мариинский театр',  href:'theater.html'},
+    {name:'БДТ им. Товстоногова', href:'theater.html'},
+    {name:'Эрмитаж',           href:'exhibits.html'}
+  ],
+  'Екатеринбург': [
+    {name:'Уральский рок-клуб', href:'concerts.html'},
+    {name:'Екатеринбург Арена', href:'concerts.html'},
+    {name:'Коляда-театр',       href:'theater.html'},
+    {name:'Театр оперы и балета', href:'theater.html'}
+  ],
+  'Казань': [
+    {name:'Казань Арена',       href:'concerts.html'},
+    {name:'УНИКС',              href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'},
+    {name:'Театр им. Качалова', href:'theater.html'}
+  ],
+  'Новосибирск': [
+    {name:'Новосибирск Арена',  href:'concerts.html'},
+    {name:'ДКЖ',               href:'concerts.html'},
+    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
+    {name:'Красный факел',      href:'theater.html'}
+  ],
+  'Краснодар': [
+    {name:'Краснодар Арена',    href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ],
+  'Ростов-на-Дону': [
+    {name:'ДонБасс Арена',      href:'concerts.html'},
+    {name:'Театр драмы',        href:'theater.html'},
+    {name:'Музыкальный театр',  href:'theater.html'}
+  ]
+};
+
+function updateFooterVenues(city) {
+  var el = document.getElementById('footerVenuesList');
+  if (!el) return;
+  var venues = FOOTER_VENUES[city] || FOOTER_VENUES['Волгоград'];
+  el.innerHTML = venues.map(function(v){
+    return '<a href="' + v.href + '">' + v.name + '</a>';
+  }).join('');
+}
+
+// Запустить при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  var city = (typeof currentCity !== 'undefined' && currentCity)
+    ? currentCity
+    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  updateFooterVenues(city);
+});
+
+// Перехватить смену города
+(function() {
+  var orig = window._onGeoCity;
+  window._onGeoCity = function(city) {
+    if (orig) orig(city);
+    updateFooterVenues(city);
+  };
+})();
+</script>
 </body>
 </html>
