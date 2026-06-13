@@ -21,9 +21,20 @@ function verifyCron(req) {
 
 // ── 1. TMDB: фильмы сейчас в кино в России ────────────────────
 async function getMoviesInCinemas() {
+  if (!TMDB_KEY || TMDB_KEY.length < 10) {
+    console.error('[TMDB] TMDB_API_KEY не установлен или слишком короткий:', TMDB_KEY ? TMDB_KEY.slice(0,5) + '...' : 'undefined');
+    return [];
+  }
   const url = `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=ru-RU&page=1`;
+  console.log('[TMDB] Запрос:', url.replace(TMDB_KEY, TMDB_KEY.slice(0,8)+'...'));
   const res = await fetch(url);
+  console.log('[TMDB] Статус ответа:', res.status, res.statusText);
   const data = await res.json();
+  if (!res.ok) {
+    console.error('[TMDB] Ошибка API:', JSON.stringify(data).slice(0,200));
+    return [];
+  }
+  console.log('[TMDB] Результаты now_playing:', (data.results||[]).length, '| total_results:', data.total_results);
   
   const upcoming_url = `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=ru-RU&page=1`;
   const upcoming_res = await fetch(upcoming_url);
