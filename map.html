@@ -702,5 +702,27 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+
+<script>
+// ── 2ГИС кнопки для всех маркеров ────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    document.querySelectorAll('.leaflet-popup-content').forEach(function(popup) {
+      if (!popup.querySelector('.twogis-btn')) {
+        var name = popup.querySelector('h3,h4,strong');
+        if (name) {
+          var btn = document.createElement('a');
+          btn.href = 'https://2gis.ru/volgograd/search/' + encodeURIComponent(name.textContent.trim());
+          btn.target = '_blank';
+          btn.className = 'twogis-btn';
+          btn.style.cssText = 'display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 12px;background:#00A859;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;';
+          btn.innerHTML = '📍 Открыть в 2ГИС';
+          popup.appendChild(btn);
+        }
+      }
+    });
+  }, 2000);
+});
+</script>
 </body>
 </html>

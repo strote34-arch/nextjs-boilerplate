@@ -1372,5 +1372,71 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+
+<script>
+// ── Данные выставок по городам ───────────────────────────────
+var EXHIBITS_DB = {
+  'Волгоград': [
+    {id:'mashkov',name:'Музей ИЗО им. Машкова',addr:'пр. Ленина, 21',
+     phone:'+7(8442)38-24-44',url:'exhibit-muzey-izo-volgograd.html',icon:'🖼️',
+     desc:'Волгоградский музей изобразительных искусств. Русское и зарубежное искусство XIV–XX вв.',
+     events:[{title:'Постоянная экспозиция',date:'Ежедневно',price:'от 150 ₽'},
+             {title:'Современное искусство',date:'до 30 июн',price:'200 ₽'}]},
+    {id:'kraeved',name:'Краеведческий музей',addr:'пр. Ленина, 31',
+     phone:'+7(8442)38-00-96',url:'#',icon:'🏛️',
+     desc:'История Волгоградской области от древности до наших дней.',
+     events:[{title:'История Сталинградской битвы',date:'Постоянно',price:'от 200 ₽'}]},
+    {id:'panorama',name:'Панорама «Сталинградская битва»',addr:'ул. Маршала Чуйкова, 47',
+     phone:'+7(8442)71-08-48',url:'#',icon:'⚔️',
+     desc:'Главный музей города-героя. Диорама разгрома немецко-фашистских войск.',
+     events:[{title:'Панорама Сталинградской битвы',date:'Постоянно',price:'от 250 ₽'}]},
+  ],
+  'Москва': [
+    {id:'tretyakov',name:'Третьяковская галерея',addr:'Лаврушинский пер., 10',
+     phone:'+7(495)957-07-27',url:'#',icon:'🖼️',
+     desc:'Главный музей русского изобразительного искусства.',
+     events:[{title:'Постоянная экспозиция',date:'Ежедневно',price:'от 500 ₽'}]},
+    {id:'pushkin',name:'ГМИИ им. Пушкина',addr:'ул. Волхонка, 12',
+     phone:'+7(495)697-95-78',url:'#',icon:'🏛️',
+     desc:'Крупнейший музей западноевропейского искусства в России.',
+     events:[{title:'Импрессионисты',date:'до 15 июл',price:'от 400 ₽'}]},
+  ]
+};
+
+function renderExhibits(city) {
+  var list = EXHIBITS_DB[city] || EXHIBITS_DB['Волгоград'];
+  var grid = document.getElementById('exhibitsGrid') ||
+             document.querySelector('.exhibits-grid,.exhibits-list');
+  if (!grid) {
+    grid = document.createElement('div');
+    grid.id = 'exhibitsGrid';
+    grid.style.cssText = 'max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;';
+    var hero = document.querySelector('.hero,.page-hero,main');
+    if (hero && hero.nextSibling) hero.parentNode.insertBefore(grid, hero.nextSibling);
+    else document.body.appendChild(grid);
+  }
+  grid.innerHTML = list.map(function(ex){
+    var evs = (ex.events||[]).map(function(ev){
+      return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
+        +'<span>'+ev.title+'</span><span style="color:#c8102e;font-weight:700;">'+ev.date+'</span></div>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);">'
+      +'<div style="background:linear-gradient(135deg,#1a1a1a,#333);padding:20px;color:#fff;">'
+      +'<div style="font-size:28px;margin-bottom:6px;">'+ex.icon+'</div>'
+      +'<div style="font-size:17px;font-weight:700;font-family:Oswald,sans-serif;">'+ex.name+'</div>'
+      +'<div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;">📍 '+ex.addr+'</div></div>'
+      +'<div style="padding:16px;">'
+      +'<p style="font-size:14px;color:#555;line-height:1.5;margin:0 0 12px;">'+ex.desc+'</p>'
+      +(evs?'<div>'+evs+'</div>':'')
+      +'<a href="'+ex.url+'" style="display:inline-block;margin-top:12px;padding:7px 16px;background:#c8102e;color:#fff;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;">Афиша →</a>'
+      +'</div></div>';
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var city=window.currentCity||localStorage.getItem('afishi_city')||'Волгоград';
+  renderExhibits(city);
+});
+</script>
 </body>
 </html>
