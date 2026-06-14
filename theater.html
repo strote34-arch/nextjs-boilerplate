@@ -924,18 +924,7 @@ footer {
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#c8102e">
 
-<script>
-(function(){
-  var fn=(location.pathname.split('/').pop()||'index.html').split('?')[0];
-  if(!fn||!fn.includes('.'))fn='index.html';
-  function go(){document.querySelectorAll('header nav a,header a[href]').forEach(function(a){
-    var h=(a.getAttribute('href')||'').split('/').pop().split('?')[0];
-    var ok=(h===fn);a.style.color=ok?'#c8102e':'';a.style.fontWeight=ok?'900':'';
-    if(ok)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
-  });}
-  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
-})();
-</script>
+
 <script>
 /* Активная навигация v4 — работает и с /concerts и с /concerts.html */
 (function(){
