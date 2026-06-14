@@ -64,14 +64,31 @@ async function getMoviesInCinemas() {
 
 // ── 2. YouTube: получить все видео канала @afishiru ───────────
 async function getChannelVideos(channelId) {
-  const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&channelId=${channelId}&part=snippet&type=video&maxResults=50&order=date`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return (data.items || []).map(item => ({
-    video_id: item.id.videoId,
-    title: item.snippet.title,
-    url: `https://www.youtube.com/watch?v=${item.id.videoId}`
-  }));
+  // Берём ВСЕ видео канала через pagination (до 500 видео)
+  const allVideos = [];
+  let pageToken = '';
+  let pages = 0;
+  while (pages < 10) {
+    const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&channelId=${channelId}&part=snippet&type=video&maxResults=50&order=date${pageToken ? '&pageToken='+pageToken : ''}`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.error) { console.error('[YT] API error:', JSON.stringify(data.error)); break; }
+      const items = data.items || [];
+      for (const item of items) {
+        allVideos.push({
+          video_id: item.id.videoId,
+          title: item.snippet.title,
+          url: `https://www.youtube.com/watch?v=${item.id.videoId}`
+        });
+      }
+      pageToken = data.nextPageToken || '';
+      pages++;
+      if (!pageToken || items.length < 50) break;
+    } catch(e) { break; }
+  }
+  console.log(`[TrailerSync] @afishiru видео найдено: ${allVideos.length}`);
+  return allVideos;
 }
 
 // ── 3. Найти ID канала @afishiru ──────────────────────────────
@@ -87,18 +104,32 @@ async function getChannelId(handle) {
 
 // ── 4. Проверить — есть ли трейлер фильма на @afishiru ────────
 function findTrailerOnChannel(movie, channelVideos) {
-  const titleLower = (movie.title_ru || '').toLowerCase();
-  const titleOrigLower = (movie.title_original || '').toLowerCase();
-  
+  const titleRu   = (movie.title_ru || '').toLowerCase().trim();
+  const titleOrig = (movie.title_original || '').toLowerCase().trim();
+
+  // Убрать лишние слова из названия для поиска
+  const cleanTitle = (t) => t.replace(/[:\-–—.!?]/g, ' ').replace(/\s+/g, ' ').trim();
+  const titleRuClean   = cleanTitle(titleRu);
+  const titleOrigClean = cleanTitle(titleOrig);
+
+  // Первые 2 слова (ключевые)
+  const keywordsRu   = titleRuClean.split(' ').filter(w=>w.length>2).slice(0,3);
+  const keywordsOrig = titleOrigClean.split(' ').filter(w=>w.length>2).slice(0,3);
+
   for (const video of channelVideos) {
-    const vTitle = video.title.toLowerCase();
-    if (
-      vTitle.includes(titleLower) ||
-      (titleOrigLower.length > 3 && vTitle.includes(titleOrigLower)) ||
-      (titleLower.length > 3 && vTitle.includes(titleLower.substring(0, Math.floor(titleLower.length * 0.7))))
-    ) {
-      return video;
-    }
+    const vt = video.title.toLowerCase();
+    const vtClean = cleanTitle(vt);
+
+    // Точное вхождение русского названия
+    if (titleRuClean.length > 3 && vtClean.includes(titleRuClean)) return video;
+    // Точное вхождение оригинального
+    if (titleOrigClean.length > 3 && vtClean.includes(titleOrigClean)) return video;
+    // Ключевые слова (все первые 2-3 слова)
+    if (keywordsRu.length >= 2 && keywordsRu.every(w => vtClean.includes(w))) return video;
+    if (keywordsOrig.length >= 2 && keywordsOrig.every(w => vtClean.includes(w))) return video;
+    // Частичное совпадение (70% названия)
+    const partial = titleRuClean.substring(0, Math.floor(titleRuClean.length * 0.75));
+    if (partial.length > 5 && vtClean.includes(partial)) return video;
   }
   return null;
 }

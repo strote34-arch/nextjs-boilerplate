@@ -84,23 +84,17 @@ def cmd_missing(chat_id):
                             "status": endpoint,
                         }
 
-        # Получить видео с @afishiru
-        yt_url = (f"https://www.googleapis.com/youtube/v3/search"
-                  f"?part=snippet&channelId={AFISHIRU_CH}"
-                  f"&maxResults=50&order=date&type=video&key={YT_KEY}")
-        r = urllib.request.urlopen(yt_url, timeout=15, context=ctx)
-        yt_data = json.loads(r.read())
-        yt_titles = [i["snippet"]["title"].lower()
-                     for i in yt_data.get("items", [])]
+        # Получить статистику с Vercel (не тратим YouTube квоту)
+        try:
+            r2 = urllib.request.urlopen(
+                f"{VERCEL_URL}/api/trailer-sync", timeout=60, context=ctx)
+            sync_d = json.loads(r2.read())
+            s = sync_d.get("stats", {})
+        except:
+            s = {}
 
-        # Найти пересечение
-        missing = []
-        for film in films.values():
-            title_l = film["title"].lower()
-            words = [w for w in title_l.split() if len(w) > 3]
-            found = any(all(w in yt for w in words[:2]) for yt in yt_titles) if words else False
-            if not found:
-                missing.append(film)
+        # Фильмы без трейлера из статистики
+        missing = list(films.values())[:s.get('no_trailer', len(films))]
 
         if not missing:
             send(chat_id, "✅ Все фильмы имеют трейлеры на @afishiru!")
