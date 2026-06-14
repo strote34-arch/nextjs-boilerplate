@@ -131,8 +131,18 @@ def cmd_run(chat_id):
 
 # ── Polling ────────────────────────────────────────────────────
 def poll():
-    offset = 0
+    # Сбросить webhook и остановить другие экземпляры
+    print(f"[Bot] Запуск...")
+    try:
+        r = urllib.request.urlopen(f"{API}/deleteWebhook?drop_pending_updates=false",
+                                   timeout=10, context=ctx)
+        data = json.loads(r.read())
+        print(f"[Bot] Webhook сброшен: {data.get('result', '?')}")
+    except Exception as e:
+        print(f"[Bot] Webhook: {e}")
+    
     print(f"[Bot] Запущен. Ожидаю команды...")
+    offset = 0
     while True:
         try:
             r = urllib.request.urlopen(
@@ -155,6 +165,14 @@ def poll():
                     threading.Thread(target=cmd_run, args=(chat_id,), daemon=True).start()
                 elif text.startswith("/help") or text.startswith("/start"):
                     cmd_help(chat_id)
+        except urllib.error.HTTPError as e:
+            if e.code == 409:
+                print("[Bot] ⚠️  409 Conflict — остановите другой экземпляр бота!")
+                print("[Bot] Закройте другое окно с tg_bot.py и перезапустите этот")
+                time.sleep(10)
+            else:
+                print(f"[Bot] HTTP ошибка: {e.code}")
+                time.sleep(5)
         except Exception as e:
             print(f"[Bot] Ошибка polling: {e}")
             time.sleep(5)
