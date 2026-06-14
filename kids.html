@@ -943,6 +943,33 @@ footer {
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',go):go();
 })();
 </script>
+<script>
+/* Активная навигация v4 — работает и с /concerts и с /concerts.html */
+(function(){
+  var raw = location.pathname.split('/').pop() || '';
+  // Убрать расширение .html для сравнения
+  var fn = raw.replace(/\.html$/i,'') || 'index';
+  function go(){
+    document.querySelectorAll('header nav a, header a[href]').forEach(function(a){
+      // Убрать все старые стили и классы active
+      a.style.color = '';
+      a.style.fontWeight = '';
+      a.classList.remove('active');
+      a.removeAttribute('aria-current');
+      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0].replace(/\.html$/i,'');
+      if(href && href === fn){
+        a.style.color = '#c8102e';
+        a.style.fontWeight = '900';
+        a.setAttribute('aria-current','page');
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
+  else go();
+  // Повторить через 300мс на случай динамического рендеринга
+  setTimeout(go, 300);
+})();
+</script>
 </head>
 <body>
 
