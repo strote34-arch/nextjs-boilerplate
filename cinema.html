@@ -336,8 +336,8 @@ a{color:inherit;text-decoration:none;}
   display: flex; justify-content: space-between; align-items: center;
   font-size: 12px; color: #666;
 }
-.footer-grid { grid-template-columns: 1fr 1fr; }
-.footer-grid { grid-template-columns: 1fr; }
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr 1fr;}}
+@media(max-width:600px){.footer-grid{grid-template-columns:1fr 1fr;}}
 
 /* City strip */
 
@@ -1934,7 +1934,7 @@ function submitReview() {
 function renderCkCinemas() {
   const f = currentFilm;
   const el = document.getElementById('ck-cinemas');
-  el.innerHTML = '';
+  if (!el) return;
   f.cinemas.forEach((cn,i) => {
     const d = document.createElement('div');
     d.style.cssText = `border:2px solid ${ckState.cinema===cn?'var(--red)':'#e0e0e0'};border-radius:4px;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:${ckState.cinema===cn?'#fff0f0':'#fff'};transition:all .15s;font-size:13px;`;
@@ -1947,7 +1947,7 @@ function renderCkCinemas() {
 function renderCkTimes() {
   const times = CINEMAS_TIMES[ckState.cinema]|| [];
   const el = document.getElementById('ck-times');
-  el.innerHTML = '';
+  if (!el) return; el.innerHTML = '';
   times.forEach((t,i) => {
     const d = document.createElement('div');
     d.className = 'stime' + (ckState.time===t?' stime-active':'');
@@ -1967,7 +1967,7 @@ function renderCkTypes() {
     {name:'VIP',price:Math.round(f.price*2.5)},
   ];
   const el = document.getElementById('ck-types');
-  el.innerHTML = '';
+  if (!el) return; el.innerHTML = '';
   types.forEach((t,i) => {
     const d = document.createElement('div');
     d.className = 'ticket-type-sel' + (ckState.type.name===t.name?' sel':'');
@@ -1982,7 +1982,7 @@ function renderCkTypes() {
 
 function renderSeatMap2() {
   const el = document.getElementById('ck-seatmap');
-  el.innerHTML = '';
+  if (!el) return; el.innerHTML = '';
   const rows=7, cols=12;
   const taken = new Set();
   for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) if (Math.random()<0.3) taken.add(`${r}-${c}`);

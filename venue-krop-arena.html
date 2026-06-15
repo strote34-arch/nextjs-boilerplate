@@ -312,8 +312,8 @@ a{color:inherit;text-decoration:none;}
   display: flex; justify-content: space-between; align-items: center;
   font-size: 12px; color: #666;
 }
-.footer-grid { grid-template-columns: 1fr 1fr; }
-.footer-grid { grid-template-columns: 1fr; }
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr 1fr;}}
+@media(max-width:600px){.footer-grid{grid-template-columns:1fr 1fr;}}
 </style>
 <style>
 /* Venue page specific */

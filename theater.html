@@ -1739,9 +1739,18 @@ function renderTheaters(city) {
   }).join('');
 }
 
+// ── Связать смену города с рендером театров ─────────────────
+window.renderPage = function(city) {
+  renderTheaters(city || localStorage.getItem('afishi_city') || 'Волгоград');
+};
+
 document.addEventListener('DOMContentLoaded',function(){
-  var city=window.currentCity||localStorage.getItem('afishi_city')||'Волгоград';
+  var city = window.currentCity || localStorage.getItem('afishi_city') || 'Волгоград';
   renderTheaters(city);
+  // Подсветить активную пилюлю города
+  document.querySelectorAll('.city-pill').forEach(function(p){
+    p.classList.toggle('active', p.textContent.trim() === city);
+  });
 });
 </script>
 </body>
