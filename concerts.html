@@ -7461,22 +7461,50 @@ function copyPageLink(btn) {
   }).catch(function(){});
 }
 function openSharePanel(title, url) {
+  var old = document.getElementById('afishi-share-panel');
+  if (old) { old.remove(); return; }
   var u = encodeURIComponent(url || location.href);
   var t = encodeURIComponent(title || document.title);
-  var panel = document.createElement('div');
-  panel.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:9999;display:flex;gap:10px;flex-wrap:wrap;max-width:380px;';
-  var btns = [
-    ['VK','https://vk.com/share.php?url='+u+'&title='+t,'#4a76a8'],
-    ['Telegram','https://t.me/share/url?url='+u+'&text='+t,'#2ca5e0'],
-    ['WhatsApp','https://wa.me/?text='+t+'%20'+u,'#25d366'],
-    ['ОК','https://connect.ok.ru/offer?url='+u,'#ee8208'],
-  ];
-  panel.innerHTML = btns.map(function(b){
-    return '<a href="'+b[1]+'" target="_blank" style="padding:9px 16px;background:'+b[2]+';color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">'+b[0]+'</a>';
-  }).join('') + '<button onclick="this.parentNode.remove()" style="padding:9px 14px;background:#eee;border:none;border-radius:8px;cursor:pointer;font-size:16px;margin-left:auto;">✕</button>';
-  document.body.appendChild(panel);
-  setTimeout(function(){if(panel.parentNode)panel.remove();},7000);
+  var ov = document.createElement('div');
+  ov.id = 'afishi-share-panel';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;">'
+    +'<div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-align:center;margin-bottom:16px;">📤 Поделиться</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
+    +'<a href="https://vk.com/share.php?url='+u+'&title='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#4a76a8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">VK</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">ВКонтакте</span></a>'
+    +'<a href="https://connect.ok.ru/offer?url='+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#ee8208;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">ОК</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">ОК</span></a>'
+    +'<a href="https://t.me/share/url?url='+u+'&text='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#2ca5e0;display:flex;align-items:center;justify-content:center;font-size:20px;">✈️</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Telegram</span></a>'
+    +'<a href="https://wa.me/?text='+t+'%20'+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:20px;">💬</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">WhatsApp</span></a>'
+    +'<a href="https://dzen.ru/share?url='+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#ff6600;display:flex;align-items:center;justify-content:center;font-size:20px;">🔶</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Дзен</span></a>'
+    +'<a href="https://rutube.ru/share/?url='+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#060a11;display:flex;align-items:center;justify-content:center;font-size:20px;">▶️</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Rutube</span></a>'
+    +'<a href="https://yandex.ru/news/story/?url='+u+'&title='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#fc3f1d;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;">Я</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Яндекс</span></a>'
+    +'<a href="https://vk.com/video?q='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
+    +'<div style="width:44px;height:44px;border-radius:12px;background:#6c17c9;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:Oswald,sans-serif;">M</div>'
+    +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">MAX</span></a>'
+    +'</div>'
+    +'<button onclick="var i=document.createElement(\'input\');i.value=decodeURIComponent(\''+u+'\');document.body.appendChild(i);i.select();document.execCommand(\'copy\');i.remove();this.textContent=\'✅ Скопировано!\';setTimeout(()=>{this.textContent=\'📋 Скопировать ссылку\';},2000);" '
+    +'style="width:100%;background:#1a1a1a;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px;border-radius:8px;border:none;cursor:pointer;margin-bottom:8px;">📋 Скопировать ссылку</button>'
+    +'<button onclick="document.getElementById(\'afishi-share-panel\').remove();" '
+    +'style="width:100%;background:#f0f0f0;color:#444;font-size:13px;padding:10px;border-radius:8px;border:none;cursor:pointer;">Закрыть</button>'
+    +'</div>';
+  document.body.appendChild(ov);
 }
+
 function shareEvent(title, url) { openSharePanel(title, url); }
 </script>
 
