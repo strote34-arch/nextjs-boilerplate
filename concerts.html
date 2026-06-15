@@ -398,6 +398,13 @@ a{color:inherit;text-decoration:none;}
 }
 @media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr 1fr;}}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr 1fr;}}
+
+/* Mobile: компактная дата/время в карточке */
+@media(max-width:480px){
+  .c-meta{font-size:11px!important;margin-bottom:2px!important;color:#666!important;}
+  .c-body{padding:8px 10px!important;}
+  .c-title{font-size:13px!important;-webkit-line-clamp:2;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;}
+}
 </style>
 
 <style id="afishi-mobile">
@@ -730,7 +737,7 @@ a{color:inherit;text-decoration:none;}
   }
   .c-body { flex: 1 !important; }
   .c-genre { font-size: 9px !important; }
-  .c-meta, .c-venue, .c-stars { display: none !important; }
+  .c-venue, .c-stars { display: none !important; }
 
   /* ── Modal full screen on small phones ──────── */
   .modal-box { max-height: 100vh !important; border-radius: 0 !important; }
@@ -2122,7 +2129,7 @@ const CONCERTS = [
     poster:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=600&fit=crop', cat:'concert'},
   {id:'fil_n01', title:'Проект Метрополис «Диско»', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Эстрада', icon:'🎵', color:'#1a0a2e',
-    date:'2 июня 2026', dateShort:'2 июн', dateISO:'2026-08-01', dayLabel:'',
+    date:'1 августа 2026', dateShort:'1 авг', dateISO:'2026-08-01', dayLabel:'',
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:800, priceMax:1600, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2130,7 +2137,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n02', title:'Оркестр Cagmo: Симфония МТВ при свечах', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Симфония', icon:'🕯️', color:'#0a0a1a',
-    date:'4 июня 2026', dateShort:'4 июн', dateISO:'2026-08-03', dayLabel:'',
+    date:'3 августа 2026', dateShort:'3 авг', dateISO:'2026-08-03', dayLabel:'',
     age:'12+', duration:'2 ч', rating:0, votes:0,
     price:1200, priceMax:2400, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2138,7 +2145,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n03', title:'«Например» становится классикой', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Эстрада', icon:'🎤', color:'#1a0a0a',
-    date:'5 июня 2026', dateShort:'5 июн', dateISO:'2026-08-04', dayLabel:'',
+    date:'4 августа 2026', dateShort:'4 авг', dateISO:'2026-08-04', dayLabel:'',
     age:'12+', duration:'2 ч', rating:0, votes:0,
     price:900, priceMax:1800, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2146,7 +2153,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n04', title:'Взрослые игры', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Спектакль', icon:'🎭', color:'#0a1a1a',
-    date:'6 июня 2026', dateShort:'6 июн', dateISO:'2026-08-05', dayLabel:'',
+    date:'5 августа 2026', dateShort:'5 авг', dateISO:'2026-08-05', dayLabel:'',
     age:'18+', duration:'2 ч', rating:0, votes:0,
     price:1500, priceMax:3000, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2154,7 +2161,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n05', title:'Дом, который построили мы. 30 лет нашего стиля', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Юбилей', icon:'🏠', color:'#1a0a00',
-    date:'7 июня 2026', dateShort:'7 июн', dateISO:'2026-08-06', dayLabel:'',
+    date:'6 августа 2026', dateShort:'6 авг', dateISO:'2026-08-06', dayLabel:'',
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:700, priceMax:1400, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2162,7 +2169,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n06', title:'Палата бизнес-класса', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Спектакль', icon:'🎭', color:'#0a0a2e',
-    date:'8 июня 2026', dateShort:'8 июн', dateISO:'2026-08-07', dayLabel:'',
+    date:'7 августа 2026', dateShort:'7 авг', dateISO:'2026-08-07', dayLabel:'',
     age:'16+', duration:'2 ч', rating:0, votes:0,
     price:1800, priceMax:3600, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2170,7 +2177,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n07', title:'Хор Сретенского монастыря. Юбилейный концерт к 30-летию', artist:'ЦКЗ Волгоградская Филармония',
     genre:'Хоровая музыка', icon:'⛪', color:'#0a1a0a',
-    date:'10 июня 2026', dateShort:'10 июн', dateISO:'2026-08-09', dayLabel:'',
+    date:'9 августа 2026', dateShort:'9 авг', dateISO:'2026-08-09', dayLabel:'',
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:1000, priceMax:2000, hot:false, newShow:false, city:'Волгоград',
     desc:'',
@@ -2202,7 +2209,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'rvlg_010', title:'Джаз-вечер: трио «Волга»',
     artist:'Джазовое трио', genre:'Джаз', icon:'🎷', color:'#1a0a05',
-    date:'7 июня 2026', dateShort:'7 июн', dateISO:'2026-08-06', dayLabel:'Вс',
+    date:'6 августа 2026', dateShort:'6 авг', dateISO:'2026-08-06', dayLabel:'Вс',
     age:'18+', duration:'2 ч', rating:0, votes:0,
     price:1200, priceMax:2500, hot:false, newShow:false, city:'Волгоград',
     desc:'Живой джаз в уютной атмосфере ресторана.',
@@ -2346,7 +2353,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1511735111819-9a3efd16f78b?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'expo_001', title:'Кипелов',
     artist:'Кипелов', genre:'Рок', icon:'🎸', color:'#1a0000',
-    date:'2 июня 2026', dateShort:'2 июн', dateISO:'2026-08-01', dayLabel:'Вт',
+    date:'1 августа 2026', dateShort:'1 авг', dateISO:'2026-08-01', dayLabel:'Вт',
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:5500, priceMax:5500, hot:false, newShow:false, city:'Волгоград',
     desc:'Кипелов в Волгограде. Выставочный комплекс ВолгоградЭКСПО.',
@@ -2354,7 +2361,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'expo_002', title:'Jony — концерт',
     artist:'Jony', genre:'Поп', icon:'🎤', color:'#001a1a',
-    date:'7 июня 2026', dateShort:'7 июн', dateISO:'2026-08-06', dayLabel:'Вс',
+    date:'6 августа 2026', dateShort:'6 авг', dateISO:'2026-08-06', dayLabel:'Вс',
     age:'12+', duration:'2 ч', rating:0, votes:0,
     price:3500, priceMax:10000, hot:true, newShow:false, city:'Волгоград',
     desc:'Jony в Волгограде. Выставочный комплекс ВолгоградЭКСПО.',
@@ -2667,7 +2674,7 @@ const CONCERTS = [
     ytId:'', zones:[]},
   {id:'fil_036', title:'Проект Метрополис «Диско»',
     artist:'Проект Метрополис', genre:'Концерт', icon:'🎤', color:'#0a0a1a',
-    date:'2 июня 2026', dateShort:'2 июн', dateISO:'2026-08-01', dayLabel:'Пн',
+    date:'1 августа 2026', dateShort:'1 авг', dateISO:'2026-08-01', dayLabel:'Пн',
     age:'12+', duration:'2 ч', rating:0, votes:0,
     price:800, priceMax:2500, hot:false, newShow:false, city:'Волгоград',
     desc:'Лучшие диско-хиты от проекта «Метрополис» — зажигательный вечер!',
@@ -2676,7 +2683,7 @@ const CONCERTS = [
     ytId:'', zones:[]},
   {id:'fil_037', title:'Жизнь в музыке',
     artist:'Сборный концерт', genre:'Концерт', icon:'🎤', color:'#0a0a1a',
-    date:'3 июня 2026', dateShort:'3 июн', dateISO:'2026-08-02', dayLabel:'Вт',
+    date:'2 августа 2026', dateShort:'2 авг', dateISO:'2026-08-02', dayLabel:'Вт',
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:600, priceMax:1800, hot:false, newShow:false, city:'Волгоград',
     desc:'Вечер классической и современной музыки «Жизнь в музыке».',
@@ -2685,7 +2692,7 @@ const CONCERTS = [
     ytId:'', zones:[]},
   {id:'fil_040', title:'Оркестр Cagmo: Симфония МТВ при свечах',
     artist:'Оркестр CAGMO', genre:'Концерт', icon:'🎤', color:'#0a0a1a',
-    date:'4 июня 2026', dateShort:'4 июн', dateISO:'2026-08-03', dayLabel:'Сб',
+    date:'3 августа 2026', dateShort:'3 авг', dateISO:'2026-08-03', dayLabel:'Сб',
     age:'12+', duration:'2 ч', rating:0, votes:0,
     price:1000, priceMax:3000, hot:false, newShow:false, city:'Волгоград',
     desc:'Легендарные хиты МТВ в симфоническом исполнении при свечах.',
@@ -2694,7 +2701,7 @@ const CONCERTS = [
     ytId:'', zones:[]},
   { id:'fil_041', title:'«Например» становится классикой',
     artist:'Группа «Например»', genre:'Поп', icon:'🎤', color:'#1a0a2e',
-    date:'5 июня 2026', dateShort:'5 июн', dateISO:'2026-08-04', dayLabel:'Пт',
+    date:'4 августа 2026', dateShort:'4 авг', dateISO:'2026-08-04', dayLabel:'Пт',
     age:'12+', duration:'2 ч', rating:0, votes:0, price:700, priceMax:2000,
     hot:false, newShow:false, city:'Волгоград',
     desc:'Любимые хиты группы «Например» в живом исполнении на сцене Волгоградской филармонии.',
