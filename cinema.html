@@ -1687,6 +1687,62 @@ function switchTab(tab) {
   if (tab === 'trailer') renderTrailerPane && renderTrailerPane();
 }
 
+
+// =============================================
+// TRAILER PANE RENDERER
+// =============================================
+function renderTrailerPane() {
+  var f = currentFilm;
+  if (!f) return;
+  var pane = document.getElementById('pane-trailer');
+  if (!pane) return;
+
+  // Получить YouTube ID трейлера: из localStorage → из данных фильма
+  var ytId = _getStoredTrailer('film', f.id) || f.ytId || f.trailer || '';
+
+  pane.innerHTML = '';
+
+  if (ytId) {
+    // Очистить ytId — взять только ID из URL если полный URL
+    var match = ytId.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+    if (match) ytId = match[1];
+
+    var wrap = document.createElement('div');
+    wrap.innerHTML = [
+      '<div style="position:relative;padding-bottom:56.25%;background:#000;border-radius:8px;overflow:hidden;margin-bottom:14px;">',
+        '<iframe src="https://www.youtube.com/embed/'+ytId+'?rel=0&modestbranding=1"',
+          ' style="position:absolute;inset:0;width:100%;height:100%;border:none;"',
+          ' allowfullscreen loading="lazy" title="'+f.title+' — трейлер"></iframe>',
+      '</div>',
+      '<div style="font-size:12px;color:#888;text-align:center;">',
+        '▶ Официальный трейлер фильма «'+f.title+'»',
+      '</div>'
+    ].join('');
+    pane.appendChild(wrap);
+  } else {
+    pane.innerHTML = [
+      '<div style="padding:36px 0;text-align:center;color:#999;">',
+        '<div style="font-size:48px;margin-bottom:14px;">🎬</div>',
+        '<div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;color:#555;">Трейлер не загружен</div>',
+        '<div style="font-size:13px;color:#aaa;">Официальный трейлер к фильму «'+f.title+'» будет добавлен позже.</div>',
+      '</div>'
+    ].join('');
+  }
+
+  // Панель администратора для добавления трейлера
+  try {
+    var isAdmin = window.Afishi && typeof window.Afishi.isAdmin === 'function' && window.Afishi.isAdmin();
+    if (isAdmin) {
+      _showTrailerAdminForm && _showTrailerAdminForm('pane-trailer', 'film', f.id, ytId);
+    }
+  } catch(e) {}
+}
+
+// renderReviewSummary — алиас для renderReviewsPane (совместимость)
+function renderReviewSummary() {
+  if (typeof renderReviewsPane === 'function') renderReviewsPane();
+}
+
 // =============================================
 // REVIEWS ENGINE
 // =============================================
