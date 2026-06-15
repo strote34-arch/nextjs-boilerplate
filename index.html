@@ -2364,6 +2364,139 @@ function updateFooterVenues(city) {
     return '<a href="' + v.href + '">' + v.name + '</a>';
   }).join('');
 }
+// ─── Date Strip ────────────────────────────────────────────────
+function renderDateStrip() {
+  var strip = document.getElementById('dateStrip');
+  if (!strip) return;
+  var days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  var months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  var today = new Date();
+  var html = '';
+  for (var i = 0; i < 14; i++) {
+    var d = new Date(today);
+    d.setDate(today.getDate() + i);
+    var dayName = i === 0 ? 'Сегодня' : i === 1 ? 'Завтра' : days[d.getDay()];
+    var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    html += '<div class="date-tab' + (i===0?' active':'') + '" data-iso="' + iso + '" onclick="selectDateTab(this)">'
+      + '<div class="day-name">' + dayName + '</div>'
+      + '<div class="day-num">' + d.getDate() + '</div>'
+      + '<div style="font-size:10px;color:#aaa;">' + months[d.getMonth()] + '</div>'
+      + '</div>';
+  }
+  strip.innerHTML = html;
+}
+
+function selectDateTab(el) {
+  document.querySelectorAll('.date-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  window._activeDateISO = el.dataset.iso || '';
+  if (typeof applyFilters === 'function') applyFilters();
+}
+
+function scrollDates(dir) {
+  var strip = document.getElementById('dateStrip');
+  if (strip) strip.scrollLeft += dir * 200;
+}
+
+// ─── Hero Aside ──────────────────────────────────────────────────
+function renderHeroAside(city) {
+  var el = document.getElementById('heroAsideContainer');
+  if (!el) return;
+  city = city || localStorage.getItem('afishi_city') || 'Волгоград';
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+
+  // Выбрать 3 ближайших события из CONCERTS_DB для текущего города
+  var events = (CONCERTS_DB || []).filter(function(c){
+    return c.city === city && c.dateISO && c.dateISO >= todayISO;
+  }).sort(function(a,b){ return a.dateISO < b.dateISO ? -1 : 1; });
+
+  if (!events.length) {
+    events = (CONCERTS_DB || []).filter(function(c){
+      return c.dateISO && c.dateISO >= todayISO;
+    }).sort(function(a,b){ return a.dateISO < b.dateISO ? -1 : 1; });
+  }
+
+  var main = events[0];
+  var side1 = events[1];
+  var side2 = events[2];
+  if (!main) return;
+
+  var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  function fmtD(iso) {
+    if (!iso) return '';
+    var p = iso.split('-');
+    return parseInt(p[2]) + ' ' + MONTHS[parseInt(p[1])-1];
+  }
+
+  function bigCard(ev) {
+    var bg = ev.photo || ev.poster || '';
+    return '<div class="hero-main" onclick="location.href=\'concerts.html\'" style="background:'+ev.color+';height:320px;border-radius:8px;overflow:hidden;cursor:pointer;position:relative;">'
+      + (bg ? '<img src="'+bg+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.7;" loading="lazy" onerror="this.remove()">' : '')
+      + '<div style="position:absolute;inset:0;background:linear-gradient(transparent 20%,rgba(0,0,0,.85))"></div>'
+      + '<div style="position:absolute;bottom:0;left:0;right:0;padding:20px;">'
+      + '<span style="background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:.5px;">'+ev.genre+'</span>'
+      + '<div style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;color:#fff;margin:8px 0 4px;line-height:1.2;">'+ev.title+'</div>'
+      + '<div style="font-size:13px;color:rgba(255,255,255,.8);">📅 '+fmtD(ev.dateISO)+(ev.time?' · ⏰ '+ev.time:'')+(ev.venue?' · '+ev.venue:'')+'</div>'
+      + '</div></div>';
+  }
+
+  function smallCard(ev) {
+    if (!ev) return '<div style="flex:1;background:#f0eeea;border-radius:8px;"></div>';
+    var bg = ev.photo || ev.poster || '';
+    return '<div onclick="location.href=\'concerts.html\'" style="flex:1;border-radius:8px;overflow:hidden;cursor:pointer;position:relative;background:'+ev.color+';min-height:150px;">'
+      + (bg ? '<img src="'+bg+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65;" loading="lazy" onerror="this.remove()">' : '')
+      + '<div style="position:absolute;inset:0;background:linear-gradient(transparent 10%,rgba(0,0,0,.8))"></div>'
+      + '<div style="position:absolute;bottom:0;left:0;right:0;padding:12px;">'
+      + '<div style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:2px;">'+fmtD(ev.dateISO)+'</div>'
+      + '<div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:#fff;line-height:1.2;">'+ev.title+'</div>'
+      + '</div></div>';
+  }
+
+  el.innerHTML = '<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;width:100%;">'
+    + bigCard(main)
+    + '<div style="display:flex;flex-direction:column;gap:12px;">'
+    + smallCard(side1)
+    + smallCard(side2)
+    + '</div></div>';
+}
+
+// ─── AI Recommendations (простые, из CONCERTS_DB) ───────────────
+function renderAIRecs(city) {
+  var aiSection = document.getElementById('section-ai');
+  var aiGrid = document.getElementById('aiGrid');
+  if (!aiSection || !aiGrid) return;
+  city = city || localStorage.getItem('afishi_city') || 'Волгоград';
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+  var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  function fmtD(iso) { if (!iso) return ''; var p = iso.split('-'); return parseInt(p[2]) + ' ' + MONTHS[parseInt(p[1])-1]; }
+
+  // Взять топ 4 события по рейтингу/hot или просто ближайших
+  var recs = (CONCERTS_DB || []).filter(function(c){
+    return c.city === city && c.dateISO && c.dateISO >= todayISO;
+  }).sort(function(a,b){
+    if (b.hot !== a.hot) return b.hot ? 1 : -1;
+    return (b.rating||0) - (a.rating||0);
+  }).slice(0,4);
+
+  if (!recs.length) return;
+  aiSection.style.display = '';
+  aiGrid.innerHTML = recs.map(function(ev){
+    var bg = ev.photo || ev.poster || '';
+    return '<div class="event-card ec-link" data-href="concerts.html" style="cursor:pointer;">'
+      + '<div class="event-card-img" style="background:'+ev.color+';position:relative;height:130px;">'
+      + (bg ? '<img src="'+bg+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.remove()">' : '<span style="font-size:36px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">'+ev.icon+'</span>')
+      + '<div style="position:absolute;top:6px;left:6px;background:linear-gradient(135deg,#7b1fa2,#c2185b);color:#fff;font-size:9px;font-family:Oswald,sans-serif;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;">✨ Для вас</div>'
+      + '</div>'
+      + '<div class="event-card-body">'
+      + '<div class="event-card-cat">'+ev.genre+'</div>'
+      + '<div class="event-card-title" style="font-size:13px;">'+ev.title+'</div>'
+      + '<div class="event-card-meta">📅 '+fmtD(ev.dateISO)+'</div>'
+      + '</div></div>';
+  }).join('');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   var city = localStorage.getItem('afishi_city') || 'Волгоград';
   updateFooterVenues(city);
@@ -2506,6 +2639,10 @@ function renderPage(city) {
   }
 
   if (typeof updateFooterVenues === 'function') updateFooterVenues(city);
+  // Дополнительные элементы главной
+  renderDateStrip();
+  renderHeroAside(city);
+  renderAIRecs(city);
 }
 
 document.addEventListener('DOMContentLoaded', function() {

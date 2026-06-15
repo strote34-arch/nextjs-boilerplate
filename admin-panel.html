@@ -2953,21 +2953,51 @@ function renderDashboard() {
 
 // Учётные данные администратора (в реальном проекте — на сервере)
 var ADMIN_CREDENTIALS = [
-  {email:'admin@afishi.ru', pass:'admin123', name:'Администратор'},
+  {email:'admin@afishi.ru', pass:'Afishi2018!', name:'Администратор Сергей'},
   {email:'strote34@gmail.com', pass:'admin2026', name:'Серго'},
 ];
 
 function adminLogin() {
-  var email = prompt('📧 Email:');
-  if (!email) return;
-  var pass = prompt('🔑 Пароль:');
-  if (!pass) return;
+  // Показать встроенную форму входа
+  var existing = document.getElementById('adminLoginOverlay');
+  if (existing) { existing.style.display='flex'; return; }
+
+  var overlay = document.createElement('div');
+  overlay.id = 'adminLoginOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = [
+    '<div style="background:#fff;border-radius:12px;padding:28px 32px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.4);">',
+      '<h2 style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;">🔐 Вход в панель</h2>',
+      '<div style="font-size:12px;color:#888;margin-bottom:20px;">Только для администраторов Афиши.ру</div>',
+      '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:4px;">EMAIL</label>',
+      '<input id="_adminEmail" type="email" placeholder="admin@afishi.ru" value="admin@afishi.ru"',
+        ' style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;">',
+      '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:4px;">ПАРОЛЬ</label>',
+      '<input id="_adminPass" type="password" placeholder="••••••••"',
+        ' style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:6px;box-sizing:border-box;">',
+      '<div id="_adminErr" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:10px;"></div>',
+      '<button onclick="doAdminLoginForm()" style="width:100%;background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:12px;cursor:pointer;margin-bottom:10px;">ВОЙТИ В ПАНЕЛЬ</button>',
+      '<button onclick="document.getElementById('adminLoginOverlay').style.display='none'" style="width:100%;background:none;border:1px solid #e0e0e0;border-radius:6px;padding:10px;cursor:pointer;font-size:13px;color:#666;">Отмена</button>',
+      '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0ede8;font-size:11px;color:#aaa;">',
+        '<b>Быстрый вход:</b> admin@afishi.ru / Afishi2018!',
+      '</div>',
+    '</div>'
+  ].join('');
+  document.body.appendChild(overlay);
+}
+
+function doAdminLoginForm() {
+  var email = (document.getElementById('_adminEmail')||{}).value || '';
+  var pass  = (document.getElementById('_adminPass')||{}).value || '';
+  var err   = document.getElementById('_adminErr');
   var found = ADMIN_CREDENTIALS.find(function(c){ return c.email===email.trim() && c.pass===pass; });
   if (found) {
     setLS('afishi_user', {email:found.email, name:found.name, role:'admin', loginAt: Date.now()});
+    var ov = document.getElementById('adminLoginOverlay');
+    if (ov) ov.remove();
     location.reload();
   } else {
-    alert('❌ Неверный логин или пароль');
+    if (err) err.textContent = '❌ Неверный email или пароль';
   }
 }
 
