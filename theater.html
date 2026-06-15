@@ -1406,7 +1406,7 @@ footer {
 
     <!-- 🏛️ Театры Москвы -->
     <div class="sw" style="margin-bottom:20px;">
-      <div class="sw-head" id="sidebarTheaterHead">🏛️ Театры Москвы</div>
+      <div class="sw-head" id="sidebarTheaterHead">🏛️ Театры Волгограда</div>
       <div class="sw-body" id="theaterSidebar"></div>
     </div>
 
@@ -1696,23 +1696,47 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 var THEATERS_DB = {
   'Волгоград': [
-    {id:'musical',name:'Волгоградский музыкальный театр',addr:'пр. Ленина, 10',
+    {id:'musical',name:'Волгоградский музыкальный театр',
+     addr:'пр. Ленина, 10, Волгоград, 400005',
+     maps:'https://maps.yandex.ru/?text=Волгоградский+музыкальный+театр',
      icon:'🎭',phone:'+7(8442)38-08-22',url:'theater-volgogradskiy-muzykalnyy-teatr.html',
-     desc:'Крупнейший музыкальный театр Нижней Волги. Оперы, балеты, мюзиклы.',
-     events:[{title:'Кармен',date:'15 июн',time:'19:00',price:'от 500 ₽'},
-             {title:'Лебединое озеро',date:'22 июн',time:'18:00',price:'от 700 ₽'}]},
-    {id:'net',name:'НЭТ (Новый Экспериментальный театр)',addr:'ул. Мира, 5',
+     desc:'Крупнейший музыкальный театр Нижней Волги. Оперы, балеты, мюзиклы. Режим работы: вт–вс 10:00–19:00.',
+     pushkin:true,
+     events:[{title:'Кармен',date:'20 июн',time:'19:00',price:'от 500 ₽'},
+             {title:'Лебединое озеро',date:'27 июн',time:'18:00',price:'от 700 ₽'},
+             {title:'Щелкунчик',date:'5 июл',time:'19:00',price:'от 800 ₽'}]},
+    {id:'net',name:'НЭТ — Новый Экспериментальный театр',
+     addr:'пр-т Ленина, 5, Волгоград, 400066',
+     maps:'https://maps.yandex.ru/?text=НЭТ+театр+Волгоград',
      icon:'🎪',phone:'+7(8442)38-63-55',url:'theater-net-novyy-eksperimentalnyy.html',
-     desc:'Ведущий драматический театр Волгограда.',
-     events:[{title:'Дядя Ваня',date:'18 июн',time:'19:00',price:'от 400 ₽'}]},
-    {id:'tyuz',name:'ТЮЗ Волгоград',addr:'пр. Ленина, 4',
+     desc:'Ведущий драматический театр Волгограда. Основан в 1993 году.',
+     pushkin:true,
+     events:[{title:'Три сестры',date:'22 июн',time:'19:00',price:'от 400 ₽'},
+             {title:'Горе от ума',date:'29 июн',time:'19:00',price:'от 450 ₽'}]},
+    {id:'tyuz',name:'ТЮЗ Волгоград',
+     addr:'пр-т Ленина, 4, Волгоград, 400066',
+     maps:'https://maps.yandex.ru/?text=ТЮЗ+Волгоград',
      icon:'🎠',phone:'+7(8442)38-09-01',url:'theater-tyuz-volgograd.html',
-     desc:'Театр юного зрителя. Спектакли для детей и взрослых.',
-     events:[{title:'Буратино',date:'21 июн',time:'12:00',price:'от 300 ₽'}]},
-    {id:'opera',name:'Царицынская Опера',addr:'ул. Мира, 4',
+     desc:'Театр юного зрителя. Спектакли для детей и молодёжи. Пушкинская карта.',
+     pushkin:true,
+     events:[{title:'Буратино',date:'21 июн',time:'12:00',price:'от 300 ₽'},
+             {title:'Питер Пэн',date:'28 июн',time:'12:00',price:'от 350 ₽'}]},
+    {id:'opera',name:'Царицынская Опера',
+     addr:'ул. Мира, 4, Волгоград, 400066',
+     maps:'https://maps.yandex.ru/?text=Царицынская+опера+Волгоград',
      icon:'🎼',phone:'+7(8442)38-23-45',url:'#',
-     desc:'Классические оперные постановки.',
-     events:[{title:'Травиата',date:'25 июн',time:'19:00',price:'от 600 ₽'}]},
+     desc:'Классические оперные и балетные постановки Волгограда.',
+     pushkin:false,
+     events:[{title:'Травиата',date:'25 июн',time:'19:00',price:'от 600 ₽'},
+             {title:'Дон Жуан',date:'9 июл',time:'19:00',price:'от 700 ₽'}]},
+    {id:'gorky',name:'Драматический театр им. Горького',
+     addr:'пл. Павших Борцов, 2, Волгоград, 400066',
+     maps:'https://maps.yandex.ru/?text=Театр+Горького+Волгоград',
+     icon:'🎭',phone:'+7(8442)38-04-17',url:'#',
+     desc:'Академический театр. Основан в 1932 году. Репертуар: классика и современная драматургия.',
+     pushkin:true,
+     events:[{title:'Ревизор',date:'24 июн',time:'19:00',price:'от 350 ₽'},
+             {title:'Чайка',date:'1 июл',time:'19:00',price:'от 400 ₽'}]},
   ],
   'Москва': [
     {id:'bolshoy',name:'Большой театр',addr:'Театральная пл., 1',

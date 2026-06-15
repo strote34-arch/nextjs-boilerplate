@@ -287,8 +287,27 @@ var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
   setTimeout(go, 300);
 })();
 </script>
+<style>
+.topbar{background:#1a1a1a;color:#ccc;font-size:12px;padding:5px 0;}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
+.topbar a{color:#bbb;text-decoration:none;margin-right:16px;}
+.topbar a:hover{color:#fff;}
+</style>
 </head>
 <body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-links">
+      <a href="about.html">О сайте</a>
+      <a href="event-add.html">Добавить событие</a>
+      <a href="advertise.html">Реклама</a>
+      <a href="help.html">Помощь</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
+      📍 Ваш город: <strong style="color:#fff;" id="cityTopLabel">Волгоград</strong> ▾
+    </div>
+  </div>
+</div>
 <header>
     <div class="header-inner">
       <a href="index.html" class="logo">Афиши<span>.ру</span></a>
