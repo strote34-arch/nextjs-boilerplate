@@ -3008,7 +3008,7 @@ function adminLogout() {
   }
 }
 
-(function checkAuth() {
+function checkAuth() {
   var user = getLS('afishi_user');
   var btn = document.getElementById('userBtn');
   var layout = document.querySelector('.admin-layout');
@@ -3055,7 +3055,6 @@ function adminLogout() {
       document.body.appendChild(screen);
     }
   }
-})();
 
 // ══ ИНИЦИАЛИЗАЦИЯ ══════════════════════════════════════════
 renderDashboard();
@@ -4422,8 +4421,16 @@ function renderDashboardFull() {
 
 // Автоинициализация при загрузке
 window.addEventListener('DOMContentLoaded', function() {
-  if (typeof checkAuth === 'function') checkAuth();
+  checkAuth();
   if (typeof renderDashboardFull === 'function') renderDashboardFull();
+  // Авто-показ формы входа если не авторизован
+  setTimeout(function() {
+    var layout = document.querySelector('.admin-layout');
+    var overlay = document.getElementById('adminLoginOverlay');
+    if ((!layout || layout.style.display === 'none') && !overlay) {
+      adminLogin();
+    }
+  }, 200);
 });
 
 

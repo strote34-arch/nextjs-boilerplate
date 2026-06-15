@@ -1017,7 +1017,7 @@ function safeGet(id) {
       <a href="#">Помощь</a>
     </div>
     <div style="display:flex;align-items:center;gap:6px;cursor:pointer;position:relative;" id="cityToggle" onclick="toggleCity()">
-      📍 Ваш город: <strong style="color:#fff;" id="cityLabel">Москва</strong> ▾
+      📍 Ваш город: <strong style="color:#fff;" id="cityLabel">Волгоград</strong> ▾
     </div>
   </div>
 </div>
@@ -3247,6 +3247,81 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Hidden fields for review form compatibility -->
 <input type="hidden" id="reviewName" value="">
 <input type="hidden" id="reviewText" value="">
+
+
+<script>
+// ── Cinema: Города + Даты ─────────────────────────────────────────
+(function() {
+  var CITIES = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар'];
+  var DAYS   = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+
+  function initCinemaUI() {
+    var city = null;
+    try { city = localStorage.getItem('afishi_city'); } catch(e) {}
+    city = city || 'Волгоград';
+
+    // Обновить cityLabel в topbar
+    var lbl = document.getElementById('cityLabel');
+    if (lbl) lbl.textContent = city;
+    var topLbl = document.getElementById('cityTopLabel');
+    if (topLbl) topLbl.textContent = city;
+
+    // Заполнить cityPillsContainer городами
+    var pillsEl = document.getElementById('cityPillsContainer');
+    if (pillsEl) {
+      pillsEl.innerHTML = '<span class="city-label">Город:</span>'
+        + CITIES.map(function(c) {
+            var active = c === city ? ' active' : '';
+            return '<button class="city-pill' + active + '" onclick="cinemaSwitchCity('' + c + '',this)">' + c + '</button>';
+          }).join('');
+    }
+
+    // Заполнить dateFilter датами (сегодня + 13 дней)
+    var df = document.getElementById('dateFilter');
+    if (df) {
+      var today = new Date();
+      var options = '<option value="">Все даты</option>';
+      for (var i = 0; i < 14; i++) {
+        var d = new Date(today);
+        d.setDate(today.getDate() + i);
+        var isoDate = d.getFullYear() + '-'
+          + String(d.getMonth()+1).padStart(2,'0') + '-'
+          + String(d.getDate()).padStart(2,'0');
+        var label = i === 0 ? 'Сегодня, ' + d.getDate() + ' ' + MONTHS[d.getMonth()]
+                  : i === 1 ? 'Завтра, ' + d.getDate() + ' ' + MONTHS[d.getMonth()]
+                  : DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+        options += '<option value="' + isoDate + '">' + label + '</option>';
+      }
+      df.innerHTML = options;
+    }
+  }
+
+  window.cinemaSwitchCity = function(city, btn) {
+    try { localStorage.setItem('afishi_city', city); } catch(e) {}
+    var lbl = document.getElementById('cityLabel');
+    if (lbl) lbl.textContent = city;
+    document.querySelectorAll('.city-pill').forEach(function(p) {
+      p.classList.toggle('active', p.textContent.trim() === city);
+    });
+    if (typeof window.switchCity === 'function') window.switchCity(city, btn);
+    // Обновить renderAll если есть
+    if (typeof renderAll === 'function') {
+      try {
+        var bcCity = document.getElementById('bcCity');
+        if (bcCity) bcCity.textContent = city;
+        renderAll();
+      } catch(e) {}
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCinemaUI);
+  } else {
+    initCinemaUI();
+  }
+})();
+</script>
 
 </body>
 </html>
