@@ -2306,8 +2306,11 @@ function renderFooter() {
 <!-- share functions see below -->
 
 </footer>
+`;
+}
+
 <script>
-// ── Footer: площадки по городу ───────────────────────────────
+// ── Footer: площадки по городу (standalone) ──────────────────
 var FOOTER_VENUES = {
   'Волгоград': [
     {name:'ЦКЗ Волгоградская Филармония', href:'venue-ckz-oktyabr-volgograd.html'},
@@ -2340,29 +2343,18 @@ var FOOTER_VENUES = {
     {name:'Театр оперы и балета', href:'theater.html'}
   ],
   'Казань': [
-    {name:'Казань Арена',       href:'concerts.html'},
-    {name:'УНИКС',              href:'concerts.html'},
-    {name:'Татарский театр им. Камала', href:'theater.html'},
-    {name:'Театр им. Качалова', href:'theater.html'}
-  ],
-  'Новосибирск': [
-    {name:'Новосибирск Арена',  href:'concerts.html'},
-    {name:'ДКЖ',               href:'concerts.html'},
-    {name:'НГАТОиБ (Опера)',    href:'theater.html'},
-    {name:'Красный факел',      href:'theater.html'}
+    {name:'Казань Арена', href:'concerts.html'},
+    {name:'Татарский театр им. Камала', href:'theater.html'}
   ],
   'Краснодар': [
-    {name:'Краснодар Арена',    href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
+    {name:'Краснодар Арена', href:'concerts.html'},
+    {name:'Театр драмы', href:'theater.html'}
   ],
   'Ростов-на-Дону': [
-    {name:'ДонБасс Арена',      href:'concerts.html'},
-    {name:'Театр драмы',        href:'theater.html'},
-    {name:'Музыкальный театр',  href:'theater.html'}
+    {name:'ДонБасс Арена', href:'concerts.html'},
+    {name:'Театр драмы', href:'theater.html'}
   ]
 };
-
 function updateFooterVenues(city) {
   var el = document.getElementById('footerVenuesList');
   if (!el) return;
@@ -2371,27 +2363,11 @@ function updateFooterVenues(city) {
     return '<a href="' + v.href + '">' + v.name + '</a>';
   }).join('');
 }
-
-// Запустить при загрузке
 document.addEventListener('DOMContentLoaded', function() {
-  var city = (typeof currentCity !== 'undefined' && currentCity)
-    ? currentCity
-    : (localStorage.getItem('afishi_city') || 'Волгоград');
+  var city = localStorage.getItem('afishi_city') || 'Волгоград';
   updateFooterVenues(city);
 });
-
-// Перехватить смену города
-(function() {
-  var orig = window._onGeoCity;
-  window._onGeoCity = function(city) {
-    if (orig) orig(city);
-    updateFooterVenues(city);
-  };
-})();
 </script>
-
-<
-</html>
 <script>
 /* ═══ AFISHI.RU — renderPage ═══════════════════════════════ */
 
