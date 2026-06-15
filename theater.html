@@ -1746,8 +1746,8 @@ function renderTheaters(city) {
 // ── Связать смену города с рендером театров ─────────────────
 window.renderPage = function(city) {
   // При смене города — сохранить предпочтение для театра
-  if (city) localStorage.setItem('afishi_theater_city', city);
-  renderTheaters(city || localStorage.getItem('afishi_theater_city') || 'Волгоград');
+  
+  renderTheaters(city || localStorage.getItem('afishi_city') || 'Волгоград');
 };
 
 document.addEventListener('DOMContentLoaded',function(){
