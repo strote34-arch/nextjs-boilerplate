@@ -986,7 +986,7 @@ footer {
       <a href="index.html">О сайте</a><a href="event-add.html">Добавить событие</a><a href="#">Реклама</a><a href="#">Помощь</a>
     </div>
     <div style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-      📍 Ваш город: <strong style="color:#fff;" id="cityLabel">Москва</strong> ▾
+      📍 Ваш город: <strong style="color:#fff;" id="cityLabel">Волгоград</strong> ▾
     </div>
   </div>
 </div>
@@ -1228,30 +1228,9 @@ footer {
     </div>
 </div>
 
-  <!-- SIDEBAR -->
-  <aside>
-    <div class="sw">
-      <div class="sw-head" id="sidebarTheaterHead">🏛️ Театры Москвы</div>
-      <div class="sw-body" id="theaterSidebar"></div>
-    </div>
 
-    <div class="promo-box">
-      <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;color:var(--gold-light);">📧 Театральная рассылка</div>
-      <div style="font-size:13px;opacity:.8;line-height:1.5;margin-bottom:12px;">Анонсы премьер и эксклюзивные скидки каждую пятницу</div>
-      <button class="btn-red" style="width:100%;padding:10px;">Подписаться</button>
-    </div>
-
-    <div class="sw">
-      <div class="sw-head">⭐ Топ-рейтинг</div>
-      <div class="sw-body" id="topSidebar"></div>
-    </div>
-
-    <div class="sw">
-      <div class="sw-head">🌟 Премьеры месяца</div>
-      <div class="sw-body" id="premieresSidebar"></div>
-    </div>
-  </aside>
 </div>
+
 
 <!-- SHOW MODAL -->
 <div class="modal-overlay" id="showModal" onclick="if(event.target===this)closeModal()">
@@ -1404,8 +1383,42 @@ footer {
 </div>
 
 
-<!-- THEATERS GRID -->
-<div id="theatersGrid" style="max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;"></div>
+<!-- THEATERS LAYOUT: 2 columns -->
+<div id="theaterPageLayout" style="max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:1fr 290px;gap:28px;align-items:start;">
+
+  <!-- Левая колонка: карточки театров -->
+  <div id="theatersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;"></div>
+
+  <!-- Правая колонка: сайдбар -->
+  <aside id="theaterSidebarPanel">
+
+    <!-- 🌟 Премьеры месяца -->
+    <div class="sw" style="margin-bottom:20px;">
+      <div class="sw-head">🌟 Премьеры месяца</div>
+      <div class="sw-body" id="premieresSidebar"></div>
+    </div>
+
+    <!-- ⭐ Топ-рейтинг -->
+    <div class="sw" style="margin-bottom:20px;">
+      <div class="sw-head">⭐ Топ-рейтинг</div>
+      <div class="sw-body" id="topSidebar"></div>
+    </div>
+
+    <!-- 🏛️ Театры Москвы -->
+    <div class="sw" style="margin-bottom:20px;">
+      <div class="sw-head" id="sidebarTheaterHead">🏛️ Театры Москвы</div>
+      <div class="sw-body" id="theaterSidebar"></div>
+    </div>
+
+    <!-- 📧 Рассылка -->
+    <div class="promo-box">
+      <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;color:var(--gold-light);">📧 Театральная рассылка</div>
+      <div style="font-size:13px;opacity:.8;line-height:1.5;margin-bottom:12px;">Анонсы премьер и скидки каждую пятницу</div>
+      <button class="btn-red" style="width:100%;padding:10px;">Подписаться</button>
+    </div>
+
+  </aside>
+</div>
 
 <!-- FOOTER -->
 
@@ -1754,6 +1767,103 @@ document.addEventListener('DOMContentLoaded',function(){
   var city = window.currentCity || localStorage.getItem('afishi_city') || 'Волгоград';
   renderTheaters(city);
   // Подсветить активную пилюлю города
+  document.querySelectorAll('.city-pill').forEach(function(p){
+    p.classList.toggle('active', p.textContent.trim() === city);
+  });
+});
+</script>
+
+<script>
+/* ── Sidebar: Премьеры, Топ-рейтинг, Театры Москвы ─────────── */
+function renderTheaterSidebar(city) {
+  city = city || localStorage.getItem('afishi_city') || 'Волгоград';
+
+  // Собрать все показы из THEATERS_DB
+  var allShows = [];
+  if (typeof THEATERS_DB === 'object') {
+    Object.keys(THEATERS_DB).forEach(function(c) {
+      (THEATERS_DB[c] || []).forEach(function(th) {
+        (th.events || []).forEach(function(ev) {
+          allShows.push({ city: c, theater: th.name, theaterShort: th.name, color: th.color, icon: th.icon || '🎭',
+            title: ev.title, date: ev.date, time: ev.time, price: ev.price || '' });
+        });
+      });
+    });
+  }
+
+  // 🌟 Премьеры: события с "Премьера" или первые 4 из текущего города
+  var pEl = document.getElementById('premieresSidebar');
+  if (pEl) {
+    var prems = allShows.filter(function(s){ return s.city === city && (s.title.includes('Премьер') || s.title.includes('премьер')); });
+    if (prems.length < 3) prems = allShows.filter(function(s){ return s.city === city; }).slice(0, 4);
+    pEl.innerHTML = prems.length ? prems.map(function(s){
+      return '<div style="padding:10px 0;border-bottom:1px solid #f0ede8;display:flex;gap:10px;align-items:flex-start;">'
+        +'<div style="min-width:36px;height:36px;border-radius:8px;background:'+(s.color||'#1a0a2e')+';display:flex;align-items:center;justify-content:center;font-size:18px;">'+s.icon+'</div>'
+        +'<div><div style="font-size:13px;font-weight:700;color:#1a1a1a;line-height:1.3;margin-bottom:2px;">'+s.title+'</div>'
+        +'<div style="font-size:11px;color:#888;">'+s.date+(s.time?' · '+s.time:'')+'</div>'
+        +'<div style="font-size:11px;color:#666;">'+s.theaterShort+'</div>'
+        +'</div></div>';
+    }).join('') : '<div style="padding:12px;color:#999;font-size:13px;">Нет данных для ' + city + '</div>';
+  }
+
+  // ⭐ Топ-рейтинг: случайная выборка из текущего города, сортированная по важности
+  var tEl = document.getElementById('topSidebar');
+  if (tEl) {
+    var topShows = allShows.filter(function(s){ return s.city === city; }).slice(0, 5);
+    tEl.innerHTML = topShows.length ? topShows.map(function(s, i){
+      var stars = ['★★★★★','★★★★★','★★★★☆','★★★★☆','★★★☆☆'][i] || '★★★★';
+      return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">'
+        +'<span style="font-size:11px;color:#c8102e;font-weight:700;">'+stars+'</span>'
+        +'</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#1a1a1a;">'+s.title+'</div>'
+        +'<div style="font-size:11px;color:#888;">'+s.theater+'</div>'
+        +'</div>';
+    }).join('') : '<div style="padding:12px;color:#999;font-size:13px;">Нет данных для ' + city + '</div>';
+  }
+
+  // 🏛️ Театры Москвы (или другого крупного города)
+  var mEl = document.getElementById('theaterSidebar');
+  var headEl = document.getElementById('sidebarTheaterHead');
+  var sideCity = city === 'Москва' ? 'Санкт-Петербург' : 'Москва';
+  if (headEl) headEl.textContent = '🏛️ Театры ' + sideCity;
+  if (mEl && typeof THEATERS_DB === 'object') {
+    var mosTheaters = (THEATERS_DB[sideCity] || THEATERS_DB['Москва'] || []).slice(0, 4);
+    mEl.innerHTML = mosTheaters.length ? mosTheaters.map(function(th){
+      return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;display:flex;gap:8px;align-items:center;">'
+        +'<div style="min-width:32px;height:32px;border-radius:6px;background:'+(th.color||'#1a0a2e')+';display:flex;align-items:center;justify-content:center;font-size:16px;">'+(th.icon||'🎭')+'</div>'
+        +'<div><div style="font-size:12px;font-weight:700;color:#1a1a1a;">'+th.name+'</div>'
+        +'<div style="font-size:11px;color:#888;">'+(th.events&&th.events[0]?th.events[0].date:'')+'</div>'
+        +'</div></div>';
+    }).join('') : '<div style="padding:12px;color:#999;font-size:13px;">Нет данных</div>';
+  }
+}
+
+// Подключить к renderTheaters
+var _origRenderTheaters = window.renderTheaters;
+if (typeof _origRenderTheaters === 'function') {
+  window.renderTheaters = function(city) {
+    _origRenderTheaters(city);
+    renderTheaterSidebar(city);
+  };
+}
+
+// Подключить к renderPage
+window.renderPage = function(city) {
+  if (city) localStorage.setItem('afishi_city', city);
+  city = city || localStorage.getItem('afishi_city') || 'Волгоград';
+  if (typeof renderTheaters === 'function') renderTheaters(city);
+  document.querySelectorAll('.city-pill').forEach(function(p){
+    p.classList.toggle('active', p.textContent.trim() === city);
+  });
+};
+
+document.addEventListener('DOMContentLoaded', function(){
+  var city = localStorage.getItem('afishi_city') || 'Волгоград';
+  var lbl = document.getElementById('cityLabel');
+  if (lbl) lbl.textContent = city;
+  if (typeof renderTheaters === 'function') renderTheaters(city);
+  renderTheaterSidebar(city);
   document.querySelectorAll('.city-pill').forEach(function(p){
     p.classList.toggle('active', p.textContent.trim() === city);
   });
