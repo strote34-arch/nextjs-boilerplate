@@ -2390,8 +2390,10 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+<
+</html>
 <script>
-/* ═══ AFISHI.RU — renderPage + инициализация ═══════════════ */
+/* ═══ AFISHI.RU — renderPage ═══════════════════════════════ */
 
 function renderConcertCard(ev) {
   var mn = ['янв','фев','мар','апр','мая','июня','июля','авг','сен','окт','ноя','дек'];
@@ -2400,45 +2402,45 @@ function renderConcertCard(ev) {
     var p = ev.dateISO.slice(0,10).split('-');
     dateStr = parseInt(p[2]) + ' ' + mn[parseInt(p[1])-1];
   } else { dateStr = ev.dateShort || ev.date || ''; }
-  var timeStr = ev.time ? ' · ' + ev.time : '';
+  var timeStr = ev.time ? ' \xb7 ' + ev.time : '';
   var photo = ev.photo || ev.poster || '';
   var imgHtml = photo
     ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" loading="lazy" onerror="this.remove()">'
     : '<span style="font-size:36px;">'+ev.icon+'</span>';
-  return '<div class="event-card" onclick="location.href='concerts.html'" style="cursor:pointer;">'
+  return '<div class="event-card ec-link" data-href="concerts.html" style="cursor:pointer;">'
     +'<div class="event-card-img" style="background:'+ev.color+';position:relative;">'+imgHtml+'</div>'
     +'<div class="event-card-body">'
     +'<div class="event-card-cat">'+ev.genre+'</div>'
     +'<div class="event-card-title">'+ev.title+'</div>'
-    +'<div class="event-card-meta">📅 '+dateStr+timeStr+' · 📍 '+(ev.venue||'')+'</div>'
+    +'<div class="event-card-meta">\u{1F4C5} '+dateStr+timeStr+' \xb7 \u{1F4CD} '+(ev.venue||'')+'</div>'
     +'</div></div>';
 }
 
 function renderFilmCard(f) {
-  return '<div class="event-card" onclick="location.href='cinema.html'" style="cursor:pointer;">'
+  return '<div class="event-card ec-link" data-href="cinema.html" style="cursor:pointer;">'
     +'<div class="event-card-img" style="background:'+f.color+';display:flex;align-items:center;justify-content:center;font-size:42px;">'+f.icon+'</div>'
     +'<div class="event-card-body">'
-    +'<div class="event-card-cat">'+f.genre+' · '+f.age+'</div>'
+    +'<div class="event-card-cat">'+f.genre+' \xb7 '+f.age+'</div>'
     +'<div class="event-card-title">'+f.title+'</div>'
     +'<div class="event-card-meta">'+f.date+'</div>'
     +'</div></div>';
 }
 
 function renderTheaterItem(t) {
-  return '<div class="event-list-item" onclick="location.href='theater.html'" style="cursor:pointer;">'
+  return '<div class="event-list-item ec-link" data-href="theater.html" style="cursor:pointer;">'
     +'<div class="event-list-img" style="background:'+(t.color||'#1a1a1a')+';">'+t.icon+'</div>'
     +'<div><div class="event-list-title">'+t.title+'</div>'
-    +'<div style="font-size:12px;color:#888;">'+t.venue+' · '+t.date+'</div>'
+    +'<div style="font-size:12px;color:#888;">'+t.venue+' \xb7 '+t.date+'</div>'
     +'</div></div>';
 }
 
 function renderExhibitCard(ex) {
-  return '<div class="event-card" onclick="location.href='exhibits.html'" style="cursor:pointer;">'
+  return '<div class="event-card ec-link" data-href="exhibits.html" style="cursor:pointer;">'
     +'<div class="event-card-img" style="background:'+ex.color+';display:flex;align-items:center;justify-content:center;font-size:42px;">'+ex.icon+'</div>'
     +'<div class="event-card-body">'
     +'<div class="event-card-cat">'+(ex.cat||'Выставка')+'</div>'
     +'<div class="event-card-title">'+ex.title+'</div>'
-    +'<div class="event-card-meta">'+ex.venue+' · '+ex.date+'</div>'
+    +'<div class="event-card-meta">'+ex.venue+' \xb7 '+ex.date+'</div>'
     +'</div></div>';
 }
 
@@ -2448,9 +2450,16 @@ function renderCityPills(city) {
   if (!el) return;
   el.innerHTML = '<span class="city-label">Город:</span>'
     + cities.map(function(c){
-        return '<button class="city-pill'+(c===city?' active':'')+'" onclick="switchCity(''+c+'',this)">'+c+'</button>';
+        var active = c === city ? ' active' : '';
+        return '<button class="city-pill'+active+'" onclick="switchCity(this.textContent.trim(),this)">'+c+'</button>';
       }).join('');
 }
+
+// Делегирование кликов для ec-link карточек
+document.addEventListener('click', function(e) {
+  var card = e.target.closest('.ec-link');
+  if (card && card.dataset.href) location.href = card.dataset.href;
+});
 
 function renderPage(city) {
   city = city || localStorage.getItem('afishi_city') || 'Волгоград';
@@ -2468,14 +2477,18 @@ function renderPage(city) {
   // Городские пилюли
   renderCityPills(city);
 
-  // КОНЦЕРТЫ
+  // КОНЦЕРТЫ — ближайшие вперёд
   var concertsGrid = document.getElementById('concertsGrid');
   if (concertsGrid) {
     var concerts = (CONCERTS_DB||[]).filter(function(c){
       return c.city === city && c.dateISO && c.dateISO >= todayISO;
-    }).slice(0,6);
-    if (!concerts.length) concerts = (CONCERTS_DB||[]).filter(function(c){ return c.dateISO && c.dateISO >= todayISO; }).slice(0,6);
-    concertsGrid.innerHTML = concerts.length ? concerts.map(renderConcertCard).join('') : '<div style="color:#888;padding:20px;text-align:center;">Нет предстоящих концертов</div>';
+    }).sort(function(a,b){ return a.dateISO < b.dateISO ? -1 : 1; }).slice(0,6);
+    if (!concerts.length) concerts = (CONCERTS_DB||[]).filter(function(c){
+      return c.dateISO && c.dateISO >= todayISO;
+    }).sort(function(a,b){ return a.dateISO < b.dateISO ? -1 : 1; }).slice(0,6);
+    concertsGrid.innerHTML = concerts.length
+      ? concerts.map(renderConcertCard).join('')
+      : '<div style="color:#888;padding:20px;text-align:center;">Нет предстоящих концертов</div>';
   }
 
   // КИНО
@@ -2507,7 +2520,7 @@ function renderPage(city) {
     var kids = (KIDS_DB||[]).filter(function(k){ return k.city === city; }).slice(0,3);
     if (!kids.length) kids = (KIDS_DB||[]).slice(0,3);
     kidsGrid.innerHTML = kids.map(function(k){
-      return '<div class="event-card" onclick="location.href='kids.html'" style="cursor:pointer;">'
+      return '<div class="event-card ec-link" data-href="kids.html" style="cursor:pointer;">'
         +'<div class="event-card-img" style="background:'+(k.color||'#1a0a2e')+';display:flex;align-items:center;justify-content:center;font-size:42px;">'+(k.icon||'🧸')+'</div>'
         +'<div class="event-card-body"><div class="event-card-cat">'+(k.cat||'Детское')+'</div>'
         +'<div class="event-card-title">'+k.title+'</div>'
