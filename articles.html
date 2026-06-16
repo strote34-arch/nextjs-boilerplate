@@ -1180,5 +1180,96 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+
+<script>
+// ── ARTICLES_DB ──────────────────────────────────────────────────
+var ARTICLES_DB = [
+  {id:'a001',title:'Лучшие концерты июня 2026 в Волгограде',
+   cat:'Подборка',icon:'🎤',color:'#c8102e',
+   author:'Редакция Афиши',date:'10 июня 2026',
+   desc:'Июнь в Волгограде богат музыкальными событиями — от классики до рока.',
+   href:'#',img:'',readTime:'4 мин'},
+  {id:'a002',title:'Театральные новинки сезона 2025/2026',
+   cat:'Театр',icon:'🎭',color:'#1a0a2e',
+   author:'Анна Смирнова',date:'8 июня 2026',
+   desc:'Обзор самых ожидаемых премьер в театрах Волгограда этого сезона.',
+   href:'#',img:'',readTime:'6 мин'},
+  {id:'a003',title:'Как выбрать идеальный спектакль для ребёнка',
+   cat:'Семья',icon:'👶',color:'#ff6b35',
+   author:'Елена Петрова',date:'5 июня 2026',
+   desc:'Советы от опытных родителей и театральных педагогов.',
+   href:'#',img:'',readTime:'3 мин'},
+  {id:'a004',title:'Выставка динозавров: первые впечатления',
+   cat:'Выставки',icon:'🦕',color:'#2a5c2a',
+   author:'Иван Козлов',date:'3 июня 2026',
+   desc:'Репортаж с открытия самой необычной выставки сезона.',
+   href:'#',img:'',readTime:'5 мин'},
+  {id:'a005',title:'Топ-10 мест для романтического вечера в Волгограде',
+   cat:'Гид',icon:'❤️',color:'#8b0000',
+   author:'Маша Волкова',date:'1 июня 2026',
+   desc:'Рестораны, театры и смотровые площадки для особенного вечера.',
+   href:'#',img:'',readTime:'7 мин'},
+  {id:'a006',title:'Рецензия: «Кармен» в Волгоградском музыкальном театре',
+   cat:'Рецензия',icon:'🎼',color:'#33001a',
+   author:'Дмитрий Орлов',date:'28 мая 2026',
+   desc:'Впечатляющая постановка с великолепными голосами и сценографией.',
+   href:'#',img:'',readTime:'8 мин'},
+];
+
+function renderArticles(cat) {
+  var grid = document.getElementById('artGrid');
+  if (!grid) return;
+  
+  var articles = cat ? ARTICLES_DB.filter(function(a){ return a.cat === cat; }) : ARTICLES_DB;
+  
+  if (!articles.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:48px;color:#999;">Статей не найдено</div>';
+    return;
+  }
+  
+  grid.innerHTML = articles.map(function(a) {
+    return '<article class="art-card" onclick="location.href=''+a.href+''" style="cursor:pointer;">'
+      +'<div class="art-img" style="background:'+a.color+';height:140px;display:flex;align-items:center;justify-content:center;border-radius:8px 8px 0 0;">'
+      +'<span style="font-size:42px;">'+a.icon+'</span>'
+      +'</div>'
+      +'<div style="padding:14px;">'
+      +'<div style="margin-bottom:8px;">'
+      +'<span style="background:var(--red,#c8102e);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:Oswald,sans-serif;text-transform:uppercase;">'+a.cat+'</span>'
+      +'<span style="color:#aaa;font-size:11px;margin-left:8px;">'+a.readTime+' чтения</span>'
+      +'</div>'
+      +'<div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;color:#1a1a1a;line-height:1.3;margin-bottom:8px;">'+a.title+'</div>'
+      +'<div style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px;">'+a.desc+'</div>'
+      +'<div style="font-size:11px;color:#aaa;">'+a.author+' · '+a.date+'</div>'
+      +'</div></article>';
+  }).join('');
+}
+
+// Категории
+function renderCatTabs() {
+  var cats = ['Все','Подборка','Театр','Семья','Выставки','Гид','Рецензия'];
+  var el = document.getElementById('catTabs');
+  if (!el) return;
+  el.innerHTML = cats.map(function(c,i){
+    return '<button class="cat-tab'+(i===0?' active':'')
+      +'" onclick="this.closest('div').querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active')});this.classList.add('active');renderArticles(''+c+''==='+''Все''+'?null:''+c+'')">'+c+'</button>';
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  renderCatTabs();
+  renderArticles(null);
+  var lbl = document.getElementById('cityTopLabel');
+  if (lbl) lbl.textContent = localStorage.getItem('afishi_city') || 'Волгоград';
+});
+</script>
+
+<style>
+.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+.art-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .2s,box-shadow .2s;}
+.art-card:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,.15);}
+.cat-tab{padding:6px 14px;border:1.5px solid #e0e0e0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#666;margin-right:6px;margin-bottom:8px;transition:all .15s;}
+.cat-tab.active{background:var(--red,#c8102e);color:#fff;border-color:var(--red,#c8102e);}
+.cat-tabs{margin-bottom:20px;}
+</style>
 </body>
 </html>
