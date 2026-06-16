@@ -5119,5 +5119,18 @@ function closeModal() {
   </div>
 </footer>
 
+
+<script>
+// Авто-показ формы входа если не авторизован
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var layout = document.querySelector('.admin-layout');
+    var overlay = document.getElementById('adminLoginOverlay');
+    if ((!layout || layout.style.display === 'none' || layout.style.display === '') && !overlay) {
+      if (typeof adminLogin === 'function') adminLogin();
+    }
+  }, 400);
+});
+</script>
 </body>
 </html>
