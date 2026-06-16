@@ -3846,18 +3846,7 @@ function previewMailing() {
   var body = (document.getElementById('ml-body')||{}).value || '';
   var win = window.open('', '_blank');
   if (win) { win.document.write('<title>' + subject + '</title><body style="font-family:sans-serif;max-width:600px;margin:40px auto;"><h2>' + subject + '</h2><p>' + body.replace(/\n/g,'<br>') + '</p>
-<script>
-// Авто-показ формы входа если не авторизован
-window.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    var layout = document.querySelector('.admin-layout');
-    var overlay = document.getElementById('adminLoginOverlay');
-    if ((!layout || layout.style.display === 'none' || layout.style.display === '') && !overlay) {
-      adminLogin();
-    }
-  }, 300);
-});
-</script>
+
 </body>'); }
 }
 
