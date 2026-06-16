@@ -1204,5 +1204,23 @@ document.addEventListener('DOMContentLoaded', function() {
   renderVenues(city);
 });
 </script>
+
+<script>
+(function(){
+  var city = localStorage.getItem('afishi_city') || 'Волгоград';
+  function fill() {
+    var cc = document.getElementById('sidebarConcerts');
+    if (cc) cc.innerHTML = ['Кай Метов. 60 лет — 20 июн','Rock Night — 21 июн','Guf — 26 июн','Руки вверх! — 4 июл'].map(function(s){
+      var p=s.split(' — '); return '<div style="padding:6px 0;border-bottom:1px solid #f5f3ef;"><div style="font-size:12px;font-weight:700;">'+p[0]+'</div><div style="font-size:10px;color:#888;">📅 '+p[1]+'</div></div>';
+    }).join('');
+    var ci = document.getElementById('sidebarCities');
+    if (ci) ci.innerHTML = ['Москва','СПб','Екатеринбург','Казань','Краснодар'].map(function(c){
+      return '<a href="#" onclick="localStorage.setItem(\'afishi_city\',\''+c+'\')" style="display:block;padding:5px 0;font-size:12px;color:#c8102e;border-bottom:1px solid #f5f3ef;text-decoration:none;">🏙 '+c+'</a>';
+    }).join('');
+    var l=document.getElementById('cityTopLabel'); if(l) l.textContent=city;
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',fill); else fill();
+})();
+</script>
 </body>
 </html>
