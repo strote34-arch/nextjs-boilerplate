@@ -806,33 +806,12 @@ footer {
 .items-list{display:flex;flex-direction:column;gap:10px;}
 .s-past{background:#f0ede8;color:#888;}
 </style>
-<script>
-/* Активная навигация v4 — работает и с /concerts и с /concerts.html */
-(function(){
-  var raw = location.pathname.split('/').pop() || '';
-  // Убрать расширение .html для сравнения
-  var fn = raw.replace(/\.html$/i,'') || 'index';
-  function go(){
-    document.querySelectorAll('header nav a, header a[href]').forEach(function(a){
-      // Убрать все старые стили и классы active
-      a.style.color = '';
-      a.style.fontWeight = '';
-      a.classList.remove('active');
-      a.removeAttribute('aria-current');
-      var href = (a.getAttribute('href')||'').split('/').pop().split('?')[0].replace(/\.html$/i,'');
-      if(href && href === fn){
-        a.style.color = '#c8102e';
-        a.style.fontWeight = '900';
-        a.setAttribute('aria-current','page');
-      }
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
-  else go();
-  // Повторить через 300мс на случай динамического рендеринга
-  setTimeout(go, 300);
-})();
-</script>
+<style>
+.topbar{background:#1a1a1a;color:#ccc;font-size:12px;padding:5px 0;}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;}
+.topbar a{color:#bbb;text-decoration:none;margin-right:16px;}
+.topbar a:hover{color:#fff;}
+</style>
 </head>
 <body>
 <div class="topbar">
@@ -2953,43 +2932,37 @@ function renderDashboard() {
 
 // Учётные данные администратора (в реальном проекте — на сервере)
 var ADMIN_CREDENTIALS = [
-  {email:'admin@afishi.ru', pass:'Afishi2018!', name:'Администратор Сергей'},
+  {email:'admin@afishi.ru', pass:'Afishi2018!', name:'Администратор'},
   {email:'strote34@gmail.com', pass:'admin2026', name:'Серго'},
 ];
 
 function adminLogin() {
-  // Показать встроенную форму входа
   var existing = document.getElementById('adminLoginOverlay');
   if (existing) { existing.style.display='flex'; return; }
-
   var overlay = document.createElement('div');
   overlay.id = 'adminLoginOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = [
     '<div style="background:#fff;border-radius:12px;padding:28px 32px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.4);">',
-      '<h2 style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;">🔐 Вход в панель</h2>',
-      '<div style="font-size:12px;color:#888;margin-bottom:20px;">Только для администраторов Афиши.ру</div>',
-      '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:4px;">EMAIL</label>',
-      '<input id="_adminEmail" type="email" placeholder="admin@afishi.ru" value="admin@afishi.ru"',
-        ' style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;">',
-      '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:4px;">ПАРОЛЬ</label>',
-      '<input id="_adminPass" type="password" placeholder="••••••••"',
-        ' style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:6px;box-sizing:border-box;">',
-      '<div id="_adminErr" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:10px;"></div>',
-      '<button onclick="doAdminLoginForm()" style="width:100%;background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:12px;cursor:pointer;margin-bottom:10px;">ВОЙТИ В ПАНЕЛЬ</button>',
-      '<button onclick="document.getElementById('adminLoginOverlay').style.display='none'" style="width:100%;background:none;border:1px solid #e0e0e0;border-radius:6px;padding:10px;cursor:pointer;font-size:13px;color:#666;">Отмена</button>',
-      '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0ede8;font-size:11px;color:#aaa;">',
-        '<b>Быстрый вход:</b> admin@afishi.ru / Afishi2018!',
-      '</div>',
+    '<h2 style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;">🔐 Вход в панель</h2>',
+    '<div style="font-size:12px;color:#888;margin-bottom:20px;">Только для администраторов</div>',
+    '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:4px;">EMAIL</label>',
+    '<input id="_adminEmail" type="email" value="admin@afishi.ru" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;">',
+    '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:4px;">ПАРОЛЬ</label>',
+    '<input id="_adminPass" type="password" placeholder="••••••••" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:6px;box-sizing:border-box;">',
+    '<div id="_adminErr" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:10px;"></div>',
+    '<button onclick="doAdminLoginForm()" style="width:100%;background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:12px;cursor:pointer;margin-bottom:10px;">ВОЙТИ В ПАНЕЛЬ</button>',
+    '<button onclick="document.getElementById(\'adminLoginOverlay\').style.display=\'none\'" style="width:100%;background:none;border:1px solid #e0e0e0;border-radius:6px;padding:10px;cursor:pointer;font-size:13px;color:#666;">Отмена</button>',
+    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0ede8;font-size:11px;color:#aaa;"><b>Быстрый вход:</b> admin@afishi.ru / Afishi2018!</div>',
     '</div>'
   ].join('');
   document.body.appendChild(overlay);
 }
 
 function doAdminLoginForm() {
-  var email = (document.getElementById('_adminEmail')||{}).value || '';
-  var pass  = (document.getElementById('_adminPass')||{}).value || '';
-  var err   = document.getElementById('_adminErr');
+  var email = (document.getElementById('_adminEmail')||{}).value||'';
+  var pass = (document.getElementById('_adminPass')||{}).value||'';
+  var err = document.getElementById('_adminErr');
   var found = ADMIN_CREDENTIALS.find(function(c){ return c.email===email.trim() && c.pass===pass; });
   if (found) {
     setLS('afishi_user', {email:found.email, name:found.name, role:'admin', loginAt: Date.now()});
@@ -3008,7 +2981,7 @@ function adminLogout() {
   }
 }
 
-function checkAuth() {
+(function checkAuth() {
   var user = getLS('afishi_user');
   var btn = document.getElementById('userBtn');
   var layout = document.querySelector('.admin-layout');
@@ -3055,6 +3028,7 @@ function checkAuth() {
       document.body.appendChild(screen);
     }
   }
+})();
 
 // ══ ИНИЦИАЛИЗАЦИЯ ══════════════════════════════════════════
 renderDashboard();
@@ -3873,41 +3847,16 @@ function previewMailing() {
   var win = window.open('', '_blank');
   if (win) { win.document.write('<title>' + subject + '</title><body style="font-family:sans-serif;max-width:600px;margin:40px auto;"><h2>' + subject + '</h2><p>' + body.replace(/\n/g,'<br>') + '</p>
 <script>
-/* ── Share functions ─────────────────────────────────────── */
-function shareToVK(){var u=encodeURIComponent(location.href),t=encodeURIComponent(document.title);window.open('https://vk.com/share.php?url='+u+'&title='+t,'_blank');}
-function shareToOK(){var u=encodeURIComponent(location.href);window.open('https://connect.ok.ru/offer?url='+u,'_blank');}
-function shareToTelegram(){var u=encodeURIComponent(location.href),t=encodeURIComponent(document.title);window.open('https://t.me/share/url?url='+u+'&text='+t,'_blank');}
-function shareToWhatsApp(){var u=encodeURIComponent(location.href),t=encodeURIComponent(document.title);window.open('https://wa.me/?text='+t+'%20'+u,'_blank');}
-function shareToDzen(){var u=encodeURIComponent(location.href);window.open('https://dzen.ru/share?url='+u,'_blank');}
-function shareToRutube(){var u=encodeURIComponent(location.href);window.open('https://rutube.ru/share/?url='+u,'_blank');}
-function shareToYandex(){var u=encodeURIComponent(location.href),t=encodeURIComponent(document.title);window.open('https://yandex.ru/news/story/?url='+u+'&title='+t,'_blank');}
-function shareToMAX(){var t=encodeURIComponent(document.title);window.open('https://vk.com/video?q='+t,'_blank');}
-function copyPageLink(btn){var inp=document.createElement('input');inp.value=location.href;document.body.appendChild(inp);inp.select();document.execCommand('copy');inp.remove();if(btn){var s=btn.querySelector('span');if(s){var old=s.textContent;s.textContent='✅ Скопировано!';setTimeout(function(){s.textContent=old;},2000);}}}
-function openSharePanel(url, title, extra) {
-  var old=document.getElementById('afishi-share-panel');
-  if(old){old.remove();return;}
-  var u=encodeURIComponent(url||location.href),t=encodeURIComponent(title||document.title);
-  var ov=document.createElement('div');
-  ov.id='afishi-share-panel';
-  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
-  ov.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;">'
-    +'<div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-align:center;margin-bottom:16px;">📤 Поделиться</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
-    +'<a href="https://vk.com/share.php?url='+u+'&title='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#4a76a8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">VK</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">ВКонтакте</span></a>'
-    +'<a href="https://connect.ok.ru/offer?url='+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#ee8208;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">ОК</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">ОК</span></a>'
-    +'<a href="https://t.me/share/url?url='+u+'&text='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#2ca5e0;display:flex;align-items:center;justify-content:center;font-size:20px;">✈️</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Telegram</span></a>'
-    +'<a href="https://wa.me/?text='+t+'%20'+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:20px;">💬</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">WhatsApp</span></a>'
-    +'<a href="https://dzen.ru/share?url='+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#ff6600;display:flex;align-items:center;justify-content:center;font-size:20px;">🔶</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Дзен</span></a>'
-    +'<a href="https://rutube.ru/share/?url='+u+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#060a11;display:flex;align-items:center;justify-content:center;font-size:20px;">▶️</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Rutube</span></a>'
-    +'<a href="https://yandex.ru/news/story/?url='+u+'&title='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#fc3f1d;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;">Я</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">Яндекс</span></a>'
-    +'<a href="https://vk.com/video?q='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;"><div style="width:44px;height:44px;border-radius:12px;background:#6c17c9;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:Oswald,sans-serif;">M</div><span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">MAX</span></a>'
-    +'</div>'
-    +'<button onclick="var inp=document.createElement('input');inp.value=''+decodeURIComponent(url||location.href)+'';document.body.appendChild(inp);inp.select();document.execCommand('copy');inp.remove();this.textContent='✅ Скопировано!';setTimeout(()=>{this.textContent='📋 Скопировать ссылку';},2000);" style="width:100%;background:#1a1a1a;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px;border-radius:8px;border:none;cursor:pointer;margin-bottom:8px;">📋 Скопировать ссылку</button>'
-    +'<button onclick="document.getElementById('afishi-share-panel').remove();" style="width:100%;background:#f0f0f0;color:#444;font-size:13px;padding:10px;border-radius:8px;border:none;cursor:pointer;">Закрыть</button>'
-    +'</div>';
-  document.body.appendChild(ov);
-}
+// Авто-показ формы входа если не авторизован
+window.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var layout = document.querySelector('.admin-layout');
+    var overlay = document.getElementById('adminLoginOverlay');
+    if ((!layout || layout.style.display === 'none' || layout.style.display === '') && !overlay) {
+      adminLogin();
+    }
+  }, 300);
+});
 </script>
 </body>'); }
 }
@@ -4421,16 +4370,8 @@ function renderDashboardFull() {
 
 // Автоинициализация при загрузке
 window.addEventListener('DOMContentLoaded', function() {
-  checkAuth();
+  if (typeof checkAuth === 'function') checkAuth();
   if (typeof renderDashboardFull === 'function') renderDashboardFull();
-  // Авто-показ формы входа если не авторизован
-  setTimeout(function() {
-    var layout = document.querySelector('.admin-layout');
-    var overlay = document.getElementById('adminLoginOverlay');
-    if ((!layout || layout.style.display === 'none') && !overlay) {
-      adminLogin();
-    }
-  }, 200);
 });
 
 
