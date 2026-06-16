@@ -5228,31 +5228,59 @@ function closeModal() {
 
 <script>
 // ── Seed demo reviews if none exist ─────────────────────────────
+// Формат: afishi_reviews_<type>_<id> = [{author,rating,text,...}]
 (function() {
   try {
-    var key = 'afishi_reviews';
-    var existing = [];
-    try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
-    if (!existing || existing.length === 0) {
-      var demos = [
-        {id:'rv001', author:'Анна М.', city:'Волгоград', event:'Кай Метов — юбилей',
-         venue:'Волгоград Арена', rating:5, text:'Отличный концерт! Звук был великолепный, много живых эмоций. Однозначно рекомендую!',
-         date:'2026-06-10', status:'approved', source:'site'},
-        {id:'rv002', author:'Дмитрий К.', city:'Волгоград', event:'Rock Night Deep Purple',
-         venue:'КЗ Комсомол', rating:4, text:'Атмосфера была потрясающей, трибьют сыгран профессионально. Немного не хватило громкости.',
-         date:'2026-06-12', status:'approved', source:'site'},
-        {id:'rv003', author:'Мария С.', city:'Волгоград', event:'Кармен — оперный спектакль',
-         venue:'Муз. театр', rating:5, text:'Великолепная постановка! Сопрано просто невероятное. Буду рекомендовать всем знакомым.',
-         date:'2026-06-08', status:'approved', source:'site'},
-        {id:'rv004', author:'Алексей Т.', city:'Волгоград', event:'Буратино — ТЮЗ',
-         venue:'ТЮЗ', rating:4, text:'Дети в восторге! Яркие костюмы, динамичный сюжет. Чуть длиннее антракт — было бы лучше.',
-         date:'2026-06-11', status:'pending', source:'site'},
-        {id:'rv005', author:'Ольга Р.', city:'Волгоград', event:'Симфоническая музыка',
-         venue:'Волгоградская Филармония', rating:5, text:'Завораживающее исполнение Бетховена. Зал заполнен, публика аплодировала стоя!',
-         date:'2026-06-09', status:'approved', source:'site'},
-      ];
-      localStorage.setItem(key, JSON.stringify(demos));
+    // Проверить есть ли уже отзывы
+    var hasReviews = false;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && (k.startsWith('afishi_reviews_') || k === 'afishi_reviews')) {
+        try {
+          var v = JSON.parse(localStorage.getItem(k) || 'null');
+          if (v && (Array.isArray(v) && v.length > 0 || typeof v === 'object' && Object.keys(v).length > 0)) {
+            hasReviews = true; break;
+          }
+        } catch(e) {}
+      }
     }
+    if (hasReviews) return;
+
+    // Записать 5 демо-отзывов в формате объекта (Format 1)
+    // ключ: 'events::eventId' → [{review}]
+    var demoDB = {
+      'concerts::vlg_kmet60': [{
+        id:'rv001', author:'Анна М.', city:'Волгоград', rating:5,
+        text:'Отличный концерт! Звук был великолепный, много живых эмоций. Однозначно рекомендую!',
+        date:'2026-06-10', status:'approved'
+      }],
+      'concerts::vlg_rock_night': [{
+        id:'rv002', author:'Дмитрий К.', city:'Волгоград', rating:4,
+        text:'Атмосфера была потрясающей, трибьют сыгран профессионально. Немного не хватило громкости.',
+        date:'2026-06-12', status:'approved'
+      }],
+      'theater::vlg_carmen': [{
+        id:'rv003', author:'Мария С.', city:'Волгоград', rating:5,
+        text:'Великолепная постановка! Сопрано просто невероятное. Буду рекомендовать всем знакомым.',
+        date:'2026-06-08', status:'approved'
+      }],
+      'theater::vlg_buratino': [{
+        id:'rv004', author:'Алексей Т.', city:'Волгоград', rating:4,
+        text:'Дети в восторге! Яркие костюмы, динамичный сюжет. Чуть длиннее антракт — было бы лучше.',
+        date:'2026-06-11', status:'pending'
+      }],
+      'concerts::vlg_simfonia': [{
+        id:'rv005', author:'Ольга Р.', city:'Волгоград', rating:5,
+        text:'Завораживающее исполнение Бетховена. Зал заполнен, публика аплодировала стоя!',
+        date:'2026-06-09', status:'approved'
+      }],
+      'kids::vlg_circus': [{
+        id:'rv006', author:'Наташа Д.', city:'Волгоград', rating:5,
+        text:'Дети просто в восторге! Очень красочное шоу, клоуны смешные, животные послушные. Приедем ещё!',
+        date:'2026-06-14', status:'approved'
+      }],
+    };
+    localStorage.setItem('afishi_reviews', JSON.stringify(demoDB));
   } catch(e) {}
 })();
 </script>

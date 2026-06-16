@@ -2054,13 +2054,21 @@ const CINEMAS_DB_SHARED = {
 // KIDS_DB — динамически из localStorage (события с cat:'kids')
 // + статический фолбэк если localStorage пустой
 var KIDS_DB_STATIC = [
-  { title:'Цирк «Победа». Новая программа', venue:'Волгоградский цирк', icon:'🎪', color:'#1a0020', date:'выходные', price:800, age:'0+', city:'Волгоград', cat:'Цирк',
-    photo:'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop&auto=format' },
-  { title:'Волшебник Изумрудного города', venue:'Волгоградский ТЮЗ', icon:'🌟', color:'#0a1a00', date:'выходные', price:450, age:'3+', city:'Волгоград', cat:'Театр',
-    photo:'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop&auto=format' },
-  { title:'Буратино и золотой ключик', venue:'Театр на Таганке', icon:'🎭', color:'#1a0a2e', date:'1 июля', price:600, age:'3+', city:'Москва', cat:'Театр', photo:null },
-  { title:'Большой цирк. Программа «Мечта»', venue:'Большой Московский Цирк', icon:'🎪', color:'#1a0020', date:'ежедн.', price:1200, age:'0+', city:'Москва', cat:'Цирк', photo:null },
-  { title:'Мастерская художника. Дети творят!', venue:'Эрарта', icon:'🎨', color:'#1a0010', date:'выходные', price:0, age:'3+', city:'Санкт-Петербург', cat:'Выставка', free:true, photo:null },
+  // ─── Волгоград ──────────────────────────────────────────────────
+  { id:'kv001', title:'Цирк «Победа» — новая программа', venue:'Волгоградский цирк',        icon:'🎪', color:'#1a0020', dateISO:'2026-06-21', date:'21 июня', price:800,  age:'0+', city:'Волгоград', cat:'Цирк',
+    photo:'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop' },
+  { id:'kv002', title:'Волшебник Изумрудного города',   venue:'ТЮЗ Волгоград',              icon:'🌟', color:'#0a1a00', dateISO:'2026-06-28', date:'28 июня', price:450,  age:'3+', city:'Волгоград', cat:'Театр',
+    photo:'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop' },
+  { id:'kv003', title:'Питер Пэн — балет для детей',    venue:'Муз. театр Волгоград',       icon:'🧚', color:'#003366', dateISO:'2026-06-28', date:'28 июня', price:350,  age:'5+', city:'Волгоград', cat:'Балет',   photo:null },
+  { id:'kv004', title:'Выставка динозавров',             venue:'Музей ИЗО Волгоград',        icon:'🦕', color:'#2a5c2a', dateISO:'2026-07-05', date:'5 июля',  price:350,  age:'5+', city:'Волгоград', cat:'Выставка', photo:null },
+  { id:'kv005', title:'Звёздное небо — планетарий',     venue:'Планетарий Волгоград',       icon:'🌟', color:'#000033', dateISO:'2026-07-12', date:'12 июля', price:250,  age:'6+', city:'Волгоград', cat:'Наука',    photo:null },
+  { id:'kv006', title:'Мастер-класс: лепка из глины',   venue:'Дом творчества Волгоград',   icon:'🏺', color:'#8B4513', dateISO:'2026-06-22', date:'22 июня', price:500,  age:'5+', city:'Волгоград', cat:'Мастер-класс', photo:null },
+  { id:'kv007', title:'Квест «Пираты Волги»',           venue:'Квест-клуб Волгоград',       icon:'🏴‍☠️', color:'#2a1a0a', dateISO:'2026-07-11', date:'11 июля', price:600,  age:'8+', city:'Волгоград', cat:'Квест',    photo:null },
+  // ─── Москва ─────────────────────────────────────────────────────
+  { id:'km001', title:'Буратино и золотой ключик',      venue:'Театр на Таганке',           icon:'🎭', color:'#1a0a2e', dateISO:'2026-07-01', date:'1 июля',  price:600,  age:'3+', city:'Москва',    cat:'Театр',    photo:null },
+  { id:'km002', title:'Большой цирк. Программа «Мечта»',venue:'Большой Московский Цирк',   icon:'🎪', color:'#1a0020', dateISO:'2026-06-20', date:'ежедн.',  price:1200, age:'0+', city:'Москва',    cat:'Цирк',     photo:null },
+  // ─── СПб ────────────────────────────────────────────────────────
+  { id:'ks001', title:'Мастерская художника. Дети творят!', venue:'Эрарта',                 icon:'🎨', color:'#1a0010', dateISO:'2026-06-29', date:'выходные', price:0,   age:'3+', city:'Санкт-Петербург', cat:'Выставка', free:true, photo:null },
 ];
 
 var KIDS_DB = (function() {
@@ -2729,8 +2737,15 @@ function renderPage(city) {
   if (kidsGrid) {
     var kdb = (typeof KIDS_DB !== 'undefined' && KIDS_DB.length) ? KIDS_DB
               : (typeof KIDS_DB_STATIC !== 'undefined' ? KIDS_DB_STATIC : []);
-    var kids = kdb.filter(function(k){ return k.city === city; }).slice(0,6);
-    if (!kids.length) kids = kdb.slice(0,6);
+    // Фильтр по городу + перемешать + взять 3 случайных
+    var kidsFiltered = kdb.filter(function(k){ return k.city === city; });
+    if (!kidsFiltered.length) kidsFiltered = kdb.slice();
+    // Fisher-Yates shuffle
+    for (var ki = kidsFiltered.length - 1; ki > 0; ki--) {
+      var kj = Math.floor(Math.random() * (ki + 1));
+      var kt = kidsFiltered[ki]; kidsFiltered[ki] = kidsFiltered[kj]; kidsFiltered[kj] = kt;
+    }
+    var kids = kidsFiltered.slice(0, 3);
     kidsGrid.innerHTML = kids.map(function(k){
       return '<div class="event-card ec-link" data-href="kids.html" style="cursor:pointer;">'
         +'<div class="event-card-img" style="background:'+(k.color||'#1a0a2e')+';display:flex;align-items:center;justify-content:center;font-size:42px;">'+(k.icon||'🧸')+'</div>'
