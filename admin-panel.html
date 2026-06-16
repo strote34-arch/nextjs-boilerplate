@@ -3907,6 +3907,63 @@ function previewMailing() {
   var win = window.open('', '_blank');
   if (win) { win.document.write('<title>' + subject + '</title><body style="font-family:sans-serif;max-width:600px;margin:40px auto;"><h2>' + subject + '</h2><p>' + body.replace(/\n/g,'<br>') + '</p>
 
+
+<script>
+// ── Final override: safe login wins over prompt-based login ───────
+(function() {
+  var _safeFn = window.adminLogin; // уже наша safe версия из начала файла
+  // Форсируем: переопределяем любой prompt-based adminLogin
+  window.adminLogin = function() {
+    var ov = document.getElementById('_safeLoginOverlay');
+    if (ov) { ov.style.display = 'flex'; return; }
+    var d = document.createElement('div');
+    d.id = '_safeLoginOverlay';
+    d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;';
+    d.innerHTML = [
+      '<div style="background:#fff;border-radius:12px;padding:28px 32px;width:360px;max-width:92vw;box-shadow:0 24px 72px rgba(0,0,0,.45);">',
+      '<div style="font-family:Oswald,sans-serif;font-size:24px;font-weight:700;margin-bottom:6px;">🔐 Вход в панель</div>',
+      '<div style="font-size:12px;color:#999;margin-bottom:20px;">Администраторам Афиши.ру</div>',
+      '<label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">EMAIL</label>',
+      '<input id="_fli_e" type="email" value="admin@afishi.ru" autocomplete="username" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:12px;">',
+      '<label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">ПАРОЛЬ</label>',
+      '<input id="_fli_p" type="password" placeholder="Введите пароль" autocomplete="current-password" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;outline:none;margin-bottom:6px;">',
+      '<div id="_fli_err" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:12px;"></div>',
+      '<button onclick="_doFinalLogin()" style="width:100%;background:#c8102e;color:#fff;border:none;border-radius:6px;padding:13px;font-family:Oswald,sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;cursor:pointer;letter-spacing:.3px;margin-bottom:8px;">ВОЙТИ</button>',
+      '<button onclick="document.getElementById(\'_safeLoginOverlay\').style.display=\'none\'" style="width:100%;background:none;border:1px solid #e0e0e0;border-radius:6px;padding:10px;font-size:13px;color:#777;cursor:pointer;">Отмена</button>',
+      '<div style="margin-top:14px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #f0ede8;padding-top:12px;">admin@afishi.ru &nbsp;/&nbsp; Afishi2018!</div>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(d);
+    setTimeout(function(){ var p=document.getElementById('_fli_p'); if(p) p.focus(); },150);
+    document.addEventListener('keydown', function h(e){ if(e.key==='Enter'){ _doFinalLogin(); document.removeEventListener('keydown',h); } });
+  };
+
+  window._doFinalLogin = function() {
+    var e = (document.getElementById('_fli_e')||{}).value||'';
+    var p = (document.getElementById('_fli_p')||{}).value||'';
+    var err = document.getElementById('_fli_err');
+    var creds = [{email:'admin@afishi.ru',pass:'Afishi2018!',name:'Администратор',role:'admin'},{email:'strote34@gmail.com',pass:'admin2026',name:'Серго',role:'admin'}];
+    var found = creds.filter(function(c){ return c.email===e.trim().toLowerCase() && c.pass===p; })[0];
+    if (found) {
+      try { localStorage.setItem('afishi_user', JSON.stringify({email:found.email,name:found.name,role:found.role,loginAt:Date.now()})); } catch(x){}
+      location.reload();
+    } else {
+      if (err) { err.textContent = '❌ Неверный email или пароль'; }
+      var pin = document.getElementById('_fli_p');
+      if (pin) { pin.style.borderColor='#c8102e'; setTimeout(function(){ pin.style.borderColor=''; },2000); }
+    }
+  };
+
+  // Показать форму если не авторизован
+  document.addEventListener('DOMContentLoaded', function() {
+    var u = null;
+    try { u = JSON.parse(localStorage.getItem('afishi_user')||'null'); } catch(x){}
+    if (!u || (u.role !== 'admin' && u.role !== 'moderator')) {
+      setTimeout(window.adminLogin, 250);
+    }
+  });
+})();
+</script>
 </body>'); }
 }
 

@@ -1893,5 +1893,89 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
+
+<script>
+// ── togglePushkinTheater ─────────────────────────────────────────
+function togglePushkinTheater() {
+  var info = document.getElementById('pkTheaterInfo');
+  var btn  = document.getElementById('pkTheaterBtn');
+  if (!info) return;
+  var visible = info.style.display !== 'none' && info.style.display !== '';
+  info.style.display = visible ? 'none' : 'block';
+  if (btn) btn.style.opacity = visible ? '1' : '0.85';
+}
+
+// ── openShowModal — открыть спектакль: описание + билеты + отзывы ─
+function openShowModal(showId) {
+  // Найти спектакль в THEATERS_DB
+  var show = null;
+  var theaterName = '';
+  if (typeof THEATERS_DB !== 'undefined') {
+    Object.keys(THEATERS_DB).forEach(function(city) {
+      (THEATERS_DB[city]||[]).forEach(function(th) {
+        (th.events||[]).forEach(function(ev, i) {
+          if ((th.id + '_' + i) === showId || ev.id === showId) {
+            show = ev; theaterName = th.name;
+          }
+        });
+      });
+    });
+  }
+  if (!show) { show = {title: showId, desc: '', price: '', date: ''}; }
+
+  var modal = document.getElementById('showModal');
+  if (!modal) return;
+
+  // Заполнить модал
+  var title = document.getElementById('mtitle');
+  var genre = document.getElementById('mgenre');
+  var meta  = document.getElementById('mmeta');
+  var poster = document.getElementById('mposter');
+
+  if (title) title.textContent = show.title || '';
+  if (genre) genre.textContent = '🎭 Спектакль' + (theaterName ? ' · ' + theaterName : '');
+  if (meta)  meta.innerHTML = (show.date ? '📅 ' + show.date : '') + (show.time ? ' · ⏰ ' + show.time : '') + (show.price ? ' · 💰 ' + show.price : '');
+  if (poster) poster.innerHTML = '<div style="font-size:56px;display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#1a0a2e,#3d1a7a);">🎭</div>';
+
+  // Описание
+  var descEl = document.getElementById('msynopsis') || document.getElementById('mdesc');
+  if (!descEl) {
+    descEl = modal.querySelector('.modal-synopsis') || modal.querySelector('.modal-desc');
+  }
+  if (descEl) descEl.textContent = show.desc || 'Классическая постановка одного из лучших театров города.';
+
+  // Билеты — добавить если нет
+  var ticketEl = document.getElementById('mtickets');
+  if (!ticketEl) {
+    var tickWrap = modal.querySelector('.modal-actions') || modal.querySelector('.ck-section');
+    if (tickWrap) {
+      var btn = document.createElement('a');
+      btn.id = 'mtickets';
+      btn.href = 'https://qtickets.ru';
+      btn.target = '_blank';
+      btn.style.cssText = 'display:inline-block;background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px 24px;border-radius:4px;text-decoration:none;margin-top:12px;';
+      btn.textContent = '🎟️ Купить билет';
+      tickWrap.appendChild(btn);
+    }
+  } else {
+    ticketEl.style.display = '';
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeShowModal() {
+  var modal = document.getElementById('showModal');
+  if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
+// Перехватить закрытие show-modal через существующую функцию
+var _origCloseModal = window.closeModal;
+window.closeModal = function() {
+  closeShowModal();
+  if (_origCloseModal) _origCloseModal();
+};
+</script>
 </body>
 </html>
