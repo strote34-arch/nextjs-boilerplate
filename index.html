@@ -1031,6 +1031,12 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
   setTimeout(go, 300);
 })();
 </script>
+
+<style>
+/* Sidebar: фиксировать правый столб */
+.main-layout { display: grid !important; grid-template-columns: 1fr 300px !important; gap: 24px; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+@media(max-width:900px) { .main-layout { grid-template-columns: 1fr !important; } .main-layout aside { display: none; } }
+</style>
 </head>
 <body>
 
@@ -1592,6 +1598,17 @@ footer {
 
   <!-- SIDEBAR -->
   <aside>
+
+    <!-- ВЕРТИКАЛЬНЫЙ БАННЕР -->
+    <div class="promo-banner" style="background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);border-radius:8px;padding:20px 16px;color:#fff;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;opacity:.08;background:repeating-linear-gradient(45deg,#fff,#fff 1px,transparent 1px,transparent 8px);"></div>
+      <div style="position:relative;">
+        <div style="font-size:36px;margin-bottom:10px;">🎫</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Добавьте<br>событие</div>
+        <div style="font-size:12px;opacity:.8;line-height:1.5;margin-bottom:14px;">Разместите анонс концерта, выставки или спектакля</div>
+        <a href="event-add.html" style="display:block;background:#fff;color:#c8102e;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px;border-radius:6px;text-decoration:none;letter-spacing:.3px;">Добавить →</a>
+      </div>
+    </div>
     <div class="sw">
       <div class="sw-head">🔥 Популярное сегодня</div>
       <div class="sw-body" id="popularWidget"></div>
@@ -2643,6 +2660,7 @@ function renderPage(city) {
   renderDateStrip();
   renderHeroAside(city);
   renderAIRecs(city);
+  renderSidebar(city);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -2651,5 +2669,66 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+<script>
+// ── Sidebar widgets ────────────────────────────────────────────────
+function renderSidebar(city) {
+  city = city || localStorage.getItem('afishi_city') || 'Волгоград';
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+  var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  function fmtD(iso) { if (!iso) return ''; var p=iso.split('-'); return parseInt(p[2])+' '+MONTHS[parseInt(p[1])-1]; }
+
+  // 🔥 Популярное сегодня
+  var popEl = document.getElementById('popularWidget');
+  if (popEl) {
+    var popular = (CONCERTS_DB||[]).filter(function(c){
+      return c.city===city && c.dateISO && c.dateISO>=todayISO;
+    }).sort(function(a,b){ return (b.rating||0)-(a.rating||0)||(b.hot?1:0)-(a.hot?1:0); }).slice(0,4);
+    popEl.innerHTML = popular.length ? popular.map(function(ev,i){
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;">'
+        +'<div style="min-width:28px;height:28px;border-radius:50%;background:'+ev.color+';display:flex;align-items:center;justify-content:center;font-size:14px;">'+ev.icon+'</div>'
+        +'<div><div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.3;">'+ev.title+'</div>'
+        +'<div style="font-size:11px;color:#888;">'+fmtD(ev.dateISO)+'</div></div></div>';
+    }).join('') : '<div style="font-size:12px;color:#aaa;padding:8px 0;">Нет событий</div>';
+  }
+
+  // 🏙️ Другие города
+  var cityLinksEl = document.getElementById('cityLinks');
+  if (cityLinksEl) {
+    var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Воронеж'];
+    cityLinksEl.innerHTML = cities.filter(function(c){ return c !== city; }).map(function(c){
+      return '<a href="#" onclick="window.renderPage && renderPage(\''+c+'\'); return false;" '
+        +'style="display:block;padding:6px 0;font-size:13px;color:var(--red);text-decoration:none;border-bottom:1px solid #f5f3ef;">'+c+'</a>';
+    }).join('');
+  }
+
+  // 📝 Виджет отзывов (статичный если нет данных)
+  var reviewsEl = document.getElementById('latestReviewsWidget');
+  if (reviewsEl && reviewsEl.textContent.includes('Загрузка')) {
+    reviewsEl.innerHTML = [
+      '<div style="padding:8px 0;border-bottom:1px solid #f5f3ef;">',
+      '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Великолепный концерт!</div>',
+      '<div style="font-size:11px;color:#888;">⭐⭐⭐⭐⭐ · Lida — концерт</div></div>',
+      '<div style="padding:8px 0;">',
+      '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Очень понравилось</div>',
+      '<div style="font-size:11px;color:#888;">⭐⭐⭐⭐☆ · Stand up Нидаль</div></div>',
+    ].join('');
+  }
+  var myReviewsEl = document.getElementById('indexReviewsWidget');
+  if (myReviewsEl && myReviewsEl.textContent.includes('Загрузка')) {
+    myReviewsEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;text-align:center;">Вы ещё не оставляли отзывов</div>';
+  }
+  
+  // Статьи
+  var artEl = document.getElementById('articlesWidgetBody');
+  if (artEl && artEl.textContent.includes('Загрузка')) {
+    artEl.innerHTML = [
+      '<a href="articles.html" style="display:block;padding:8px 0;border-bottom:1px solid #f5f3ef;font-size:12px;font-weight:600;color:#1a1a1a;text-decoration:none;">Лучшие концерты июня 2026</a>',
+      '<a href="articles.html" style="display:block;padding:8px 0;font-size:12px;font-weight:600;color:#1a1a1a;text-decoration:none;">Театральные новинки сезона</a>',
+    ].join('');
+  }
+}
+</script>
 </body>
 </html>
