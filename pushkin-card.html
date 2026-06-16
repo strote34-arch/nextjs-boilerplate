@@ -1572,5 +1572,65 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+
+<script>
+// ── Pushkin-card: архив прошедших мероприятий ────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var MONTH = {
+    'января':0,'февраля':1,'марта':2,'апреля':3,'мая':4,'июня':5,
+    'июля':6,'августа':7,'сентября':8,'октября':9,'ноября':10,'декабря':11
+  };
+
+  var pastRows = [];
+  var futureRows = [];
+
+  document.querySelectorAll('.pk-row').forEach(function(row) {
+    var dateEl = row.querySelector('.pk-date');
+    if (!dateEl) return;
+    var txt = dateEl.textContent.trim();
+    var m = txt.match(/(\d{1,2})\s+(\S+)/);
+    if (!m) { futureRows.push(row); return; }
+    var day = parseInt(m[1]);
+    var mon = MONTH[m[2]];
+    if (mon === undefined) { futureRows.push(row); return; }
+    var evDate = new Date(2026, mon, day);
+    if (evDate < today) {
+      pastRows.push(row);
+    } else {
+      futureRows.push(row);
+    }
+  });
+
+  if (!pastRows.length) return;
+
+  // Скрыть прошедшие
+  pastRows.forEach(function(r) { r.style.display = 'none'; r.dataset.archived = '1'; });
+
+  // Добавить кнопку архива
+  var evSection = document.querySelector('.pk-section-head + .pk-section-head') 
+               || document.querySelectorAll('.pk-section-head')[1];
+  var insertAfter = document.querySelector('.pk-events');
+  if (!insertAfter) insertAfter = document.querySelector('.pk-row') && document.querySelector('.pk-row').parentNode;
+
+  var archBtn = document.createElement('div');
+  archBtn.style.cssText = 'text-align:center;margin:16px 0 8px;';
+  archBtn.innerHTML = '<button onclick="togglePKArchive(this)" '
+    +'style="background:none;border:1.5px solid #c8102e;color:#c8102e;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:8px 20px;border-radius:20px;cursor:pointer;">'
+    +'📁 Прошедшие мероприятия (' + pastRows.length + ')</button>';
+  
+  if (insertAfter) insertAfter.appendChild(archBtn);
+
+  window.togglePKArchive = function(btn) {
+    var items = document.querySelectorAll('[data-archived="1"]');
+    var vis = items[0] && items[0].style.display !== 'none';
+    items.forEach(function(r){ r.style.display = vis ? 'none' : ''; });
+    btn.textContent = vis
+      ? '📁 Прошедшие мероприятия (' + items.length + ')'
+      : '📁 Скрыть прошедшие';
+  };
+});
+</script>
 </body>
 </html>

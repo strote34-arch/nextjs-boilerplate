@@ -5211,5 +5211,36 @@ function closeModal() {
   </div>
 </footer>
 
+
+<script>
+// ── Seed demo reviews if none exist ─────────────────────────────
+(function() {
+  try {
+    var key = 'afishi_reviews';
+    var existing = [];
+    try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
+    if (!existing || existing.length === 0) {
+      var demos = [
+        {id:'rv001', author:'Анна М.', city:'Волгоград', event:'Кай Метов — юбилей',
+         venue:'Волгоград Арена', rating:5, text:'Отличный концерт! Звук был великолепный, много живых эмоций. Однозначно рекомендую!',
+         date:'2026-06-10', status:'approved', source:'site'},
+        {id:'rv002', author:'Дмитрий К.', city:'Волгоград', event:'Rock Night Deep Purple',
+         venue:'КЗ Комсомол', rating:4, text:'Атмосфера была потрясающей, трибьют сыгран профессионально. Немного не хватило громкости.',
+         date:'2026-06-12', status:'approved', source:'site'},
+        {id:'rv003', author:'Мария С.', city:'Волгоград', event:'Кармен — оперный спектакль',
+         venue:'Муз. театр', rating:5, text:'Великолепная постановка! Сопрано просто невероятное. Буду рекомендовать всем знакомым.',
+         date:'2026-06-08', status:'approved', source:'site'},
+        {id:'rv004', author:'Алексей Т.', city:'Волгоград', event:'Буратино — ТЮЗ',
+         venue:'ТЮЗ', rating:4, text:'Дети в восторге! Яркие костюмы, динамичный сюжет. Чуть длиннее антракт — было бы лучше.',
+         date:'2026-06-11', status:'pending', source:'site'},
+        {id:'rv005', author:'Ольга Р.', city:'Волгоград', event:'Симфоническая музыка',
+         venue:'Волгоградская Филармония', rating:5, text:'Завораживающее исполнение Бетховена. Зал заполнен, публика аплодировала стоя!',
+         date:'2026-06-09', status:'approved', source:'site'},
+      ];
+      localStorage.setItem(key, JSON.stringify(demos));
+    }
+  } catch(e) {}
+})();
+</script>
 </body>
 </html>
