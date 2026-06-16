@@ -1144,6 +1144,20 @@ document.addEventListener('DOMContentLoaded', function() {
           style="background:#1a6c2e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;">
           ✚ Создать страницу заведения
         </button>
+        <button onclick="openPopularManager()"
+          style="background:#c8102e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;">
+          ⭐ Управление популярными
+        </button>
+        <button onclick="showViewStats()"
+          style="background:#1a0a2e;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;">
+          👁 Просмотры
+        </button>
+      </div>
+      <!-- Блок популярных заведений -->
+      <div id="popularVenuesBlock" style="background:#fffbe8;border:1px solid #f4b942;border-radius:8px;padding:16px;margin-bottom:16px;">
+        <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;">⭐ Закреплённые в «Популярном»</div>
+        <div id="featuredVenuesList" style="margin-bottom:10px;"></div>
+        <div style="font-size:12px;color:#888;">Эти заведения/события всегда показываются первыми в блоке 🔥 Популярное на сайте</div>
       </div>
       <div class="filter-row">
         <select id="venuesCityFilter" onchange="renderList('venues', getActiveStatus('venues'))">
@@ -5241,6 +5255,216 @@ function closeModal() {
     }
   } catch(e) {}
 })();
+</script>
+
+<script>
+/* ── Управление популярными заведениями/событиями ─────────────────
+   localStorage: afishi_featured = {id: true/false}
+   localStorage: afishi_views    = {id: count}
+──────────────────────────────────────────────────────────────────── */
+
+// ── Список заведений для добавления в популярные ──────────────────
+var VENUES_FOR_POPULAR = [
+  {id:'vlg_ckz',     name:'ЦКЗ Волгоградская Филармония', city:'Волгоград', icon:'🎼'},
+  {id:'vlg_arena',   name:'Волгоград Арена',               city:'Волгоград', icon:'🏟️'},
+  {id:'vlg_dom_off', name:'Дом Офицеров',                  city:'Волгоград', icon:'🏛️'},
+  {id:'vlg_komsomol',name:'КЗ Комсомол',                   city:'Волгоград', icon:'🎸'},
+  {id:'vlg_muztetr', name:'Волг. музыкальный театр',       city:'Волгоград', icon:'🎭'},
+  {id:'vlg_restoran',name:'Ресторан-клуб Панорама',        city:'Волгоград', icon:'🍽️'},
+  {id:'panorama',    name:'Панорама Сталинградской битвы', city:'Волгоград', icon:'⚔️'},
+  {id:'mashkov',     name:'Музей ИЗО им. Машкова',         city:'Волгоград', icon:'🖼️'},
+  {id:'kraeved',     name:'Краеведческий музей',           city:'Волгоград', icon:'🏛️'},
+];
+
+// ── Получить featured ──────────────────────────────────────────────
+function _getFeatured() {
+  try { return JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(e){ return {}; }
+}
+function _setFeatured(obj) {
+  try { localStorage.setItem('afishi_featured', JSON.stringify(obj)); } catch(e){}
+}
+
+// ── Получить просмотры ─────────────────────────────────────────────
+function _getViews() {
+  try { return JSON.parse(localStorage.getItem('afishi_views') || '{}'); } catch(e){ return {}; }
+}
+
+// ── Показать список featured в admin panel ─────────────────────────
+function renderFeaturedVenuesList() {
+  var el = document.getElementById('featuredVenuesList');
+  if (!el) return;
+  var featured = _getFeatured();
+  var items = VENUES_FOR_POPULAR.filter(function(v){ return featured[v.id]; });
+  
+  if (!items.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;padding:4px 0;">Нет закреплённых. Нажмите «Управление популярными».</div>';
+    return;
+  }
+  
+  el.innerHTML = items.map(function(v){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fff;border-radius:6px;margin-bottom:6px;">'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span style="font-size:18px;">'+v.icon+'</span>'
+      +'<div><div style="font-size:13px;font-weight:700;">'+v.name+'</div>'
+      +'<div style="font-size:11px;color:#888;">'+v.city+'</div>'
+      +'</div></div>'
+      +'<button onclick="removeFromFeatured(\''+v.id+'\')" '
+      +'style="background:none;border:1px solid #e0e0e0;color:#888;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">✕ Убрать</button>'
+      +'</div>';
+  }).join('');
+}
+
+function removeFromFeatured(id) {
+  var f = _getFeatured();
+  delete f[id];
+  _setFeatured(f);
+  renderFeaturedVenuesList();
+  showToastAdmin('✅ Удалено из популярных');
+}
+
+// ── Модал управления популярными ──────────────────────────────────
+function openPopularManager() {
+  var ov = document.getElementById('_popManagerOv');
+  if (ov) { ov.remove(); }
+  
+  var featured = _getFeatured();
+  var views    = _getViews();
+  
+  // Объединить VENUES_FOR_POPULAR + события из CONCERTS_DB (если доступен)
+  var allItems = VENUES_FOR_POPULAR.slice();
+  
+  // Сортировать: featured сначала, потом по просмотрам
+  allItems.sort(function(a, b) {
+    var fa = featured[a.id] ? 1 : 0;
+    var fb = featured[b.id] ? 1 : 0;
+    if (fb !== fa) return fb - fa;
+    return (views[b.id]||0) - (views[a.id]||0);
+  });
+  
+  var d = document.createElement('div');
+  d.id = '_popManagerOv';
+  d.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;';
+  
+  var rows = allItems.map(function(v){
+    var isFeat = featured[v.id] ? true : false;
+    var viewCnt = views[v.id] || 0;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0ede8;">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-size:22px;min-width:28px;">'+v.icon+'</span>'
+      +'<div>'
+      +'<div style="font-size:13px;font-weight:700;color:#1a1a1a;">'+v.name+'</div>'
+      +'<div style="font-size:11px;color:#888;">'+v.city+' · 👁 '+viewCnt+' просм.'+(isFeat?' · ⭐ в топе':'')+'</div>'
+      +'</div></div>'
+      +'<button onclick="_toggleFeatured(\''+v.id+'\',this)" '
+      +'data-featured="'+isFeat+'" '
+      +'style="min-width:120px;background:'+(isFeat?'#c8102e':'#f0ede8')+';color:'+(isFeat?'#fff':'#555')+';'
+      +'font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;'
+      +'border:none;border-radius:6px;padding:7px 12px;cursor:pointer;">'
+      +(isFeat?'⭐ В топе':'＋ Добавить в топ')+'</button>'
+      +'</div>';
+  }).join('');
+  
+  d.innerHTML = '<div style="background:#fff;border-radius:12px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;">'
+    +'<div style="background:linear-gradient(135deg,#1a0a2e,#c8102e);padding:20px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div>'
+    +'<div style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;color:#fff;">⭐ Управление «Популярным»</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;">Выберите заведения для блока 🔥 Популярное на сайте</div>'
+    +'</div>'
+    +'<button onclick="document.getElementById(\'_popManagerOv\').remove()" '
+    +'style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px 24px;">'
+    +'<div style="font-size:12px;color:#888;background:#f9f7f4;border-radius:6px;padding:10px 14px;margin-bottom:14px;">'
+    +'💡 Заведения с ⭐ показываются первыми в блоке «Популярное» на всех страницах сайта. Остальные сортируются по просмотрам.</div>'
+    + rows
+    +'</div></div>';
+  
+  document.body.appendChild(d);
+  d.addEventListener('click', function(e){ if(e.target===d) d.remove(); });
+}
+
+function _toggleFeatured(id, btn) {
+  var f = _getFeatured();
+  var wasActive = f[id] === true;
+  if (wasActive) {
+    delete f[id];
+    btn.style.background = '#f0ede8';
+    btn.style.color = '#555';
+    btn.textContent = '＋ Добавить в топ';
+    btn.dataset.featured = 'false';
+    showToastAdmin('✅ Убрано из топа: ' + id);
+  } else {
+    f[id] = true;
+    btn.style.background = '#c8102e';
+    btn.style.color = '#fff';
+    btn.textContent = '⭐ В топе';
+    btn.dataset.featured = 'true';
+    showToastAdmin('⭐ Добавлено в топ: ' + id);
+  }
+  _setFeatured(f);
+  // Обновить список в panel
+  renderFeaturedVenuesList();
+}
+
+// ── Статистика просмотров ──────────────────────────────────────────
+function showViewStats() {
+  var views = _getViews();
+  var featured = _getFeatured();
+  
+  var ids = Object.keys(views).sort(function(a,b){ return views[b]-views[a]; });
+  
+  if (!ids.length) {
+    alert('Просмотров пока нет. Они накапливаются когда пользователи кликают на события/заведения на сайте.');
+    return;
+  }
+  
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;';
+  
+  var rows = ids.slice(0,20).map(function(id, i) {
+    var cnt = views[id];
+    var isFeat = featured[id] ? ' ⭐' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f3ef;">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-family:Oswald,sans-serif;font-size:11px;color:#aaa;min-width:20px;">#'+(i+1)+'</span>'
+      +'<div style="font-size:13px;font-weight:600;color:#1a1a1a;">'+id+isFeat+'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:#c8102e;">👁 '+cnt+'</span>'
+      +'<button onclick="_toggleFeaturedById(\''+id+'\')" '
+      +'style="font-size:10px;padding:4px 8px;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;background:'+(featured[id]?'#c8102e':'none')+';color:'+(featured[id]?'#fff':'#666')+'">'
+      +(featured[id]?'⭐ Убрать':'＋ В топ')+'</button>'
+      +'</div></div>';
+  }).join('');
+  
+  d.innerHTML = '<div style="background:#fff;border-radius:12px;width:500px;max-width:95vw;max-height:80vh;overflow-y:auto;">'
+    +'<div style="background:#1a0a2e;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-family:Oswald,sans-serif;font-size:18px;font-weight:700;color:#fff;">👁 Статистика просмотров</div>'
+    +'<button onclick="this.closest(\'div[style*=\\"position:fixed\\"]\')" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:16px;width:28px;height:28px;border-radius:50%;cursor:pointer;" onclick="this.parentElement.parentElement.parentElement.remove()">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px 24px;">'
+    +(ids.length ? rows : '<div style="color:#aaa;text-align:center;padding:20px;">Нет данных</div>')
+    +'<div style="margin-top:16px;text-align:right;">'
+    +'<button onclick="this.closest(\'[style*=z-index]\').remove()" style="background:#f0ede8;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;">Закрыть</button>'
+    +'<button onclick="if(confirm(\'Сбросить все просмотры?\'))localStorage.removeItem(\'afishi_views\');location.reload();" style="margin-left:8px;background:#c8102e;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;">🗑 Сбросить всё</button>'
+    +'</div></div></div>';
+    
+  d.addEventListener('click', function(e){ if(e.target===d) d.remove(); });
+  document.body.appendChild(d);
+}
+
+function _toggleFeaturedById(id) {
+  var f = _getFeatured();
+  if (f[id]) { delete f[id]; } else { f[id] = true; }
+  _setFeatured(f);
+  renderFeaturedVenuesList();
+  showViewStats(); // обновить модал
+}
+
+// ── Инициализация при загрузке панели ─────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  renderFeaturedVenuesList();
+});
 </script>
 </body>
 </html>

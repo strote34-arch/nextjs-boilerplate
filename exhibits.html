@@ -1476,10 +1476,19 @@ document.addEventListener('DOMContentLoaded', function() {
   var lbl = document.getElementById('cityTopLabel');
   if (lbl) lbl.textContent = city;
 
-  // 🔥 Популярное
+  // 🔥 Популярное — сортировка по просмотрам и featured
   var popEl = document.getElementById('sbPopular');
   if (popEl) {
+    var _vw = {}; var _ft = {};
+    try { _vw = JSON.parse(localStorage.getItem('afishi_views') || '{}'); } catch(x){}
+    try { _ft = JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(x){}
     var ex = typeof EXHIBITS_DB !== 'undefined' ? (EXHIBITS_DB[city] || EXHIBITS_DB['Волгоград'] || []) : [];
+    // Сортировать: featured → просмотры → порядок по умолчанию
+    ex = ex.slice().sort(function(a, b) {
+      var fa = _ft[a.id] ? 1 : 0, fb = _ft[b.id] ? 1 : 0;
+      if (fb !== fa) return fb - fa;
+      return (_vw[b.id]||0) - (_vw[a.id]||0);
+    });
     popEl.innerHTML = ex.slice(0,4).map(function(e){
       return '<div style="padding:8px 0;border-bottom:1px solid #f5f3ef;display:flex;gap:8px;align-items:flex-start;">'
         +'<div style="font-size:20px;min-width:24px;">'+e.icon+'</div>'
@@ -1570,11 +1579,14 @@ document.addEventListener('DOMContentLoaded', function() {
       {icon:'🏛️',name:'Краеведческий музей',url:'exhibit-kraeved-volgograd.html'},
     ];
     popEl.innerHTML = ex2.map(function(e){
-      return '<a href="'+(e.url||'exhibits.html')+'" style="display:flex;gap:8px;align-items:center;'
+      var isFeat = _ft[e.id] ? '⭐ ' : '';
+      var viewCnt = _vw[e.id] || 0;
+      return '<a href="'+(e.url||'exhibits.html')+'" onclick="try{var v=JSON.parse(localStorage.getItem(\'afishi_views\')||\'{}\');v[\''+e.id+'\']=(v[\''+e.id+'\']+1||1);localStorage.setItem(\'afishi_views\',JSON.stringify(v));}catch(x){}" style="display:flex;gap:8px;align-items:center;'
         +'padding:8px 0;border-bottom:1px solid #f5f3ef;text-decoration:none;color:inherit;">'
         +'<span style="font-size:20px;min-width:26px;">'+e.icon+'</span>'
-        +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.3;">'+e.name+'</div>'
-        +'</a>';
+        +'<div><div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.3;">'+isFeat+e.name+'</div>'
+        +(viewCnt?'<div style="font-size:10px;color:#aaa;">👁 '+viewCnt+' просм.</div>':'')
+        +'</div></a>';
     }).join('');
   }
 
