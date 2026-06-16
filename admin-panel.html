@@ -5025,6 +5025,67 @@ function closeModal() {
 }
 </script>
 
+<script>
+/* ── adminLogin final override — runs after all other scripts ── */
+(function() {
+  var _safe = function() {
+    var ov = document.getElementById('_sli_ov');
+    if (ov) { ov.style.display='flex'; return; }
+    var d = document.createElement('div');
+    d.id = '_sli_ov';
+    d.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;';
+    d.innerHTML = [
+      '<div style="background:#fff;border-radius:12px;padding:28px 32px;width:360px;max-width:92vw;box-shadow:0 24px 72px rgba(0,0,0,.45);">',
+      '<div style="font-family:Oswald,sans-serif;font-size:24px;font-weight:700;margin-bottom:4px;">🔐 Вход в панель</div>',
+      '<div style="font-size:12px;color:#999;margin-bottom:20px;">Афиши.ру · Администраторам</div>',
+      '<label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">EMAIL</label>',
+      '<input id="_sli_e" type="email" value="admin@afishi.ru" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;margin-bottom:12px;">',
+      '<label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">ПАРОЛЬ</label>',
+      '<input id="_sli_p" type="password" placeholder="Введите пароль" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;margin-bottom:6px;">',
+      '<div id="_sli_err" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:12px;"></div>',
+      '<button onclick="window._doAdminLogin()" style="width:100%;background:#c8102e;color:#fff;border:none;border-radius:6px;padding:13px;font-family:Oswald,sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;cursor:pointer;margin-bottom:8px;">ВОЙТИ</button>',
+      '<button onclick="document.getElementById(\'_sli_ov\').style.display=\'none\'" style="width:100%;background:none;border:1px solid #ddd;border-radius:6px;padding:10px;cursor:pointer;font-size:13px;color:#777;">Отмена</button>',
+      '<div style="margin-top:14px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #f0f0f0;padding-top:12px;">admin@afishi.ru / Afishi2018!</div>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(d);
+    var pEl = document.getElementById('_sli_p');
+    if (pEl) { pEl.focus(); pEl.onkeydown = function(e){ if(e.key==='Enter') window._doAdminLogin(); }; }
+  };
+
+  window._doAdminLogin = function() {
+    var e = (document.getElementById('_sli_e')||{}).value||'';
+    var p = (document.getElementById('_sli_p')||{}).value||'';
+    var err = document.getElementById('_sli_err');
+    var creds = [
+      {email:'admin@afishi.ru', pass:'Afishi2018!', name:'Администратор', role:'admin'},
+      {email:'strote34@gmail.com', pass:'admin2026', name:'Серго', role:'admin'}
+    ];
+    var found = creds.filter(function(c){ return c.email===e.trim().toLowerCase() && c.pass===p; })[0];
+    if (found) {
+      try { localStorage.setItem('afishi_user', JSON.stringify({email:found.email, name:found.name, role:found.role, loginAt:Date.now()})); } catch(x){}
+      location.reload();
+    } else {
+      if (err) err.textContent = '❌ Неверный email или пароль';
+      var pin = document.getElementById('_sli_p');
+      if (pin) { pin.style.borderColor='#c8102e'; setTimeout(function(){ pin.style.borderColor=''; }, 2000); }
+    }
+  };
+
+  /* Override adminLogin ПОСЛЕ всех скриптов */
+  window.adminLogin = _safe;
+
+  /* Показать форму при загрузке если не авторизован */
+  document.addEventListener('DOMContentLoaded', function() {
+    var u = null;
+    try { u = JSON.parse(localStorage.getItem('afishi_user')||'null'); } catch(x){}
+    if (!u || (u.role !== 'admin' && u.role !== 'moderator')) {
+      setTimeout(_safe, 200);
+    }
+  });
+})();
+</script>
+
 <footer>
   <!-- CTA полоса -->
   <div class="footer-top">
