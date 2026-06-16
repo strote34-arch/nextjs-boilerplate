@@ -1037,6 +1037,12 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
 .main-layout { display: grid !important; grid-template-columns: 1fr 300px !important; gap: 24px; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 @media(max-width:900px) { .main-layout { grid-template-columns: 1fr !important; } .main-layout aside { display: none; } }
 </style>
+<style>
+/* Sidebar fix */
+.main-layout { display: grid !important; grid-template-columns: 1fr 300px !important; gap: 24px; align-items: start !important; }
+.main-layout > aside { align-self: start !important; }
+@media(max-width:900px){ .main-layout { grid-template-columns: 1fr !important; } }
+</style>
 </head>
 <body>
 
@@ -1597,7 +1603,7 @@ footer {
   </div>
 
   <!-- SIDEBAR -->
-  <aside style="position:sticky;top:24px;">
+  <aside style="align-self:start;">
 
     <!-- ВЕРТИКАЛЬНЫЙ БАННЕР -->
     <div class="promo-banner" style="background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);border-radius:8px;padding:20px 16px;color:#fff;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;">
