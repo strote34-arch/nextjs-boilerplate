@@ -3273,7 +3273,7 @@ document.addEventListener('DOMContentLoaded', function() {
       pillsEl.innerHTML = '<span class="city-label">Город:</span>'
         + CITIES.map(function(c) {
             var active = c === city ? ' active' : '';
-            return '<button class="city-pill' + active + '" onclick="cinemaSwitchCity('' + c + '',this)">' + c + '</button>';
+            return '<button class="city-pill' + active + '" onclick="cinemaSwitchCity(\'" + c + "\',this)">' + c + '</button>';
           }).join('');
     }
 
