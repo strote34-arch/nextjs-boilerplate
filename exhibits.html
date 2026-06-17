@@ -900,6 +900,55 @@ footer {
   setTimeout(go, 300);
 })();
 </script>
+
+<style>
+/* ── Exhibits: city strip + tabs под шапкой ─── */
+.page-tabs-bar {
+  background: #fff;
+  border-bottom: 2px solid var(--border, #e8e4dc);
+  padding: 0 16px;
+  max-width: 100%;
+}
+.page-tabs-bar .tabs {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0;
+}
+.page-tabs-bar .tab {
+  padding: 14px 24px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--mid, #555);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.page-tabs-bar .tab:hover { color: var(--red, #c8102e); }
+.page-tabs-bar .tab.active {
+  color: var(--red, #c8102e);
+  border-bottom-color: var(--red, #c8102e);
+}
+/* city-strip под шапкой */
+.city-strip {
+  background: var(--dark, #1a1a1a);
+  padding: 8px 0;
+}
+.city-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+</style>
 </head>
 <body>
 
@@ -967,6 +1016,22 @@ footer {
       </div>
     </div>
   </header>
+
+<!-- CITY STRIP -->
+<div class="city-strip">
+  <div class="city-strip-inner" id="cityPillsContainer">
+    <span class="city-label">Город:</span>
+    <!-- Города загружаются динамически -->
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="page-tabs-bar">
+<div class="tabs">
+      <div class="tab active" onclick="switchMainTab('exhibits')">📋 Анонсы выставок</div>
+      <div class="tab" onclick="switchMainTab('venues')">🏛️ Площадки</div>
+    </div>
+</div>
 
 <!-- FILTER BAR -->
 <div class="filter-bar">
@@ -1053,20 +1118,9 @@ footer {
 <div class="page-wrap">
   <div class="main-col">
 
-<!-- CITY STRIP -->
-<div class="city-strip">
-  <div class="city-strip-inner" id="cityPillsContainer">
-    <span class="city-label">Город:</span>
-    <!-- Города загружаются динамически -->
-  </div>
-</div>
 
-    <div class="tabs">
-      <div class="tab active" onclick="switchMainTab('exhibits')">📋 Анонсы выставок</div>
-      <div class="tab" onclick="switchMainTab('venues')">🏛️ Площадки</div>
-    </div>
 
-    <!-- EXHIBITS TAB -->
+        <!-- EXHIBITS TAB -->
     <div class="tab-pane active" id="pane-exhibits">
       <div id="exhibitGrid" class="exhibit-grid"></div>
       <div id="exhibitList" class="exhibit-list" style="display:none;"></div>
