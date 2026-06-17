@@ -944,6 +944,14 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="ni-icon">🎬</span> Фильмы
       <span class="n-badge" id="nb-films"></span>
     </a>
+    <div class="nav-group-label">Источники</div>
+    <a class="nav-item" onclick="showPanel('sources',this)" href="#">
+      <span class="ni-icon">📋</span> Исходники событий
+    </a>
+    <a class="nav-item" onclick="showPanel('auto-check',this)" href="#">
+      <span class="ni-icon">🔄</span> Авто-проверка
+      <span class="n-badge" id="nb-autocheck" style="background:#e67e22;"></span>
+    </a>
     <div class="nav-group-label">Контент</div>
     <a class="nav-item" onclick="showPanel('articles',this)" href="#">
       <span class="ni-icon">📝</span> Статьи
@@ -1276,6 +1284,71 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="panel-banners" class="panel-card" style="display:none;">
       <div class="panel-head">📢 Баннеры / Реклама</div>
       <div class="panel-sub">Управление рекламными блоками на сайте</div>
+      <!-- ИСТОЧНИКИ МЕРОПРИЯТИЙ -->
+      <div id="panel-sources" class="panel-card" style="display:none;">
+        <div class="panel-head">📋 Исходники мероприятий</div>
+        <div class="panel-sub">Все события по категориям. Ссылки на страницы и исходные данные</div>
+
+        <!-- Быстрые ссылки -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+          <a href="concerts.html" target="_blank" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🎸 Концерты</a>
+          <a href="theater.html" target="_blank" style="background:#1a0a2e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🎭 Спектакли</a>
+          <a href="cinema.html" target="_blank" style="background:#003366;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🎬 Кинотеатры</a>
+          <a href="exhibits.html" target="_blank" style="background:#2a5c2a;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🖼️ Выставки</a>
+          <a href="kids.html" target="_blank" style="background:#ff6b35;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">👶 Детям</a>
+          <a href="venue-concert-city.html" target="_blank" style="background:#1a3300;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🏟️ Площадки</a>
+        </div>
+
+        <!-- Концерты -->
+        <div style="margin-bottom:20px;">
+          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🎸 Концерты</div>
+          <div id="src-concerts-list" style="max-height:300px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
+        </div>
+
+        <!-- Спектакли -->
+        <div style="margin-bottom:20px;">
+          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🎭 Спектакли</div>
+          <div id="src-theater-list" style="max-height:200px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
+        </div>
+
+        <!-- Фильмы -->
+        <div style="margin-bottom:20px;">
+          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🎬 Фильмы в кинотеатрах</div>
+          <div id="src-films-list" style="max-height:200px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
+        </div>
+
+        <!-- Выставки -->
+        <div style="margin-bottom:20px;">
+          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🖼️ Выставки</div>
+          <div id="src-exhibits-list" style="max-height:200px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="exhibit-panorama-stalingrad.html" target="_blank" style="font-size:12px;background:#f0ede8;padding:5px 12px;border-radius:4px;text-decoration:none;color:#1a1a1a;">⚔️ Панорама Сталинградской битвы</a>
+            <a href="exhibit-muzey-izo-volgograd.html" target="_blank" style="font-size:12px;background:#f0ede8;padding:5px 12px;border-radius:4px;text-decoration:none;color:#1a1a1a;">🖼️ Музей ИЗО</a>
+            <a href="exhibit-kraeved-volgograd.html" target="_blank" style="font-size:12px;background:#f0ede8;padding:5px 12px;border-radius:4px;text-decoration:none;color:#1a1a1a;">🏛️ Краеведческий</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- АВТО-ПРОВЕРКА (каждую субботу) -->
+      <div id="panel-auto-check" class="panel-card" style="display:none;">
+        <div class="panel-head">🔄 Авто-проверка источников</div>
+        <div class="panel-sub">Проверка новых событий. Запускается автоматически при входе в панель и каждую субботу.</div>
+
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px;margin-bottom:16px;">
+          <div style="font-weight:700;margin-bottom:4px;">⏱️ Последняя проверка</div>
+          <div id="lastCheckTime" style="font-size:13px;color:#555;">Никогда</div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">Запускается каждую <strong>субботу в 00:00</strong> · Источников: <span id="totalSourceCount">0</span></div>
+        </div>
+
+        <button onclick="runSourcesCheck()" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:11px 24px;cursor:pointer;margin-bottom:16px;">
+          🔄 Проверить сейчас
+        </button>
+
+        <div id="checkResultsBlock" style="display:none;">
+          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">📋 Найденные изменения</div>
+          <div id="checkResultsList"></div>
+        </div>
+      </div>
 
       <!-- ═══ Яндекс.Директ ═══ -->
       <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:12px;">
@@ -5492,6 +5565,209 @@ function _toggleFeaturedById(id) {
 // ── Инициализация при загрузке панели ─────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   renderFeaturedVenuesList();
+});
+</script>
+
+<script>
+/* ── Рендеринг панели источников ─────────────────────────────────── */
+function renderSourcesPanel() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+
+  function rowHtml(ev, isPast) {
+    var pastStyle = isPast ? 'opacity:.5;' : '';
+    var pastBadge = isPast ? '<span style="background:#e0e0e0;color:#888;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;margin-left:6px;">ПРОШЛО</span>' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;'+pastStyle+'">'
+      +'<div><span style="font-size:14px;margin-right:8px;">'+(ev.icon||'🎵')+'</span>'
+      +'<span style="font-size:13px;font-weight:700;">'+ev.title+'</span>'+pastBadge+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span style="font-size:11px;color:#888;">'+(ev.dateISO||ev.date||'')+'</span>'
+      +'<span style="font-size:11px;color:#888;">'+(ev.venue||ev.city||'')+'</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+(ev.price?'#1a6c2e':'#888')+';">'+(ev.price?'от '+ev.price+' ₽':'—')+'</span>'
+      +'</div></div>';
+  }
+
+  // Концерты
+  var concEl = document.getElementById('src-concerts-list');
+  if (concEl && typeof CONCERTS !== 'undefined') {
+    var city = localStorage.getItem('afishi_city') || 'Волгоград';
+    var arr = CONCERTS.filter(function(c){ return c.city === city; })
+      .sort(function(a,b){ return (a.dateISO||'') < (b.dateISO||'') ? -1 : 1; });
+    concEl.innerHTML = arr.length
+      ? arr.map(function(ev){ return rowHtml(ev, ev.dateISO && ev.dateISO < todayISO); }).join('')
+      : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных</div>';
+  }
+
+  // Спектакли
+  var thEl = document.getElementById('src-theater-list');
+  if (thEl && typeof THEATERS_DB !== 'undefined') {
+    var city2 = localStorage.getItem('afishi_city') || 'Волгоград';
+    var rows = [];
+    (THEATERS_DB[city2] || []).forEach(function(th){
+      (th.events || []).forEach(function(ev){
+        var pastCheck = ev.dateISO ? ev.dateISO < todayISO : false;
+        rows.push('<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;'+(pastCheck?'opacity:.5;':'')+'">'
+          +'<div><span style="font-size:14px;margin-right:8px;">'+(th.icon||'🎭')+'</span>'
+          +'<span style="font-size:13px;font-weight:700;">'+ev.title+'</span>'
+          +(pastCheck?'<span style="background:#e0e0e0;color:#888;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;margin-left:6px;">ПРОШЛО</span>':'')
+          +'</div>'
+          +'<div style="display:flex;gap:8px;align-items:center;">'
+          +'<span style="font-size:11px;color:#888;">'+(ev.date||ev.dateISO||'')+'</span>'
+          +'<span style="font-size:11px;color:#888;">'+th.name+'</span>'
+          +'<span style="font-size:11px;font-weight:700;color:#1a6c2e;">'+(ev.price||'—')+'</span>'
+          +'</div></div>');
+      });
+    });
+    thEl.innerHTML = rows.length ? rows.join('') : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных</div>';
+  }
+
+  // Фильмы
+  var filmEl = document.getElementById('src-films-list');
+  if (filmEl && typeof FILMS !== 'undefined') {
+    var films = (FILMS || []).slice(0, 20);
+    filmEl.innerHTML = films.length
+      ? films.map(function(f){
+          var pastCheck = f.dateISO ? f.dateISO < todayISO : false;
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;'+(pastCheck?'opacity:.5;':'')+'">'
+            +'<div><span style="font-size:14px;margin-right:8px;">'+(f.icon||'🎬')+'</span>'
+            +'<span style="font-size:13px;font-weight:700;">'+f.title+'</span>'
+            +(pastCheck?'<span style="background:#e0e0e0;color:#888;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;margin-left:6px;">ПРОШЛО</span>':'')
+            +'</div>'
+            +'<div style="font-size:11px;color:#888;">'+(f.date||f.dateISO||'')+'</div>'
+            +'</div>';
+        }).join('')
+      : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных</div>';
+  }
+
+  // Выставки
+  var exEl = document.getElementById('src-exhibits-list');
+  if (exEl && typeof EXHIBITS_DB !== 'undefined') {
+    var city3 = localStorage.getItem('afishi_city') || 'Волгоград';
+    var exArr = EXHIBITS_DB[city3] || [];
+    exEl.innerHTML = exArr.length
+      ? exArr.map(function(e){
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;">'
+            +'<div><span style="font-size:14px;margin-right:8px;">'+(e.icon||'🖼️')+'</span>'
+            +'<a href="'+(e.url||'exhibits.html')+'" target="_blank" style="font-size:13px;font-weight:700;color:#c8102e;text-decoration:none;">'+e.name+'</a></div>'
+            +'<div style="font-size:11px;color:#888;">'+(e.addr||'')+'</div>'
+            +'</div>';
+        }).join('')
+      : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных для '+city3+'</div>';
+  }
+
+  // Статистика для авто-проверки
+  var totalSrc = (typeof CONCERTS !== 'undefined' ? CONCERTS.length : 0)
+    + (typeof FILMS !== 'undefined' ? FILMS.length : 0);
+  var tEl = document.getElementById('totalSourceCount');
+  if (tEl) tEl.textContent = totalSrc;
+
+  // Последняя проверка
+  var lastRun = localStorage.getItem('afishi_monitor_last_run') || '0';
+  var statusEl = document.getElementById('lastCheckTime');
+  if (statusEl) {
+    var cities = loadMonitorCities();
+    var total = Object.values(cities).reduce(function(sum, c){ return sum + (c.sites||[]).filter(function(s){ return s.active; }).length; }, 0);
+    statusEl.innerHTML = lastRun ? '🕐 Последняя проверка: ' + new Date(parseInt(lastRun)).toLocaleString('ru') : '⏳ Никогда не запускалась';
+  }
+
+  // Бейдж авто-проверки
+  var badge = document.getElementById('nb-autocheck');
+  if (badge) {
+    var newCount = countNewSources();
+    badge.textContent = newCount || '';
+    badge.style.display = newCount ? '' : 'none';
+  }
+}
+
+function countNewSources() {
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  if (!lastRun) return 0;
+  var count = 0;
+  if (typeof CONCERTS !== 'undefined') {
+    CONCERTS.forEach(function(c){ if ((c._added || 0) > lastRun) count++; });
+  }
+  return count;
+}
+
+/* ── Авто-проверка источников ─────────────────────────────────── */
+function runSourcesCheck() {
+  var now = Date.now();
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  localStorage.setItem('afishi_monitor_last_run', String(now));
+  
+  var results = [];
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+
+  // Проверить концерты — новые после последней проверки
+  if (typeof CONCERTS !== 'undefined') {
+    var newConcerts = CONCERTS.filter(function(c){
+      return c.dateISO && c.dateISO >= todayISO;
+    });
+    results.push({cat:'🎸 Концерты', count: newConcerts.length,
+      items: newConcerts.slice(0,5).map(function(c){ return c.title + ' (' + c.dateISO + ')'; })});
+  }
+
+  // Проверить спектакли
+  if (typeof THEATERS_DB !== 'undefined') {
+    var thCount = 0;
+    Object.values(THEATERS_DB).forEach(function(arr){
+      arr.forEach(function(th){ thCount += (th.events||[]).length; });
+    });
+    results.push({cat:'🎭 Спектакли', count: thCount, items:[]});
+  }
+
+  // Проверить фильмы
+  if (typeof FILMS !== 'undefined') {
+    results.push({cat:'🎬 Фильмы', count: FILMS.length,
+      items: FILMS.slice(0,3).map(function(f){ return f.title; })});
+  }
+
+  var block = document.getElementById('checkResultsBlock');
+  var list = document.getElementById('checkResultsList');
+  if (!block || !list) return;
+  
+  block.style.display = '';
+  list.innerHTML = results.map(function(r){
+    return '<div style="background:#f9f7f4;border-radius:8px;padding:14px;margin-bottom:10px;">'
+      +'<div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:6px;">'+r.cat+' — '+r.count+' событий</div>'
+      +(r.items.length ? r.items.map(function(i){ return '<div style="font-size:12px;color:#555;padding:2px 0;">• '+i+'</div>'; }).join('') : '')
+      +'</div>';
+  }).join('');
+
+  var statusEl = document.getElementById('lastCheckTime');
+  if (statusEl) statusEl.textContent = '✅ Проверено: ' + new Date(now).toLocaleString('ru');
+
+  showToastAdmin('✅ Проверка завершена. Источников: ' + results.reduce(function(s,r){ return s+r.count; },0));
+}
+
+// Хук: при открытии панели источников — рендерить данные
+var _origShowPanel = window.showPanel;
+window.showPanel = function(name, el) {
+  if (_origShowPanel) _origShowPanel(name, el);
+  if (name === 'sources' || name === 'auto-check') {
+    setTimeout(renderSourcesPanel, 100);
+  }
+};
+
+// Авто-запуск в субботу
+document.addEventListener('DOMContentLoaded', function() {
+  var now = new Date();
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var lastRunDate = new Date(lastRun);
+  var daysSince = (now - lastRunDate) / 86400000;
+  // Запустить если суббота (6) и не запускалось сегодня
+  if (now.getDay() === 6 && daysSince > 1) {
+    setTimeout(runSourcesCheck, 3000);
+  }
+  // Показать бейдж
+  setTimeout(function() {
+    var badge = document.getElementById('nb-autocheck');
+    if (badge && !lastRun) {
+      badge.textContent = '!';
+      badge.style.display = '';
+    }
+  }, 500);
 });
 </script>
 </body>

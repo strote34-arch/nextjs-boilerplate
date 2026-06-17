@@ -1523,7 +1523,10 @@ function makeGridCard(f) {
       </div>
       <div class="film-price-row">
         <div class="film-price">от <strong>${f.price} ₽</strong></div>
-        <button class="buy-btn" onclick="event.stopPropagation();openModal('${f.id}',true)">Билеты</button>
+        <div style="display:flex;gap:6px;">
+          <button class="buy-btn" onclick="event.stopPropagation();openModal('${f.id}',true)">Билеты</button>
+          <button onclick="event.stopPropagation();shareFilm(${JSON.stringify(f.id)},${JSON.stringify(f.title)})" style="background:none;border:1.5px solid var(--red);color:var(--red);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:5px 10px;border-radius:4px;cursor:pointer;" title="Поделиться">📤</button>
+        </div>
       </div>
     </div>`;
   el.onclick = () => openModal(f.id);
@@ -3323,5 +3326,13 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+
+<script>
+function shareFilm(filmId, filmTitle) {
+  var url = window.location.origin + '/cinema.html#' + filmId;
+  var text = '🎬 ' + filmTitle + ' — смотрите в кино!';
+  _showSharePanel(text, url);
+}
+</script>
 </body>
 </html>

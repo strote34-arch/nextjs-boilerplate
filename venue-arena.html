@@ -1401,5 +1401,164 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 })();
 </script>
+<!-- Universal Archive Script: hides past events on ALL pages -->
+<script>
+(function() {
+  'use strict';
+  var MONTHS = {
+    'января':1,'февраля':2,'марта':3,'апреля':4,'мая':5,'июня':6,
+    'июля':7,'августа':8,'сентября':9,'октября':10,'ноября':11,'декабря':12
+  };
+
+  function parseRuDate(txt) {
+    if (!txt) return null;
+    var m = txt.match(/(\d{1,2})\s+(\S+?)\s*(\d{4})?/);
+    if (!m) return null;
+    var day = parseInt(m[1]);
+    var mon = MONTHS[m[2]];
+    if (!mon) return null;
+    var yr = m[3] ? parseInt(m[3]) : 2026;
+    return new Date(yr, mon - 1, day);
+  }
+
+  function parseISODate(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return null;
+    var p = iso.slice(0,10).split('-');
+    return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+  }
+
+  function archivePage() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var pastItems = [];
+
+    // Найти карточки с датой — pk-row, event-card, schedule-row и т.д.
+    var SELECTORS = [
+      '.pk-row', '.schedule-row', '.event-row',
+      '.event-item', '.concert-item', '.show-item'
+    ];
+
+    SELECTORS.forEach(function(sel) {
+      document.querySelectorAll(sel).forEach(function(el) {
+        if (el.dataset.archived) return;
+        var dateEl = el.querySelector('.pk-date, .event-date, .c-date, [class*="date"]');
+        var isoEl = el.dataset.dateIso || el.querySelector('[data-date-iso]');
+        
+        var evDate = null;
+        if (isoEl) {
+          evDate = parseISODate(typeof isoEl === 'string' ? isoEl : isoEl.dataset.dateIso);
+        } else if (dateEl) {
+          evDate = parseRuDate(dateEl.textContent);
+        }
+        
+        if (evDate && evDate < today) {
+          pastItems.push(el);
+        }
+      });
+    });
+
+    if (!pastItems.length) return;
+
+    // Скрыть прошедшие
+    pastItems.forEach(function(el) {
+      el.style.display = 'none';
+      el.dataset.archived = '1';
+    });
+
+    // Добавить кнопку архива к общему контейнеру
+    var container = pastItems[0].parentNode;
+    if (!container || container.querySelector('.universal-archive-btn')) return;
+
+    var btn = document.createElement('div');
+    btn.className = 'universal-archive-btn';
+    btn.style.cssText = 'text-align:center;padding:12px 0;margin:8px 0;';
+    btn.innerHTML = '<button onclick="(function(b){' +
+      'var items=document.querySelectorAll(\'[data-archived]\"1\"]\');' +
+      'var vis=items[0]&&items[0].style.display!==\'none\';' +
+      'items.forEach(function(el){el.style.display=vis?\'none\':\'\'});' +
+      'b.textContent=vis?\'📁 Прошедшие мероприятия (\'+items.length+\')\':' +
+      '\'📁 Скрыть прошедшие (\'+ items.length+\')\';' +
+      '})(this)" style="background:none;border:1.5px solid #c8102e;color:#c8102e;' +
+      'font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;' +
+      'padding:8px 20px;border-radius:20px;cursor:pointer;">' +
+      '📁 Прошедшие мероприятия (' + pastItems.length + ')</button>';
+    
+    container.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', archivePage);
+  } else {
+    archivePage();
+  }
+})();
+</script>
+
+<script>
+// ── Концерты на площадке ─────────────────────────────────────────
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var venueName = document.querySelector('.venue-name') || document.querySelector('h1');
+    var vname = venueName ? venueName.textContent.trim() : '';
+    
+    // Найти контейнер для концертов
+    var concEl = document.getElementById('venueConcerts');
+    if (!concEl) {
+      // Создать секцию концертов
+      var section = document.createElement('div');
+      section.className = 'venue-concerts-section';
+      section.style.cssText = 'max-width:800px;margin:24px auto;padding:0 16px;';
+      section.innerHTML = '<h2 style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">🎸 Ближайшие концерты</h2>'
+        + '<div id="venueConcerts"></div>';
+      
+      var main = document.querySelector('.content') || document.querySelector('main') || document.body;
+      var footer = document.querySelector('footer');
+      if (footer) footer.parentNode.insertBefore(section, footer);
+      else main.appendChild(section);
+      
+      concEl = document.getElementById('venueConcerts');
+    }
+    
+    if (!concEl) return;
+    
+    // Загрузить концерты из CONCERTS_DB или localStorage
+    var allConcerts = [];
+    try {
+      // Из статичного CONCERTS на странице concerts.html через sessionStorage
+      var stored = sessionStorage.getItem('afishi_concerts_cache');
+      if (stored) allConcerts = JSON.parse(stored);
+    } catch(e) {}
+    
+    // Фильтровать по названию площадки
+    var today = new Date(); today.setHours(0,0,0,0);
+    var todayISO = today.toISOString().slice(0,10);
+    var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+    
+    var concerts = allConcerts.filter(function(c){
+      return (c.venue || '').toLowerCase().indexOf(vname.toLowerCase().slice(0, 10)) >= 0
+        && c.dateISO && c.dateISO >= todayISO;
+    }).sort(function(a, b){ return a.dateISO < b.dateISO ? -1 : 1; });
+    
+    // Если нет данных из кэша — показать заглушку
+    if (!concerts.length) {
+      concEl.innerHTML = '<div style="background:#f9f7f4;border-radius:8px;padding:20px;text-align:center;color:#888;">'
+        + '<div style="font-size:32px;margin-bottom:8px;">🎸</div>'
+        + '<div style="font-weight:700;margin-bottom:4px;">Концерты на площадке</div>'
+        + '<div style="font-size:13px;">Смотрите актуальные события в разделе <a href="concerts.html" style="color:#c8102e;">Концерты</a></div>'
+        + '</div>';
+      return;
+    }
+    
+    concEl.innerHTML = concerts.slice(0,6).map(function(c){
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);">'
+        + '<div style="display:flex;align-items:center;gap:12px;">'
+        + '<div style="width:40px;height:40px;border-radius:8px;background:'+c.color+';display:flex;align-items:center;justify-content:center;font-size:20px;">'+c.icon+'</div>'
+        + '<div><div style="font-weight:700;font-size:14px;">'+c.title+'</div>'
+        + '<div style="font-size:12px;color:#888;">📅 '+c.date+(c.time?' · ⏰ '+c.time:'')+'</div></div></div>'
+        + '<a href="concerts.html" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:8px 14px;border-radius:4px;text-decoration:none;">Билеты →</a>'
+        + '</div>';
+    }).join('');
+  });
+})();
+</script>
 </body>
 </html>
