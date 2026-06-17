@@ -812,6 +812,19 @@ footer {
 .topbar a{color:#bbb;text-decoration:none;margin-right:16px;}
 .topbar a:hover{color:#fff;}
 </style>
+<style>
+.src-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f5f3ef;background:#fff;}
+.src-row:last-child{border-bottom:none;}
+.src-row:hover{background:#fafaf8;}
+.src-info{flex:1;min-width:0;}
+.src-name{display:block;font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:1px;}
+.src-url{display:block;font-size:11px;color:#c8102e;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.src-open{background:#f0ede8;color:#1a1a1a;font-family:Oswald,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 10px;border-radius:4px;text-decoration:none;white-space:nowrap;}
+.src-open:hover{background:#c8102e;color:#fff;}
+.src-row-sm{padding:6px 12px;border-bottom:1px solid #f5f3ef;font-size:12px;}
+.src-row-sm a{color:#c8102e;text-decoration:none;}
+.src-row-sm a:hover{text-decoration:underline;}
+</style>
 </head>
 <body>
 <div class="topbar">
@@ -1266,28 +1279,9 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div id="reviewsList" style="display:flex;flex-direction:column;gap:10px;">
-        <div style="color:#aaa;padding:20px;text-align:center;">Загрузка...</div>
-      </div>
-      <div class="panel-sub">Модерация отзывов пользователей</div>
-      <div class="item-tabs" style="margin-bottom:14px;">
-        <div class="itab active">Все отзывы</div>
-        <div class="itab">Ждут проверки</div>
-        <div class="itab">Жалобы</div>
-      </div>
-      <div id="reviewsList"></div>
-      <div style="background:#f9f7f4;border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-top:12px;font-size:11px;color:#999;">
-        💡 Отзывы хранятся в localStorage этого браузера. Показаны отзывы оставленные с данного устройства.
-      </div>
-    </div>
-
-    <!-- ═══ БАННЕРЫ / РЕКЛАМА ═══ -->
-    <div id="panel-banners" class="panel-card" style="display:none;">
-      <div class="panel-head">📢 Баннеры / Реклама</div>
-      <div class="panel-sub">Управление рекламными блоками на сайте</div>
-      <!-- ИСТОЧНИКИ МЕРОПРИЯТИЙ -->
-      <div id="panel-sources" class="panel-card" style="display:none;">
+        <div style="color:#aaa;padding:20px;text-align:center;">Загрузка...<id="panel-sources" class="panel-card" style="display:none;">
         <div class="panel-head">📋 Источники мероприятий</div>
-        <div class="panel-sub">Сайты-источники для парсинга событий по городам. Добавляйте, включайте и отключайте источники.</div>
+        <div class="panel-sub">Сайты-источники для парсинга событий по городам. Проверяйте новые события, включайте и отключайте источники.</div>
 
         <!-- Быстрые ссылки на разделы сайта -->
         <div style="background:#f9f7f4;border-radius:8px;padding:14px;margin-bottom:20px;">
@@ -1302,11 +1296,83 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
 
-        <!-- Города и источники (парсер) -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;">🌐 Источники для парсера</div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="addMonitorCity()" style="background:#1a6c2e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:7px 14px;cursor:pointer;">✚ Добавить город</button>
+        <!-- Волгоград -->
+        <div style="margin-bottom:20px;">
+          <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;padding:10px 16px;background:#1a0a2e;color:#fff;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">
+            <span>🏙️ Волгоград</span>
+            <span style="font-size:11px;opacity:.6;">12 источников</span>
+          </div>
+          <div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">ЦКЗ Волгоградская Филармония</span><a href="https://volgphil.ru/afisha/" target="_blank" class="src-url">volgphil.ru/afisha/</a></div><a href="https://volgphil.ru/afisha/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">НЭТ — Новый экспериментальный театр</span><a href="https://neatvolg.ru/afisha/" target="_blank" class="src-url">neatvolg.ru/afisha/</a></div><a href="https://neatvolg.ru/afisha/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Царицынская опера</span><a href="https://tzopera.ru/afisha/" target="_blank" class="src-url">tzopera.ru/afisha/</a></div><a href="https://tzopera.ru/afisha/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">ТЮЗ Волгоград</span><a href="https://volgogradtuz.ru/afisha/" target="_blank" class="src-url">volgogradtuz.ru/afisha/</a></div><a href="https://volgogradtuz.ru/afisha/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">КассирРу Волгоград</span><a href="https://vlg.kassir.ru/" target="_blank" class="src-url">vlg.kassir.ru</a></div><a href="https://vlg.kassir.ru/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Яндекс.Афиша Волгоград</span><a href="https://afisha.yandex.ru/volgograd/concert" target="_blank" class="src-url">afisha.yandex.ru/volgograd</a></div><a href="https://afisha.yandex.ru/volgograd/concert" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Афиша ВКонтакте Волгоград</span><a href="https://vk.com/afisha_volgograd" target="_blank" class="src-url">vk.com/afisha_volgograd</a></div><a href="https://vk.com/afisha_volgograd" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Т-Банк Афиша Волгоград</span><a href="https://www.tbank.ru/gorod/afisha/volgograd/concerts/" target="_blank" class="src-url">tbank.ru/afisha/volgograd</a></div><a href="https://www.tbank.ru/gorod/afisha/volgograd/concerts/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">КонцертГорода Волгоград</span><a href="https://koncertgoroda.ru/volgograd" target="_blank" class="src-url">koncertgoroda.ru/volgograd</a></div><a href="https://koncertgoroda.ru/volgograd" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">АфишаГо Волгоград</span><a href="https://vlg.afishago.ru/events/" target="_blank" class="src-url">vlg.afishago.ru/events/</a></div><a href="https://vlg.afishago.ru/events/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">МузТеатр Волгоград</span><a href="https://volgmuztheatre.ru/afisha/" target="_blank" class="src-url">volgmuztheatre.ru/afisha/</a></div><a href="https://volgmuztheatre.ru/afisha/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">TimeOut Волгоград</span><a href="https://www.timeout.ru/volgograd/art" target="_blank" class="src-url">timeout.ru/volgograd</a></div><a href="https://www.timeout.ru/volgograd/art" target="_blank" class="src-open">Открыть →</a></div>
+          </div>
+        </div>
+
+        <!-- Москва -->
+        <div style="margin-bottom:20px;">
+          <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;padding:10px 16px;background:#1a0a2e;color:#fff;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">
+            <span>🏛️ Москва</span><span style="font-size:11px;opacity:.6;">5 источников</span>
+          </div>
+          <div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">KassirRu Москва</span><a href="https://www.kassir.ru/" target="_blank" class="src-url">kassir.ru</a></div><a href="https://www.kassir.ru/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Афиша Москва</span><a href="https://www.afisha.ru/msk/" target="_blank" class="src-url">afisha.ru/msk/</a></div><a href="https://www.afisha.ru/msk/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Яндекс.Афиша Москва</span><a href="https://afisha.yandex.ru/moscow/" target="_blank" class="src-url">afisha.yandex.ru/moscow/</a></div><a href="https://afisha.yandex.ru/moscow/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Ticketland Москва</span><a href="https://www.ticketland.ru/" target="_blank" class="src-url">ticketland.ru</a></div><a href="https://www.ticketland.ru/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Большой театр</span><a href="https://www.bolshoi.ru/timetable/" target="_blank" class="src-url">bolshoi.ru/timetable/</a></div><a href="https://www.bolshoi.ru/timetable/" target="_blank" class="src-open">Открыть →</a></div>
+          </div>
+        </div>
+
+        <!-- СПб -->
+        <div style="margin-bottom:20px;">
+          <div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;padding:10px 16px;background:#1a0a2e;color:#fff;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">
+            <span>🎭 Санкт-Петербург</span><span style="font-size:11px;opacity:.6;">4 источника</span>
+          </div>
+          <div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">КассирРу СПб</span><a href="https://spb.kassir.ru/" target="_blank" class="src-url">spb.kassir.ru</a></div><a href="https://spb.kassir.ru/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Афиша СПб</span><a href="https://www.afisha.ru/spb/" target="_blank" class="src-url">afisha.ru/spb/</a></div><a href="https://www.afisha.ru/spb/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Яндекс.Афиша СПб</span><a href="https://afisha.yandex.ru/saint-petersburg/" target="_blank" class="src-url">afisha.yandex.ru/spb</a></div><a href="https://afisha.yandex.ru/saint-petersburg/" target="_blank" class="src-open">Открыть →</a></div>
+            <div class="src-row"><input type="checkbox" checked style="accent-color:#c8102e;"><div class="src-info"><span class="src-name">Мариинский театр</span><a href="https://www.mariinsky.ru/playbill/playbill/" target="_blank" class="src-url">mariinsky.ru/playbill/</a></div><a href="https://www.mariinsky.ru/playbill/playbill/" target="_blank" class="src-open">Открыть →</a></div>
+          </div>
+        </div>
+
+        <!-- Екатеринбург, Казань, Краснодар -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div>
+            <div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:8px 12px;background:#1a0a2e;color:#fff;border-radius:6px 6px 0 0;">⚙️ Екатеринбург</div>
+            <div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 6px 6px;">
+              <div class="src-row-sm"><a href="https://ekb.kassir.ru/" target="_blank">kassir.ru/ekb</a></div>
+              <div class="src-row-sm"><a href="https://afisha.yandex.ru/yekaterinburg/" target="_blank">yandex/ekb</a></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:8px 12px;background:#1a0a2e;color:#fff;border-radius:6px 6px 0 0;">🕌 Казань</div>
+            <div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 6px 6px;">
+              <div class="src-row-sm"><a href="https://kazan.kassir.ru/" target="_blank">kassir.ru/kazan</a></div>
+              <div class="src-row-sm"><a href="https://afisha.yandex.ru/kazan/" target="_blank">yandex/kazan</a></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:8px 12px;background:#1a0a2e;color:#fff;border-radius:6px 6px 0 0;">☀️ Краснодар</div>
+            <div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 6px 6px;">
+              <div class="src-row-sm"><a href="https://krd.kassir.ru/" target="_blank">kassir.ru/krd</a></div>
+              <div class="src-row-sm"><a href="https://afisha.yandex.ru/krasnodar/" target="_blank">yandex/krasnodar</a></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="citiesMonitorListSources"></div>
+
+      dMonitorCity()" style="background:#1a6c2e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:7px 14px;cursor:pointer;">✚ Добавить город</button>
             <button onclick="runSourcesCheck()" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:7px 14px;cursor:pointer;">🔄 Проверить</button>
           </div>
         </div>
