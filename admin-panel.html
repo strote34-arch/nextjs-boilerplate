@@ -1286,49 +1286,39 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="panel-sub">Управление рекламными блоками на сайте</div>
       <!-- ИСТОЧНИКИ МЕРОПРИЯТИЙ -->
       <div id="panel-sources" class="panel-card" style="display:none;">
-        <div class="panel-head">📋 Исходники мероприятий</div>
-        <div class="panel-sub">Все события по категориям. Ссылки на страницы и исходные данные</div>
+        <div class="panel-head">📋 Источники мероприятий</div>
+        <div class="panel-sub">Сайты-источники для парсинга событий по городам. Добавляйте, включайте и отключайте источники.</div>
 
-        <!-- Быстрые ссылки -->
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
-          <a href="concerts.html" target="_blank" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🎸 Концерты</a>
-          <a href="theater.html" target="_blank" style="background:#1a0a2e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🎭 Спектакли</a>
-          <a href="cinema.html" target="_blank" style="background:#003366;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🎬 Кинотеатры</a>
-          <a href="exhibits.html" target="_blank" style="background:#2a5c2a;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🖼️ Выставки</a>
-          <a href="kids.html" target="_blank" style="background:#ff6b35;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">👶 Детям</a>
-          <a href="venue-concert-city.html" target="_blank" style="background:#1a3300;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:9px 18px;border-radius:6px;text-decoration:none;">🏟️ Площадки</a>
-        </div>
-
-        <!-- Концерты -->
-        <div style="margin-bottom:20px;">
-          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🎸 Концерты</div>
-          <div id="src-concerts-list" style="max-height:300px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
-        </div>
-
-        <!-- Спектакли -->
-        <div style="margin-bottom:20px;">
-          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🎭 Спектакли</div>
-          <div id="src-theater-list" style="max-height:200px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
-        </div>
-
-        <!-- Фильмы -->
-        <div style="margin-bottom:20px;">
-          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🎬 Фильмы в кинотеатрах</div>
-          <div id="src-films-list" style="max-height:200px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
-        </div>
-
-        <!-- Выставки -->
-        <div style="margin-bottom:20px;">
-          <div class="panel-head" style="font-size:15px;margin-bottom:10px;">🖼️ Выставки</div>
-          <div id="src-exhibits-list" style="max-height:200px;overflow-y:auto;border:1px solid #f0ede8;border-radius:8px;"></div>
-          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="exhibit-panorama-stalingrad.html" target="_blank" style="font-size:12px;background:#f0ede8;padding:5px 12px;border-radius:4px;text-decoration:none;color:#1a1a1a;">⚔️ Панорама Сталинградской битвы</a>
-            <a href="exhibit-muzey-izo-volgograd.html" target="_blank" style="font-size:12px;background:#f0ede8;padding:5px 12px;border-radius:4px;text-decoration:none;color:#1a1a1a;">🖼️ Музей ИЗО</a>
-            <a href="exhibit-kraeved-volgograd.html" target="_blank" style="font-size:12px;background:#f0ede8;padding:5px 12px;border-radius:4px;text-decoration:none;color:#1a1a1a;">🏛️ Краеведческий</a>
+        <!-- Быстрые ссылки на разделы сайта -->
+        <div style="background:#f9f7f4;border-radius:8px;padding:14px;margin-bottom:20px;">
+          <div style="font-family:Oswald,sans-serif;font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:10px;">Разделы сайта</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="concerts.html" target="_blank" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:7px 14px;border-radius:4px;text-decoration:none;">🎸 Концерты</a>
+            <a href="theater.html" target="_blank" style="background:#1a0a2e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:7px 14px;border-radius:4px;text-decoration:none;">🎭 Спектакли</a>
+            <a href="cinema.html" target="_blank" style="background:#003366;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:7px 14px;border-radius:4px;text-decoration:none;">🎬 Кинотеатры</a>
+            <a href="exhibits.html" target="_blank" style="background:#2a5c2a;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:7px 14px;border-radius:4px;text-decoration:none;">🖼️ Выставки</a>
+            <a href="kids.html" target="_blank" style="background:#ff6b35;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:7px 14px;border-radius:4px;text-decoration:none;">👶 Детям</a>
+            <a href="venue-concert-city.html" target="_blank" style="background:#1a3300;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:7px 14px;border-radius:4px;text-decoration:none;">🏟️ Площадки</a>
           </div>
         </div>
-      </div>
 
+        <!-- Города и источники (парсер) -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;">🌐 Источники для парсера</div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="addMonitorCity()" style="background:#1a6c2e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:7px 14px;cursor:pointer;">✚ Добавить город</button>
+            <button onclick="runSourcesCheck()" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:7px 14px;cursor:pointer;">🔄 Проверить</button>
+          </div>
+        </div>
+
+        <div id="monitorStatus" style="font-size:12px;color:#888;margin-bottom:16px;padding:10px 14px;background:#f9f7f4;border-radius:6px;">
+          ⏰ Запускается каждую <strong>субботу в 00:00</strong> · Источников: <span id="totalSourceCount2">0</span>
+        </div>
+
+        <!-- Список источников по городам -->
+        <div id="citiesMonitorListSources"></div>
+
+      
       <!-- АВТО-ПРОВЕРКА (каждую субботу) -->
       <div id="panel-auto-check" class="panel-card" style="display:none;">
         <div class="panel-head">🔄 Авто-проверка источников</div>
@@ -4218,6 +4208,34 @@ var DEFAULT_MONITOR_CITIES = {
       {name:'Афиша Москва', url:'https://www.afisha.ru/msk/', active:true},
       {name:'Яндекс.Афиша Москва', url:'https://afisha.yandex.ru/moscow/', active:true},
       {name:'Ticketland Москва', url:'https://www.ticketland.ru/', active:true},
+      {name:'Большой театр', url:'https://www.bolshoi.ru/timetable/', active:true},
+    ]
+  },
+  'Санкт-Петербург': {
+    sites: [
+      {name:'КассирРу СПб', url:'https://spb.kassir.ru/', active:true},
+      {name:'Афиша СПб', url:'https://www.afisha.ru/spb/', active:true},
+      {name:'Яндекс.Афиша СПб', url:'https://afisha.yandex.ru/saint-petersburg/', active:true},
+      {name:'Мариинский театр', url:'https://www.mariinsky.ru/playbill/playbill/', active:true},
+    ]
+  },
+  'Екатеринбург': {
+    sites: [
+      {name:'КассирРу Екб', url:'https://ekb.kassir.ru/', active:true},
+      {name:'Яндекс.Афиша Екб', url:'https://afisha.yandex.ru/yekaterinburg/', active:true},
+      {name:'66.ru Афиша', url:'https://66.ru/afisha/', active:false},
+    ]
+  },
+  'Казань': {
+    sites: [
+      {name:'КассирРу Казань', url:'https://kazan.kassir.ru/', active:true},
+      {name:'Яндекс.Афиша Казань', url:'https://afisha.yandex.ru/kazan/', active:true},
+    ]
+  },
+  'Краснодар': {
+    sites: [
+      {name:'КассирРу Краснодар', url:'https://krd.kassir.ru/', active:true},
+      {name:'Яндекс.Афиша Краснодар', url:'https://afisha.yandex.ru/krasnodar/', active:true},
     ]
   }
 };
@@ -5571,6 +5589,49 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 /* ── Рендеринг панели источников ─────────────────────────────────── */
 function renderSourcesPanel() {
+  // Заполнить список источников из DEFAULT_MONITOR_CITIES
+  var srcEl = document.getElementById('citiesMonitorListSources');
+  if (srcEl) {
+    var cities = loadMonitorCities ? loadMonitorCities() : (window.DEFAULT_MONITOR_CITIES || {});
+    var totalSites = 0;
+    var html = Object.keys(cities).map(function(city) {
+      var sites = cities[city].sites || [];
+      totalSites += sites.filter(function(s){ return s.active; }).length;
+      return '<div style="margin-bottom:20px;">'
+        + '<div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;padding:10px 14px;background:#1a0a2e;color:#fff;border-radius:8px 8px 0 0;">'
+        + '<span>🏙️ ' + city + '</span>'
+        + '<span style="margin-left:auto;font-size:11px;opacity:.6;">' + sites.length + ' источников</span>'
+        + '<button onclick="addMonitorSite(' + JSON.stringify(city) + ');renderSourcesPanel();" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-family:Oswald,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;">+ сайт</button>'
+        + '</div>'
+        + '<div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">'
+        + sites.map(function(s, idx) {
+            return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f5f3ef;background:'+(s.active?'#fff':'#fafafa')+';transition:background .15s;">'
+              + '<input type="checkbox" ' + (s.active?'checked':'') + ' onchange="toggleMonitorSite(' + JSON.stringify(city) + ',' + idx + ',this.checked);renderSourcesPanel();" style="accent-color:#c8102e;">'
+              + '<div style="flex:1;min-width:0;">'
+              + '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + s.name + '</div>'
+              + '<a href="' + s.url + '" target="_blank" style="font-size:11px;color:#c8102e;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">' + s.url + '</a>'
+              + '</div>'
+              + '<a href="' + s.url + '" target="_blank" style="background:#f0ede8;color:#1a1a1a;font-family:Oswald,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 10px;border-radius:4px;text-decoration:none;white-space:nowrap;">Открыть →</a>'
+              + '<button onclick="removeMonitorSite(' + JSON.stringify(city) + ',' + idx + ');renderSourcesPanel();" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:16px;padding:0 4px;line-height:1;" title="Удалить">×</button>'
+              + '</div>';
+          }).join('')
+        + '</div>'
+        + '</div>';
+    }).join('');
+    srcEl.innerHTML = html || '<div style="color:#aaa;text-align:center;padding:24px;">Источники не найдены. Нажмите «✚ Добавить город».</div>';
+    var t = document.getElementById('totalSourceCount2');
+    if (t) t.textContent = totalSites;
+  }
+  // Статус последней проверки
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var statusEl = document.getElementById('monitorStatus');
+  if (statusEl && lastRun) {
+    var total = 0;
+    var mc = loadMonitorCities ? loadMonitorCities() : {};
+    Object.values(mc).forEach(function(c){ total += (c.sites||[]).filter(function(s){ return s.active; }).length; });
+    statusEl.innerHTML = '🕐 Последняя проверка: ' + new Date(lastRun).toLocaleString('ru') + ' · Источников: ' + total;
+  }
+
   var today = new Date(); today.setHours(0,0,0,0);
   var todayISO = today.toISOString().slice(0,10);
 
