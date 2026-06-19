@@ -2835,15 +2835,19 @@ function renderSidebar(city) {
     }).join('');
   }
 
-  // 📝 Статьи
+  // 📝 Статьи — из ARTICLES_DB если доступен, иначе статичный список
   var artEl = document.getElementById('articlesWidgetBody');
   if (artEl) {
-    var ARTICLES = [
-      {icon:'🎸',title:'Топ-10 концертов этого лета',cat:'Концерты',date:'1 июн',href:'articles.html'},
-      {icon:'🎭',title:'Как выбрать спектакль для первого похода в театр',cat:'Театр',date:'28 май',href:'articles.html'},
-      {icon:'🎬',title:'Новинки проката: что смотреть в июне',cat:'Кино',date:'3 июн',href:'articles.html'},
-      {icon:'🖼️',title:'Выставки лета: гид по галереям',cat:'Выставки',date:'25 май',href:'articles.html'},
-    ];
+    var artDB = (typeof ARTICLES_DB !== 'undefined' && ARTICLES_DB.length) ? ARTICLES_DB : null;
+    var ARTICLES = artDB
+      ? artDB.slice().sort(function(a,b){ return (b.views||0)-(a.views||0); }).slice(0,4)
+          .map(function(a){ return {icon:a.icon, title:a.title, cat:a.cat, date:a.date.split(' ').slice(0,2).join(' '), href:'articles.html', id:a.id}; })
+      : [
+          {icon:'🎸',title:'Топ-10 концертов этого лета',cat:'Подборка',date:'10 июн',href:'articles.html'},
+          {icon:'🎬',title:'Кино июня: что смотреть летом',cat:'Кино',date:'5 июн',href:'articles.html'},
+          {icon:'❤️',title:'Топ-5 мест для романтического вечера',cat:'Гид',date:'25 мая',href:'articles.html'},
+          {icon:'👨‍👩‍👧‍👦',title:'Семейный досуг: куда сходить с детьми',cat:'Семья',date:'20 мая',href:'articles.html'},
+        ];
     artEl.innerHTML = ARTICLES.map(function(a){
       return '<a href="'+a.href+'" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;text-decoration:none;color:inherit;">'
         +'<span style="font-size:20px;min-width:24px;">'+a.icon+'</span>'

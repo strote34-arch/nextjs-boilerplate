@@ -1184,38 +1184,77 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 // ── ARTICLES_DB ──────────────────────────────────────────────────
 var ARTICLES_DB = [
-  {id:'a001',title:'Лучшие концерты июня 2026 в Волгограде',
-   cat:'Подборка',icon:'🎤',color:'#c8102e',
-   author:'Редакция Афиши',date:'10 июня 2026',
-   desc:'Июнь в Волгограде богат музыкальными событиями — от классики до рока.',
-   href:'#',img:'',readTime:'4 мин'},
-  {id:'a002',title:'Театральные новинки сезона 2025/2026',
-   cat:'Театр',icon:'🎭',color:'#1a0a2e',
-   author:'Анна Смирнова',date:'8 июня 2026',
-   desc:'Обзор самых ожидаемых премьер в театрах Волгограда этого сезона.',
-   href:'#',img:'',readTime:'6 мин'},
-  {id:'a003',title:'Как выбрать идеальный спектакль для ребёнка',
-   cat:'Семья',icon:'👶',color:'#ff6b35',
-   author:'Елена Петрова',date:'5 июня 2026',
-   desc:'Советы от опытных родителей и театральных педагогов.',
-   href:'#',img:'',readTime:'3 мин'},
-  {id:'a004',title:'Выставка динозавров: первые впечатления',
-   cat:'Выставки',icon:'🦕',color:'#2a5c2a',
-   author:'Иван Козлов',date:'3 июня 2026',
-   desc:'Репортаж с открытия самой необычной выставки сезона.',
-   href:'#',img:'',readTime:'5 мин'},
-  {id:'a005',title:'Топ-10 мест для романтического вечера в Волгограде',
-   cat:'Гид',icon:'❤️',color:'#8b0000',
-   author:'Маша Волкова',date:'1 июня 2026',
-   desc:'Рестораны, театры и смотровые площадки для особенного вечера.',
-   href:'#',img:'',readTime:'7 мин'},
-  {id:'a006',title:'Рецензия: «Кармен» в Волгоградском музыкальном театре',
-   cat:'Рецензия',icon:'🎼',color:'#33001a',
-   author:'Дмитрий Орлов',date:'28 мая 2026',
-   desc:'Впечатляющая постановка с великолепными голосами и сценографией.',
-   href:'#',img:'',readTime:'8 мин'},
+  {id:'a001',
+   title:'Топ-10 концертов этого лета в Волгограде',
+   cat:'Подборка', icon:'🎸', color:'#c8102e',
+   author:'Редакция Афиши', date:'10 июня 2026',
+   desc:'Лето 2026 обещает быть насыщенным — от симфонических вечеров до рок-фестивалей под открытым небом.',
+   readTime:'4 мин', views:1240, href:'#',
+   img:'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&h=400&fit=crop'},
+  {id:'a002',
+   title:'Театральные премьеры сезона 2025/2026',
+   cat:'Театр', icon:'🎭', color:'#1a0a2e',
+   author:'Анна Смирнова', date:'8 июня 2026',
+   desc:'Обзор самых ожидаемых постановок: от классики до современной драматургии в театрах Волгограда.',
+   readTime:'6 мин', views:876, href:'#',
+   img:'https://images.unsplash.com/photo-1503095396549-807759245b35?w=600&h=400&fit=crop'},
+  {id:'a003',
+   title:'Кино июня: что смотреть этим летом',
+   cat:'Кино', icon:'🎬', color:'#003366',
+   author:'Дмитрий Орлов', date:'5 июня 2026',
+   desc:'Новинки проката, которые уже вышли и те, которые стоит ждать: боевики, драмы, анимация.',
+   readTime:'5 мин', views:2100, href:'#',
+   img:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&h=400&fit=crop'},
+  {id:'a004',
+   title:'Как выбрать спектакль для первого похода в театр',
+   cat:'Гид', icon:'🗺️', color:'#2a1a0a',
+   author:'Елена Петрова', date:'3 июня 2026',
+   desc:'Советы для тех, кто впервые идёт в театр: от выбора спектакля до правил поведения в зале.',
+   readTime:'3 мин', views:654, href:'#',
+   img:'https://images.unsplash.com/photo-1507924538820-ede94a04019d?w=600&h=400&fit=crop'},
+  {id:'a005',
+   title:'Выставки лета: гид по галереям Волгограда',
+   cat:'Выставки', icon:'🖼️', color:'#2a5c2a',
+   author:'Иван Козлов', date:'1 июня 2026',
+   desc:'Панорама Сталинградской битвы, музей ИЗО, краеведческий — куда сходить с семьёй и с детьми.',
+   readTime:'5 мин', views:432, href:'#',
+   img:'https://images.unsplash.com/photo-1578926375605-eaf7559b1458?w=600&h=400&fit=crop'},
+  {id:'a006',
+   title:'Рецензия: «Кармен» в Волгоградском музыкальном театре',
+   cat:'Рецензия', icon:'🎼', color:'#33001a',
+   author:'Дмитрий Орлов', date:'28 мая 2026',
+   desc:'Мощные голоса, яркая сценография и живой оркестр — постановка, которую стоит увидеть.',
+   readTime:'8 мин', views:890, href:'#',
+   img:'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&h=400&fit=crop'},
+  {id:'a007',
+   title:'Топ-5 мест для романтического вечера в Волгограде',
+   cat:'Гид', icon:'❤️', color:'#8b0000',
+   author:'Маша Волкова', date:'25 мая 2026',
+   desc:'Панорамные рестораны, джазовые вечера, прогулки по набережной — идеи для особенного свидания.',
+   readTime:'4 мин', views:1870, href:'#',
+   img:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop'},
+  {id:'a008',
+   title:'Семейный досуг: куда сходить с детьми в июне',
+   cat:'Семья', icon:'👨‍👩‍👧‍👦', color:'#ff6b35',
+   author:'Наташа Дробная', date:'20 мая 2026',
+   desc:'Цирк, планетарий, динозавры, квест-комнаты — всё для незабываемых выходных с детьми.',
+   readTime:'4 мин', views:1430, href:'#',
+   img:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&h=400&fit=crop'},
+  {id:'a009',
+   title:'Интервью с художественным руководителем НЭТ',
+   cat:'Интервью', icon:'🎙️', color:'#1a0a2e',
+   author:'Редакция Афиши', date:'15 мая 2026',
+   desc:'Олег Куликов рассказал о новом сезоне, экспериментах с форматом и планах на гастроли.',
+   readTime:'10 мин', views:340, href:'#',
+   img:'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600&h=400&fit=crop'},
+  {id:'a010',
+   title:'5 причин сходить на классический концерт',
+   cat:'Подборка', icon:'🎻', color:'#1a3300',
+   author:'Анна Смирнова', date:'10 мая 2026',
+   desc:'Почему живая классическая музыка — это совсем не скучно, и что важно знать перед посещением.',
+   readTime:'3 мин', views:560, href:'#',
+   img:'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&h=400&fit=crop'},
 ];
-
 function renderArticles(cat) {
   var grid = document.getElementById('artGrid');
   if (!grid) return;
@@ -1227,26 +1266,36 @@ function renderArticles(cat) {
     return;
   }
   
-  grid.innerHTML = articles.map(function(a) {
-    return '<article class="art-card" onclick="location.href=''+a.href+''" style="cursor:pointer;">'
-      +'<div class="art-img" style="background:'+a.color+';height:140px;display:flex;align-items:center;justify-content:center;border-radius:8px 8px 0 0;">'
-      +'<span style="font-size:42px;">'+a.icon+'</span>'
+  grid.innerHTML = articles.map(function(a, i) {
+    var isWide = i === 0 && !cat; // Первая статья — широкая
+    var imgBg = a.img
+      ? 'background:'+a.color+';' 
+      : 'background:'+a.color+';';
+    var imgContent = a.img
+      ? '<img src="'+a.img+'" alt="'+a.title+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75;" loading="lazy" onerror="this.style.display=\'none\'">'
+        + '<div style="position:absolute;inset:0;background:rgba(0,0,0,.2);"></div>'
+        + '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:42px;opacity:.3;">'+a.icon+'</span>'
+      : '<span style="font-size:42px;">'+a.icon+'</span>';
+    return '<article class="art-card'+(isWide?' art-card-wide':'')+'" onclick="openArticleModal('+JSON.stringify(a.id)+')" style="cursor:pointer;'+(isWide?'grid-column:1/-1;':'')+'">'
+      +'<div style="position:relative;'+imgBg+'height:'+(isWide?'220':'160')+'px;display:flex;align-items:center;justify-content:center;overflow:hidden;">'
+      + imgContent
+      +'<div style="position:absolute;top:10px;left:10px;">'
+      +'<span style="background:var(--red,#c8102e);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;font-family:Oswald,sans-serif;text-transform:uppercase;">'+a.cat+'</span>'
       +'</div>'
-      +'<div style="padding:14px;">'
-      +'<div style="margin-bottom:8px;">'
-      +'<span style="background:var(--red,#c8102e);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:Oswald,sans-serif;text-transform:uppercase;">'+a.cat+'</span>'
-      +'<span style="color:#aaa;font-size:11px;margin-left:8px;">'+a.readTime+' чтения</span>'
       +'</div>'
-      +'<div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;color:#1a1a1a;line-height:1.3;margin-bottom:8px;">'+a.title+'</div>'
-      +'<div style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px;">'+a.desc+'</div>'
+      +'<div style="padding:16px;">'
+      +'<div style="font-family:Oswald,sans-serif;font-size:'+(isWide?'20':'15')+'px;font-weight:700;color:#1a1a1a;line-height:1.3;margin-bottom:8px;">'+a.title+'</div>'
+      +'<div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:12px;">'+a.desc+'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;">'
       +'<div style="font-size:11px;color:#aaa;">'+a.author+' · '+a.date+'</div>'
-      +'</div></article>';
+      +'<div style="font-size:11px;color:#aaa;">'+a.readTime+' · 👁 '+(a.views||0)+'</div>'
+      +'</div></div></article>';
   }).join('');
 }
 
 // Категории
 function renderCatTabs() {
-  var cats = ['Все','Подборка','Театр','Семья','Выставки','Гид','Рецензия'];
+  var cats = ['Все','Подборка','Театр','Кино','Гид','Семья','Выставки','Рецензия','Интервью'];
   var el = document.getElementById('catTabs');
   if (!el) return;
   el.innerHTML = cats.map(function(c,i){
