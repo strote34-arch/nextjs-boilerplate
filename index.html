@@ -517,7 +517,7 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
 .date-tab.active .day-name,.date-tab.active .day-num{color:var(--red);}
 .date-tab:hover .day-num{color:var(--red);}
 
-.hero{max-width:1200px;margin:20px auto 0;padding:0 16px;display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.hero{width:100%;max-width:1200px;margin:20px auto 0;padding:0 16px;box-sizing:border-box;}
 .hero-main{position:relative;border-radius:4px;overflow:hidden;height:340px;cursor:pointer;}
 .hero-main-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:60px 24px 20px;color:#fff;}
 .hero-badge{display:inline-block;background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:2px;margin-bottom:8px;}
@@ -1107,6 +1107,24 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
 .main-layout { display: grid !important; grid-template-columns: 1fr 300px !important; gap: 24px; align-items: start !important; }
 .main-layout > aside { align-self: start !important; }
 @media(max-width:900px){ .main-layout { grid-template-columns: 1fr !important; } }
+</style>
+<style>
+/* Hero на всю ширину — перекрывает левый и правый столбы */
+.hero { position: relative; z-index: 1; }
+.hero-aside-inner {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+/* hero-main = большая карточка, hero-aside-small = маленькие */
+.hero-main { border-radius: 8px; overflow: hidden; height: 340px; cursor: pointer; position: relative; }
+.hero-aside-small { display: flex; flex-direction: column; gap: 12px; }
+.hero-small-card { flex: 1; border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; min-height: 160px; }
+@media(max-width:768px) {
+  .hero-aside-inner { grid-template-columns: 1fr; }
+  .hero-aside-small { flex-direction: row; }
+}
 </style>
 </head>
 <body>
@@ -2777,38 +2795,29 @@ function renderSidebar(city) {
   var today = new Date(); today.setHours(0,0,0,0);
   var todayISO = today.toISOString().slice(0,10);
   var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  function fmtD(iso) { if (!iso) return ''; var p=iso.split('-'); return parseInt(p[2])+' '+MONTHS[parseInt(p[1])-1]; }
+  function fmtD(iso) { if(!iso) return ''; var p=iso.split('-'); return parseInt(p[2])+' '+MONTHS[parseInt(p[1])-1]; }
 
-  // 🔥 Популярное — сортировка по просмотрам + admin featured
+  // 🔥 Популярное
+  var _views = {}; var _featured = {};
+  try { _views = JSON.parse(localStorage.getItem('afishi_views') || '{}'); } catch(e){}
+  try { _featured = JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(e){}
   var popEl = document.getElementById('popularWidget');
   if (popEl) {
-    // Читать просмотры и featured из localStorage
-    var _views = {}; var _featured = {};
-    try { _views = JSON.parse(localStorage.getItem('afishi_views') || '{}'); } catch(e){}
-    try { _featured = JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(e){}
-
-    var popular = (CONCERTS_DB||[]).filter(function(c){
-      return c.city===city && c.dateISO && c.dateISO>=todayISO;
-    }).sort(function(a,b){
-      // Featured от администратора — всегда первые
-      var fa = _featured[a.id] ? 1 : 0;
-      var fb = _featured[b.id] ? 1 : 0;
-      if (fb !== fa) return fb - fa;
-      // Потом по просмотрам
-      var va = _views[a.id] || 0;
-      var vb = _views[b.id] || 0;
-      if (vb !== va) return vb - va;
-      // Потом по рейтингу и hot
-      return (b.rating||0)-(a.rating||0)||(b.hot?1:0)-(a.hot?1:0);
-    }).slice(0,4);
-    popEl.innerHTML = popular.length ? popular.map(function(ev,i){
-      var vCnt = _views[ev.id] || 0;
+    var concertDB = (typeof CONCERTS_DB !== 'undefined') ? CONCERTS_DB : (typeof CONCERTS !== 'undefined' ? CONCERTS : []);
+    var popular = concertDB.filter(function(c){ return c.city===city && c.dateISO && c.dateISO>=todayISO; })
+      .sort(function(a,b){
+        var fa=_featured[a.id]?1:0, fb=_featured[b.id]?1:0;
+        if(fb!==fa) return fb-fa;
+        return (_views[b.id]||0)-(_views[a.id]||0);
+      }).slice(0,5);
+    popEl.innerHTML = popular.length ? popular.map(function(ev){
+      var vCnt = _views[ev.id]||0;
       var isFeat = _featured[ev.id] ? '⭐ ' : '';
-      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;">'
-        +'<div style="min-width:28px;height:28px;border-radius:50%;background:'+ev.color+';display:flex;align-items:center;justify-content:center;font-size:14px;">'+ev.icon+'</div>'
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;cursor:pointer;" onclick="location.href='concerts.html'">'
+        +'<div style="min-width:30px;height:30px;border-radius:50%;background:'+ev.color+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">'+ev.icon+'</div>'
         +'<div style="flex:1;min-width:0;">'
-        +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.3;">'+isFeat+ev.title+'</div>'
-        +'<div style="font-size:10px;color:#aaa;">'+fmtD(ev.dateISO)+(vCnt?' · 👁 '+vCnt+' просм.':'')+'</div>'
+        +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+isFeat+ev.title+'</div>'
+        +'<div style="font-size:10px;color:#aaa;">'+fmtD(ev.dateISO)+(vCnt?' · 👁 '+vCnt:'')+'</div>'
         +'</div></div>';
     }).join('') : '<div style="font-size:12px;color:#aaa;padding:8px 0;">Нет событий</div>';
   }
@@ -2816,39 +2825,90 @@ function renderSidebar(city) {
   // 🏙️ Другие города
   var cityLinksEl = document.getElementById('cityLinks');
   if (cityLinksEl) {
-    var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Воронеж'];
-    cityLinksEl.innerHTML = cities.filter(function(c){ return c !== city; }).map(function(c){
-      return '<a href="#" onclick="window.renderPage && renderPage(\''+c+'\'); return false;" '
-        +'style="display:block;padding:6px 0;font-size:13px;color:var(--red);text-decoration:none;border-bottom:1px solid #f5f3ef;">'+c+'</a>';
+    var CITIES = ['Москва','Санкт-Петербург','Екатеринбург','Казань','Новосибирск',
+                  'Краснодар','Нижний Новгород','Ростов-на-Дону','Уфа','Пермь','Красноярск'];
+    cityLinksEl.innerHTML = CITIES.map(function(c){
+      return '<a href="#" onclick="switchCity && switchCity(\'' + c + '\'); try{localStorage.setItem(\'afishi_city\',\''+c+'\');}catch(x){}; renderPage && renderPage(\''+c+'\'); return false;" '
+        +'style="display:inline-block;padding:4px 10px;margin:3px;background:#f5f3ef;border-radius:12px;font-size:12px;color:#1a1a1a;text-decoration:none;transition:background .15s;" '
+        +'onmouseover="this.style.background=\'#c8102e\';this.style.color=\'#fff\';" '
+        +'onmouseout="this.style.background=\'#f5f3ef\';this.style.color=\'#1a1a1a\';">'+c+'</a>';
     }).join('');
   }
 
-  // 📝 Виджет отзывов (статичный если нет данных)
-  var reviewsEl = document.getElementById('latestReviewsWidget');
-  if (reviewsEl && reviewsEl.textContent.includes('Загрузка')) {
-    reviewsEl.innerHTML = [
-      '<div style="padding:8px 0;border-bottom:1px solid #f5f3ef;">',
-      '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Великолепный концерт!</div>',
-      '<div style="font-size:11px;color:#888;">⭐⭐⭐⭐⭐ · Lida — концерт</div></div>',
-      '<div style="padding:8px 0;">',
-      '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Очень понравилось</div>',
-      '<div style="font-size:11px;color:#888;">⭐⭐⭐⭐☆ · Stand up Нидаль</div></div>',
-    ].join('');
-  }
-  var myReviewsEl = document.getElementById('indexReviewsWidget');
-  if (myReviewsEl && myReviewsEl.textContent.includes('Загрузка')) {
-    myReviewsEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;text-align:center;">Вы ещё не оставляли отзывов</div>';
-  }
-  
-  // Статьи
+  // 📝 Статьи
   var artEl = document.getElementById('articlesWidgetBody');
-  if (artEl && artEl.textContent.includes('Загрузка')) {
-    artEl.innerHTML = [
-      '<a href="articles.html" style="display:block;padding:8px 0;border-bottom:1px solid #f5f3ef;font-size:12px;font-weight:600;color:#1a1a1a;text-decoration:none;">Лучшие концерты июня 2026</a>',
-      '<a href="articles.html" style="display:block;padding:8px 0;font-size:12px;font-weight:600;color:#1a1a1a;text-decoration:none;">Театральные новинки сезона</a>',
-    ].join('');
+  if (artEl) {
+    var ARTICLES = [
+      {icon:'🎸',title:'Топ-10 концертов этого лета',cat:'Концерты',date:'1 июн',href:'articles.html'},
+      {icon:'🎭',title:'Как выбрать спектакль для первого похода в театр',cat:'Театр',date:'28 май',href:'articles.html'},
+      {icon:'🎬',title:'Новинки проката: что смотреть в июне',cat:'Кино',date:'3 июн',href:'articles.html'},
+      {icon:'🖼️',title:'Выставки лета: гид по галереям',cat:'Выставки',date:'25 май',href:'articles.html'},
+    ];
+    artEl.innerHTML = ARTICLES.map(function(a){
+      return '<a href="'+a.href+'" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;text-decoration:none;color:inherit;">'
+        +'<span style="font-size:20px;min-width:24px;">'+a.icon+'</span>'
+        +'<div><div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.4;margin-bottom:2px;">'+a.title+'</div>'
+        +'<div style="font-size:10px;color:#888;">'+a.cat+' · '+a.date+'</div>'
+        +'</div></a>';
+    }).join('');
+  }
+
+  // 📝 Ваши рецензии
+  var myRevEl = document.getElementById('indexReviewsWidget');
+  if (myRevEl) {
+    try {
+      var reviews = JSON.parse(localStorage.getItem('afishi_reviews') || 'null');
+      var myRevs = [];
+      if (reviews && typeof reviews === 'object' && !Array.isArray(reviews)) {
+        Object.values(reviews).forEach(function(arr){ if(Array.isArray(arr)) myRevs = myRevs.concat(arr); });
+      }
+      var approved = myRevs.filter(function(r){ return r.status === 'approved'; }).slice(0,2);
+      if (approved.length) {
+        myRevEl.innerHTML = approved.map(function(r){
+          var stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
+          return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;">'
+            +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;margin-bottom:2px;">'+(r.event||r.author)+'</div>'
+            +'<div style="font-size:11px;color:#888;">'+stars+' · '+r.author+'</div>'
+            +'<div style="font-size:12px;color:#555;margin-top:3px;line-height:1.4;">'+((r.text||'').slice(0,80))+'...</div>'
+            +'</div>';
+        }).join('');
+      } else {
+        myRevEl.innerHTML = '<div style="font-size:12px;color:var(--light,#888);text-align:center;padding:12px 0;">Рецензий пока нет. <a href="cinema.html" style="color:var(--red,#c8102e);">Написать →</a></div>';
+      }
+    } catch(e) {
+      myRevEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;">Рецензий пока нет</div>';
+    }
+  }
+
+  // 💬 Новые отзывы
+  var newRevEl = document.getElementById('latestReviewsWidget');
+  if (newRevEl) {
+    try {
+      var reviews2 = JSON.parse(localStorage.getItem('afishi_reviews') || 'null');
+      var allRevs = [];
+      if (reviews2 && typeof reviews2 === 'object' && !Array.isArray(reviews2)) {
+        Object.values(reviews2).forEach(function(arr){ if(Array.isArray(arr)) allRevs = allRevs.concat(arr); });
+      }
+      var recent = allRevs.filter(function(r){ return r.status === 'approved'; })
+        .sort(function(a,b){ return (b.date||'') > (a.date||'') ? 1 : -1; }).slice(0,3);
+      if (recent.length) {
+        newRevEl.innerHTML = recent.map(function(r){
+          var stars = '★'.repeat(r.rating||5);
+          return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;">'
+            +'<div style="font-size:11px;font-weight:700;color:#1a1a1a;">'+(r.event||'Концерт')+'</div>'
+            +'<div style="font-size:10px;color:#c8102e;margin:1px 0;">'+stars+'</div>'
+            +'<div style="font-size:11px;color:#888;">'+r.author+(r.date?' · '+r.date:'')+'</div>'
+            +'</div>';
+        }).join('');
+      } else {
+        newRevEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;text-align:center;">Отзывов пока нет</div>';
+      }
+    } catch(e) {
+      newRevEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;">Отзывов пока нет</div>';
+    }
   }
 }
+
 </script>
 </body>
 </html>
