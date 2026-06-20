@@ -1210,7 +1210,16 @@ function safeGet(id) {
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:20px;">
+          <button id="btnTrailer" onclick="openTrailer()" style="flex:1;padding:10px;background:#c8102e;color:#fff;border:none;border-radius:6px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;cursor:pointer;">▶ Трейлер</button>
           <button onclick="_shareModal()" style="flex:1;padding:10px;background:#f4f2ee;border:none;border-radius:6px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;cursor:pointer;">📤 Поделиться</button>
+        </div>
+        <!-- Трейлер embed -->
+        <div id="trailerBlock" style="display:none;margin-bottom:20px;border-radius:8px;overflow:hidden;">
+          <div style="position:relative;padding-top:56.25%;background:#000;">
+            <iframe id="trailerFrame" style="position:absolute;inset:0;width:100%;height:100%;border:none;"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
         </div>
       </div>
 
@@ -1293,7 +1302,8 @@ const FILMS = [
     cast:'Милош Бикович, Александра Бортич, Иван Охлобыстин',
     times:['10:00','12:30','15:00','17:30','20:00','22:30'],
     img:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300&h=420&fit=crop',
-    hot:true
+    hot:true,
+    trailerYT:'dYJCOy9rEi8'
   },
   {
     id:'f002', title:'Очень страшное кино 6', year:2026,
@@ -1306,7 +1316,8 @@ const FILMS = [
     cast:'Анна Фэрис, Реджина Холл',
     times:['11:00','13:30','16:00','18:30','21:00','23:00'],
     img:'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=300&h=420&fit=crop',
-    hot:true
+    hot:true,
+    trailerYT:'AuM2s18Xb_0'
   },
   {
     id:'f003', title:'Властелины Вселенной', year:2026,
@@ -1319,7 +1330,8 @@ const FILMS = [
     cast:'Николас Галицин, Камила Мендес, Идрис Эльба, Джаред Лето',
     times:['10:30','13:00','15:30','18:00','20:30','23:00'],
     img:'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=300&h=420&fit=crop',
-    hot:false
+    hot:false,
+    trailerYT:'rJVo0b9Abzk'
   },
   {
     id:'f004', title:'Майкл', year:2026,
@@ -1332,7 +1344,8 @@ const FILMS = [
     cast:'Хайме Гарсия Моя, Коулман Доминго',
     times:['11:30','14:30','17:30','20:30'],
     img:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=420&fit=crop',
-    hot:true
+    hot:true,
+    trailerYT:'6YZLzD0FFN8'
   },
   {
     id:'f005', title:'Закулисье реальности', year:2026,
@@ -1371,7 +1384,8 @@ const FILMS = [
     cast:'Ума Турман, Люси Лью, Дэрил Ханна, Дэвид Кэррадайн',
     times:['12:00','17:30','22:00'],
     img:'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=300&h=420&fit=crop',
-    hot:false
+    hot:false,
+    trailerYT:'M09tYSN0LvQ'
   },
   {
     id:'f008', title:'Зверолюция', year:2026,
@@ -3446,6 +3460,75 @@ function shareFilm(filmId, filmTitle) {
   var text = '🎬 ' + filmTitle + ' — смотрите в кино!';
   _showSharePanel(text, url);
 }
+</script>
+
+<script>
+/* ── Трейлеры фильмов (YouTube embed) ──────────────────────── */
+function openTrailer() {
+  var f = currentFilm;
+  if (!f || !f.trailerYT) {
+    alert('Трейлер для этого фильма недоступен. Ищите на YouTube: ' + (f ? f.title : '') + ' трейлер');
+    return;
+  }
+  var block = document.getElementById('trailerBlock');
+  var frame = document.getElementById('trailerFrame');
+  if (!block || !frame) return;
+  
+  if (block.style.display !== 'none') {
+    // Скрыть и остановить
+    block.style.display = 'none';
+    frame.src = '';
+    document.getElementById('btnTrailer').textContent = '▶ Трейлер';
+    return;
+  }
+  
+  // Показать трейлер
+  frame.src = 'https://www.youtube.com/embed/' + f.trailerYT + '?autoplay=1&rel=0';
+  block.style.display = 'block';
+  document.getElementById('btnTrailer').textContent = '✕ Закрыть трейлер';
+  block.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// Обновить состояние кнопки трейлера при открытии модала
+var _origOpenModal = window.openModal;
+window.openModal = function(id, goTickets) {
+  // Сбросить трейлер
+  var block = document.getElementById('trailerBlock');
+  var frame = document.getElementById('trailerFrame');
+  var btn   = document.getElementById('btnTrailer');
+  if (block) block.style.display = 'none';
+  if (frame) frame.src = '';
+  if (btn)   btn.textContent = '▶ Трейлер';
+  
+  // Вызвать оригинал
+  if (_origOpenModal) _origOpenModal(id, goTickets);
+  
+  // Обновить видимость кнопки
+  setTimeout(function() {
+    var f = window.currentFilm;
+    if (btn) {
+      if (f && f.trailerYT) {
+        btn.style.display = '';
+        btn.style.opacity = '1';
+      } else {
+        btn.style.opacity = '0.5';
+        btn.title = 'Трейлер недоступен';
+      }
+    }
+  }, 50);
+};
+
+// При закрытии модала — останавливаем трейлер
+var _origCloseModal = window.closeModal;
+window.closeModal = function() {
+  var frame = document.getElementById('trailerFrame');
+  var block = document.getElementById('trailerBlock');
+  var btn   = document.getElementById('btnTrailer');
+  if (frame) frame.src = '';
+  if (block) block.style.display = 'none';
+  if (btn)   btn.textContent = '▶ Трейлер';
+  if (_origCloseModal) _origCloseModal();
+};
 </script>
 </body>
 </html>
