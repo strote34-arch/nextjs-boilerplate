@@ -1768,9 +1768,9 @@ function openModal(id, goTickets=false) {
   (document.getElementById('mmeta')||{}).innerHTML = `Реж. ${f.director} · ${f.duration} мин · ${f.age} · ${f.rating}★ (${(f.votes/1000).toFixed(0)}K голосов)`;
   var _mp = document.getElementById('mposter');
   if (_mp) {
-    if (f.poster) {
+    if (f.poster||f.img) {
       var _mpImg = document.createElement('img');
-      _mpImg.src = f.poster;
+      _mpImg.src = f.poster||f.img;
       _mpImg.alt = f.title || '';
       _mpImg.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top center;';
       _mpImg.onerror = function() { this.style.display='none'; };
