@@ -1333,7 +1333,8 @@ const FILMS = [
     formats:['2D','3D','IMAX'],
     times:['10:30','13:00','15:30','18:00','20:30','23:00'],
     img:'https://images.unsplash.com/photo-1608889175123-8ee362201f81?w=342&h=513&fit=crop',
-    hot:false, trailerYT:'rJVo0b9Abzk'
+    hot:false, trailerYT:'rJVo0b9Abzk',
+    tmdbId:454639
   },
   {
     id:'f004', title:'Майкл', year:2026,
@@ -1348,7 +1349,8 @@ const FILMS = [
     formats:['2D'],
     times:['11:30','14:30','17:30','20:30'],
     img:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=342&h=513&fit=crop',
-    hot:true, trailerYT:'6YZLzD0FFN8'
+    hot:true, trailerYT:'6YZLzD0FFN8',
+    tmdbId:936075
   },
   {
     id:'f005', title:'Закулисье реальности', year:2026,
@@ -1393,7 +1395,8 @@ const FILMS = [
     formats:['2D'],
     times:['12:00','17:30','22:00'],
     img:'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=342&h=513&fit=crop',
-    hot:false, trailerYT:'M09tYSN0LvQ'
+    hot:false, trailerYT:'M09tYSN0LvQ',
+    tmdbId:24428
   },
   {
     id:'f008', title:'Зверолюция', year:2026,
@@ -1423,7 +1426,8 @@ const FILMS = [
     formats:['2D'],
     times:['10:30','12:30','14:30'],
     img:'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=342&h=513&fit=crop',
-    hot:false, trailerYT:''
+    hot:false, trailerYT:'',
+    tmdbId:808867
   },
   {
     id:'f010', title:'Стивен Спилберг: Неизвестный', year:2026,
@@ -3554,6 +3558,61 @@ window.closeModal = function() {
   if (btn)   btn.textContent = '▶ Трейлер';
   if (_origCloseModal) _origCloseModal();
 };
+</script>
+
+<script>
+/* ── TMDB постеры: загружаются в браузере клиента ───────────────
+   Ключ read-only: публичный API v3 для чтения данных
+   Постеры сохраняются в sessionStorage для быстрой работы ────── */
+(function loadTMDBPosters() {
+  var TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
+  var IMG_BASE = 'https://image.tmdb.org/t/p/w342';
+  var CACHE_KEY = 'afishi_tmdb_posters';
+  
+  // Загрузить из кэша
+  var cache = {};
+  try { cache = JSON.parse(sessionStorage.getItem(CACHE_KEY) || '{}'); } catch(e) {}
+  
+  function applyPoster(filmId, posterUrl) {
+    // Обновить FILMS массив
+    if (typeof FILMS !== 'undefined') {
+      FILMS.forEach(function(f) {
+        if (f.id === filmId) f.img = posterUrl;
+      });
+    }
+    // Обновить уже отрисованные карточки
+    var cards = document.querySelectorAll('[data-film-id="' + filmId + '"] .film-poster, [data-id="' + filmId + '"] .film-poster');
+    cards.forEach(function(c) {
+      c.src = posterUrl;
+      c.style.display = '';
+    });
+  }
+  
+  function fetchPoster(film) {
+    if (!film.tmdbId) return;
+    if (cache[film.id]) { applyPoster(film.id, cache[film.id]); return; }
+    
+    fetch('https://api.themoviedb.org/3/movie/' + film.tmdbId + '?api_key=' + TMDB_KEY + '&language=ru')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.poster_path) {
+          var url = IMG_BASE + d.poster_path;
+          cache[film.id] = url;
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch(e) {}
+          applyPoster(film.id, url);
+        }
+      })
+      .catch(function(e) {});
+  }
+  
+  // Запустить после рендеринга страницы
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      if (typeof FILMS === 'undefined') return;
+      FILMS.filter(function(f) { return f.tmdbId; }).forEach(fetchPoster);
+    }, 1000);
+  });
+})();
 </script>
 </body>
 </html>
