@@ -1476,7 +1476,102 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <!-- ═══ ПОЛЬЗОВАТЕЛИ ═══ -->
-    <div id="panel-users" class="panel-card" style="display:none;">
+    <div 
+      <!-- БАННЕРЫ / РЕКЛАМА -->
+      <div id="panel-banners" class="panel-card" style="display:none;">
+        <div class="panel-head">📢 Баннеры / Реклама</div>
+        <div class="panel-sub">Настройка рекламных баннеров на главной странице и в правом столбе</div>
+
+        <!-- Сайдбар-баннер (правый столб главной) -->
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+          <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;">📌 Баннер в правом столбе (главная страница)</div>
+          <div style="font-size:12px;color:#888;margin-bottom:16px;">Вертикальный баннер в правой колонке на главной странице. Настройте текст, цвет и ссылку.</div>
+
+          <!-- Предпросмотр -->
+          <div id="sidebarBannerPreview" style="background:linear-gradient(160deg,#0d0d2b,#c8102e);border-radius:8px;padding:20px 16px;color:#fff;margin-bottom:16px;text-align:center;max-width:280px;position:relative;overflow:hidden;">
+            <div style="position:absolute;inset:0;opacity:.06;background:repeating-linear-gradient(45deg,#fff,#fff 1px,transparent 1px,transparent 8px);"></div>
+            <div id="sbPreviewIcon" style="font-size:36px;margin-bottom:10px;position:relative;">🎫</div>
+            <div id="sbPreviewTitle" style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;margin-bottom:8px;position:relative;">Добавьте событие</div>
+            <div id="sbPreviewDesc" style="font-size:12px;opacity:.8;line-height:1.5;margin-bottom:14px;position:relative;">Разместите анонс концерта, выставки или спектакля</div>
+            <div id="sbPreviewBtn" style="background:#fff;color:#c8102e;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px;border-radius:6px;position:relative;">Добавить →</div>
+          </div>
+
+          <!-- Форма настройки -->
+          <div style="display:grid;gap:12px;">
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Иконка (emoji)</label>
+              <input id="sbIcon" type="text" value="🎫" placeholder="🎫" style="width:80px;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:18px;outline:none;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Заголовок</label>
+              <input id="sbTitle" type="text" value="Добавьте событие" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Описание</label>
+              <input id="sbDesc" type="text" value="Разместите анонс концерта, выставки или спектакля" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Текст кнопки</label>
+              <input id="sbBtnText" type="text" value="Добавить →" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Ссылка кнопки</label>
+              <input id="sbLink" type="url" value="event-add.html" placeholder="https://..." style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Цвет фона (CSS gradient)</label>
+              <input id="sbColor" type="text" value="linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%)" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:12px;font-family:monospace;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Цвет текста кнопки</label>
+              <input id="sbBtnColor" type="text" value="#c8102e" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+            <button onclick="updateSidebarBannerPreview()" style="background:#f0ede8;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600;">👁 Предпросмотр</button>
+            <button onclick="saveSidebarBanner()" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:10px 20px;cursor:pointer;">💾 Сохранить на сайт</button>
+            <button onclick="resetSidebarBanner()" style="background:#f0ede8;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:13px;color:#888;">↺ Сбросить</button>
+          </div>
+          <div id="sbSavedMsg" style="color:#1a6c2e;font-size:12px;margin-top:8px;display:none;">✅ Баннер сохранён! Обновите главную страницу чтобы увидеть изменения.</div>
+        </div>
+
+        <!-- Горизонтальный баннер 728×90 (верхний, под шапкой) -->
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+          <div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;">📐 Горизонтальный баннер 728×90 (под шапкой)</div>
+          <div style="font-size:12px;color:#888;margin-bottom:16px;">Рекламный баннер под шапкой главной страницы. Поддерживает Google AdSense и custom HTML.</div>
+          <div style="display:grid;gap:10px;">
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Тип баннера</label>
+              <select id="bannerType" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+                <option value="afishiplus">АфишиПлюс (встроенный)</option>
+                <option value="adsense">Google AdSense</option>
+                <option value="custom">Свой HTML</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Заголовок (для АфишиПлюс)</label>
+              <input id="h728Title" type="text" value="⭐ АфишиПлюс Золото" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Подзаголовок</label>
+              <input id="h728Sub" type="text" value="Скидка 15% на билеты · Без рекламы · Ранний доступ" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Текст кнопки</label>
+              <input id="h728Btn" type="text" value="299 ₽/мес →" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Ссылка</label>
+              <input id="h728Link" type="url" value="loyalty.html" style="width:100%;border:1.5px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+          <button onclick="saveH728Banner()" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;border:none;border-radius:6px;padding:10px 20px;cursor:pointer;margin-top:12px;">💾 Сохранить</button>
+          <div id="h728SavedMsg" style="color:#1a6c2e;font-size:12px;margin-top:8px;display:none;">✅ Сохранено!</div>
+        </div>
+
+      </div>
+id="panel-users" class="panel-card" style="display:none;">
       <div class="panel-head">👥 Пользователи</div>
       <div class="panel-sub">Регистрация администраторов и модераторов</div>
       <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px;">
@@ -5896,6 +5991,103 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }, 500);
 });
+</script>
+
+<script>
+/* ── Управление сайдбар-баннером ─────────────────────────────────── */
+
+function updateSidebarBannerPreview() {
+  var icon  = document.getElementById('sbIcon')   && document.getElementById('sbIcon').value   || '🎫';
+  var title = document.getElementById('sbTitle')  && document.getElementById('sbTitle').value  || 'Добавьте событие';
+  var desc  = document.getElementById('sbDesc')   && document.getElementById('sbDesc').value   || '';
+  var btn   = document.getElementById('sbBtnText') && document.getElementById('sbBtnText').value || 'Добавить →';
+  var color = document.getElementById('sbColor')  && document.getElementById('sbColor').value  || 'linear-gradient(160deg,#0d0d2b,#c8102e)';
+  var btnColor = document.getElementById('sbBtnColor') && document.getElementById('sbBtnColor').value || '#c8102e';
+
+  var prev = document.getElementById('sidebarBannerPreview');
+  if (prev) prev.style.background = color;
+  var ic = document.getElementById('sbPreviewIcon');   if (ic)  ic.textContent  = icon;
+  var ti = document.getElementById('sbPreviewTitle');  if (ti)  ti.textContent  = title;
+  var de = document.getElementById('sbPreviewDesc');   if (de)  de.textContent  = desc;
+  var bt = document.getElementById('sbPreviewBtn');    if (bt) { bt.textContent = btn; bt.style.color = btnColor; }
+}
+
+function saveSidebarBanner() {
+  var data = {
+    icon:     (document.getElementById('sbIcon')     || {}).value || '🎫',
+    title:    (document.getElementById('sbTitle')    || {}).value || 'Добавьте событие',
+    desc:     (document.getElementById('sbDesc')     || {}).value || '',
+    btnText:  (document.getElementById('sbBtnText')  || {}).value || 'Добавить →',
+    link:     (document.getElementById('sbLink')     || {}).value || 'event-add.html',
+    color:    (document.getElementById('sbColor')    || {}).value || 'linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%)',
+    btnColor: (document.getElementById('sbBtnColor') || {}).value || '#c8102e',
+    savedAt:  Date.now()
+  };
+  try {
+    localStorage.setItem('afishi_sidebar_banner', JSON.stringify(data));
+    var msg = document.getElementById('sbSavedMsg');
+    if (msg) { msg.style.display = ''; setTimeout(function(){ msg.style.display = 'none'; }, 4000); }
+    if (typeof showToastAdmin === 'function') showToastAdmin('✅ Баннер сохранён! Обновите главную страницу.');
+  } catch(e) {
+    alert('Ошибка сохранения: ' + e.message);
+  }
+}
+
+function resetSidebarBanner() {
+  try { localStorage.removeItem('afishi_sidebar_banner'); } catch(e){}
+  ['sbIcon','sbTitle','sbDesc','sbBtnText','sbLink','sbColor','sbBtnColor'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = el.defaultValue || '';
+  });
+  updateSidebarBannerPreview();
+  if (typeof showToastAdmin === 'function') showToastAdmin('↺ Баннер сброшен до умолчания');
+}
+
+function loadSidebarBannerForm() {
+  try {
+    var data = JSON.parse(localStorage.getItem('afishi_sidebar_banner') || 'null');
+    if (!data) return;
+    var fields = { sbIcon: data.icon, sbTitle: data.title, sbDesc: data.desc,
+                   sbBtnText: data.btnText, sbLink: data.link,
+                   sbColor: data.color, sbBtnColor: data.btnColor };
+    Object.keys(fields).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && fields[id]) el.value = fields[id];
+    });
+    updateSidebarBannerPreview();
+  } catch(e) {}
+}
+
+function saveH728Banner() {
+  var data = {
+    type:  (document.getElementById('bannerType') || {}).value || 'afishiplus',
+    title: (document.getElementById('h728Title')  || {}).value || '⭐ АфишиПлюс Золото',
+    sub:   (document.getElementById('h728Sub')    || {}).value || 'Скидка 15% на билеты',
+    btn:   (document.getElementById('h728Btn')    || {}).value || '299 ₽/мес →',
+    link:  (document.getElementById('h728Link')   || {}).value || 'loyalty.html',
+    savedAt: Date.now()
+  };
+  try {
+    localStorage.setItem('afishi_h728_banner', JSON.stringify(data));
+    var msg = document.getElementById('h728SavedMsg');
+    if (msg) { msg.style.display = ''; setTimeout(function(){ msg.style.display = 'none'; }, 3000); }
+    if (typeof showToastAdmin === 'function') showToastAdmin('✅ Баннер 728×90 сохранён!');
+  } catch(e) {}
+}
+
+/* Хук: при открытии panel-banners загрузить текущие настройки */
+(function() {
+  var _orig = window.showPanel;
+  window.showPanel = function(name, el) {
+    if (_orig) _orig(name, el);
+    if (name === 'banners') {
+      setTimeout(function() {
+        loadSidebarBannerForm();
+        updateSidebarBannerPreview();
+      }, 100);
+    }
+  };
+})();
 </script>
 </body>
 </html>

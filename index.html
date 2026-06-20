@@ -1689,13 +1689,13 @@ footer {
   <aside style="align-self:start;">
 
     <!-- ВЕРТИКАЛЬНЫЙ БАННЕР -->
-    <div class="promo-banner" style="background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);border-radius:8px;padding:20px 16px;color:#fff;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;">
+    <div id="sidebarAdBanner" class="promo-banner" style="background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);border-radius:8px;padding:20px 16px;color:#fff;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;">
       <div style="position:absolute;inset:0;opacity:.08;background:repeating-linear-gradient(45deg,#fff,#fff 1px,transparent 1px,transparent 8px);"></div>
       <div style="position:relative;">
-        <div style="font-size:36px;margin-bottom:10px;">🎫</div>
-        <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Добавьте<br>событие</div>
-        <div style="font-size:12px;opacity:.8;line-height:1.5;margin-bottom:14px;">Разместите анонс концерта, выставки или спектакля</div>
-        <a href="event-add.html" style="display:block;background:#fff;color:#c8102e;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px;border-radius:6px;text-decoration:none;letter-spacing:.3px;">Добавить →</a>
+        <div id="sidebarBannerIcon" style="font-size:36px;margin-bottom:10px;">🎫</div>
+        <div id="sidebarBannerTitle" style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Добавьте<br>событие</div>
+        <div id="sidebarBannerDesc" style="font-size:12px;opacity:.8;line-height:1.5;margin-bottom:14px;">Разместите анонс концерта, выставки или спектакля</div>
+        <a id="sidebarBannerBtn" href="event-add.html" style="display:block;background:#fff;color:#c8102e;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px;border-radius:6px;text-decoration:none;letter-spacing:.3px;">Добавить →</a>
       </div>
     </div>
     <div class="sw">
@@ -2913,6 +2913,48 @@ function renderSidebar(city) {
   }
 }
 
+</script>
+
+<script>
+/* ── Загрузить сайдбар-баннер из настроек admin-panel ─────────────
+   Читает localStorage.afishi_sidebar_banner и обновляет баннер
+   Если настроек нет — остаётся дефолтный баннер ─────────────── */
+(function() {
+  function loadAdminBanner() {
+    var banner = null;
+    try { banner = JSON.parse(localStorage.getItem('afishi_sidebar_banner') || 'null'); } catch(e){}
+    if (!banner) return; // Нет настроек → оставить дефолтный
+
+    var bannerEl = document.getElementById('sidebarAdBanner');
+    if (!bannerEl) return;
+
+    // Применить настройки из admin-panel
+    if (banner.color) bannerEl.style.background = banner.color;
+
+    var iconEl  = document.getElementById('sidebarBannerIcon');
+    var titleEl = document.getElementById('sidebarBannerTitle');
+    var descEl  = document.getElementById('sidebarBannerDesc');
+    var btnEl   = document.getElementById('sidebarBannerBtn');
+
+    if (iconEl  && banner.icon)    iconEl.textContent  = banner.icon;
+    if (titleEl && banner.title)   titleEl.innerHTML   = banner.title.replace(/\n/g,'<br>');
+    if (descEl  && banner.desc)    descEl.textContent  = banner.desc;
+    if (btnEl) {
+      if (banner.btnText)  btnEl.textContent = banner.btnText;
+      if (banner.link)     btnEl.href        = banner.link;
+      if (banner.btnColor) btnEl.style.color = banner.btnColor;
+    }
+  }
+
+  // Запустить после загрузки DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadAdminBanner);
+  } else {
+    loadAdminBanner();
+  }
+  // Также вызвать через 500ms на случай если renderPage перерисует DOM
+  setTimeout(loadAdminBanner, 500);
+})();
 </script>
 </body>
 </html>
