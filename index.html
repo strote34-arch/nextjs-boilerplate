@@ -1100,7 +1100,7 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
 <style>
 /* Sidebar: фиксировать правый столб */
 .main-layout { display: grid !important; grid-template-columns: 1fr 300px !important; gap: 24px; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-@media(max-width:900px) { .main-layout { grid-template-columns: 1fr !important; } .main-layout aside { display: none; } }
+@media(max-width:768px) { .main-layout { grid-template-columns: 1fr !important; } .main-layout > aside { display: none; } }
 </style>
 <style>
 /* Sidebar fix */
