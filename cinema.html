@@ -1663,7 +1663,7 @@ function makeGridCard(f) {
   const newBadge = f.new ? `<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:2px;letter-spacing:.5px;">НОВИНКА</div>` : '';
   el.innerHTML = `
     <div class="film-poster" style="background:${f.color};position:relative;overflow:hidden;">
-      ${f.poster ? `<img src="${f.poster}" alt="${f.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;" loading="lazy">` : ''}
+      ${(f.poster||f.img) ? `<img src="${f.poster||f.img}" alt="${f.title}" class="film-poster-bg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;" loading="lazy" onerror="this.style.display='none'">` : ''}
       <div class="film-poster-img" style="font-size:42px;${f.poster ? 'opacity:0;' : ''}">${f.icon}</div>
       ${newBadge}
       <div class="film-age">${f.age}</div>
@@ -1696,7 +1696,7 @@ function makeListCard(f) {
   const starsStr = '★'.repeat(stars)+'☆'.repeat(5-stars);
   const fmtTags = f.formats.map(fmt=>`<span class="film-list-tag">${fmt}</span>`).join('');
   el.innerHTML = `
-    <div class="film-list-poster" style="background:${f.color};display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;overflow:hidden;">${f.poster ? `<img src="${f.poster}" alt="${f.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">` : f.icon}</div>
+    <div class="film-list-poster" style="background:${f.color};display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;overflow:hidden;">${(f.poster||f.img) ? `<img src="${f.poster||f.img}" alt="${f.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">` : f.icon}</div>
     <div class="film-list-body">
       <div class="film-list-genre">${f.genre} · ${f.country} · ${f.year} · ${f.age}</div>
       <div class="film-list-title">${f.title}</div>
