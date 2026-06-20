@@ -1544,6 +1544,20 @@ footer {
 @media(max-width:600px){
   #aiGrid { grid-template-columns: 1fr 1fr !important; gap:8px !important; }
 }
+
+/* ── Sidebar всегда видим на десктопе / широком планшете ── */
+@media(min-width:769px) {
+  .main-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 300px !important;
+    gap: 24px !important;
+    align-items: start !important;
+  }
+  .main-layout > aside {
+    display: block !important;
+    align-self: start !important;
+  }
+}
 </style>
 
 
@@ -1689,7 +1703,7 @@ footer {
   <aside style="align-self:start;">
 
     <!-- ВЕРТИКАЛЬНЫЙ БАННЕР -->
-    <div id="sidebarAdBanner" class="promo-banner" style="background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);border-radius:8px;padding:20px 16px;color:#fff;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;">
+    <div id="sidebarAdBanner" class="promo-banner" style="background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);border-radius:8px;padding:24px 16px;color:#fff;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;min-height:200px;display:flex;align-items:center;justify-content:center;">
       <div style="position:absolute;inset:0;opacity:.08;background:repeating-linear-gradient(45deg,#fff,#fff 1px,transparent 1px,transparent 8px);"></div>
       <div style="position:relative;">
         <div id="sidebarBannerIcon" style="font-size:36px;margin-bottom:10px;">🎫</div>
