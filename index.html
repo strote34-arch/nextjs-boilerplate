@@ -1126,6 +1126,39 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
   .hero-aside-small { flex-direction: row; }
 }
 </style>
+
+<script>
+/* ── ARTICLES_DB для сайдбара главной ─────────────────────── */
+if (typeof ARTICLES_DB === 'undefined') {
+  var ARTICLES_DB = [
+    {id:'a001',title:'Топ-10 концертов этого лета в Волгограде',
+     cat:'Подборка',icon:'🎸',color:'#c8102e',
+     author:'Редакция Афиши',date:'10 июня 2026',
+     desc:'Лето 2026 обещает быть насыщенным — от симфонических вечеров до рок-фестивалей.',
+     readTime:'4 мин',views:1240,href:'articles.html'},
+    {id:'a002',title:'Театральные премьеры сезона 2025/2026',
+     cat:'Театр',icon:'🎭',color:'#1a0a2e',
+     author:'Анна Смирнова',date:'8 июня 2026',
+     desc:'Обзор самых ожидаемых постановок в театрах Волгограда.',
+     readTime:'6 мин',views:876,href:'articles.html'},
+    {id:'a003',title:'Кино июня: что смотреть этим летом',
+     cat:'Кино',icon:'🎬',color:'#003366',
+     author:'Дмитрий Орлов',date:'5 июня 2026',
+     desc:'Новинки проката — от боевиков до семейных фильмов.',
+     readTime:'5 мин',views:2100,href:'articles.html'},
+    {id:'a004',title:'Топ-5 мест для романтического вечера',
+     cat:'Гид',icon:'❤️',color:'#8b0000',
+     author:'Маша Волкова',date:'25 мая 2026',
+     desc:'Рестораны, театры и смотровые площадки для особого вечера.',
+     readTime:'4 мин',views:1870,href:'articles.html'},
+    {id:'a005',title:'Семейный досуг: куда сходить с детьми в июне',
+     cat:'Семья',icon:'👨‍👩‍👧‍👦',color:'#ff6b35',
+     author:'Наташа Дробная',date:'20 мая 2026',
+     desc:'Цирк, планетарий, квесты — всё для незабываемых выходных.',
+     readTime:'4 мин',views:1430,href:'articles.html'},
+  ];
+}
+</script>
 </head>
 <body>
 
@@ -2871,9 +2904,15 @@ function renderSidebar(city) {
     }).join('');
   }
 
-  // 📝 Ваши рецензии
+  // 📝 Ваши рецензии — из localStorage или статические демо
   var myRevEl = document.getElementById('indexReviewsWidget');
   if (myRevEl) {
+    var DEMO_REVIEWS = [
+      {event:'Кармен — Муз. театр', author:'Мария С.', rating:5,
+       text:'Великолепная постановка! Сопрано просто невероятное. Однозначно рекомендую!'},
+      {event:'Холоп 3 — премьера', author:'Дмитрий О.', rating:4,
+       text:'Смеялся от души! Прилучный и Асмус — блестящий дуэт.'},
+    ];
     try {
       var reviews = JSON.parse(localStorage.getItem('afishi_reviews') || 'null');
       var myRevs = [];
@@ -2881,26 +2920,38 @@ function renderSidebar(city) {
         Object.values(reviews).forEach(function(arr){ if(Array.isArray(arr)) myRevs = myRevs.concat(arr); });
       }
       var approved = myRevs.filter(function(r){ return r.status === 'approved'; }).slice(0,2);
-      if (approved.length) {
-        myRevEl.innerHTML = approved.map(function(r){
-          var stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
-          return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;">'
-            +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;margin-bottom:2px;">'+(r.event||r.author)+'</div>'
-            +'<div style="font-size:11px;color:#888;">'+stars+' · '+r.author+'</div>'
-            +'<div style="font-size:12px;color:#555;margin-top:3px;line-height:1.4;">'+((r.text||'').slice(0,80))+'...</div>'
-            +'</div>';
-        }).join('');
-      } else {
-        myRevEl.innerHTML = '<div style="font-size:12px;color:var(--light,#888);text-align:center;padding:12px 0;">Рецензий пока нет. <a href="cinema.html" style="color:var(--red,#c8102e);">Написать →</a></div>';
-      }
+      var toShow = approved.length ? approved : DEMO_REVIEWS;
+      myRevEl.innerHTML = toShow.map(function(r){
+        var stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
+        return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;">'
+          +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;margin-bottom:2px;">'+(r.event||r.title||'Мероприятие')+'</div>'
+          +'<div style="font-size:11px;color:#c8102e;margin:2px 0;">'+stars+'</div>'
+          +'<div style="font-size:11px;color:#888;">'+r.author+'</div>'
+          +'<div style="font-size:12px;color:#555;margin-top:3px;line-height:1.4;">'+((r.text||'').slice(0,90))+'...</div>'
+          +'</div>';
+      }).join('')
+      + '<div style="text-align:right;margin-top:8px;"><a href="reviews.html" style="font-size:11px;color:var(--red,#c8102e);">Написать рецензию →</a></div>';
     } catch(e) {
-      myRevEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;">Рецензий пока нет</div>';
+      myRevEl.innerHTML = DEMO_REVIEWS.map(function(r){
+        var stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
+        return '<div style="padding:8px 0;border-bottom:1px solid #f0ede8;">'
+          +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;">'+r.event+'</div>'
+          +'<div style="font-size:11px;color:#c8102e;">'+stars+'</div>'
+          +'<div style="font-size:11px;color:#888;">'+r.author+'</div>'
+          +'<div style="font-size:12px;color:#555;margin-top:2px;">'+r.text.slice(0,90)+'...</div>'
+          +'</div>';
+      }).join('');
     }
   }
 
-  // 💬 Новые отзывы
+  // 💬 Новые отзывы — из localStorage или демо
   var newRevEl = document.getElementById('latestReviewsWidget');
   if (newRevEl) {
+    var DEMO_LATEST = [
+      {event:'Майкл Джексон (байопик)', rating:5, author:'Анна М.', date:'15 июн'},
+      {event:'Властелины Вселенной',     rating:4, author:'Игорь К.', date:'12 июн'},
+      {event:'Симфония в Филармонии',    rating:5, author:'Ольга Р.', date:'9 июн'},
+    ];
     try {
       var reviews2 = JSON.parse(localStorage.getItem('afishi_reviews') || 'null');
       var allRevs = [];
@@ -2919,7 +2970,14 @@ function renderSidebar(city) {
             +'</div>';
         }).join('');
       } else {
-        newRevEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;text-align:center;">Отзывов пока нет</div>';
+        var stars3 = '★★★★★';
+      newRevEl.innerHTML = DEMO_LATEST.map(function(r){
+        return '<div style="padding:7px 0;border-bottom:1px solid #f0ede8;">'
+          +'<div style="font-size:11px;font-weight:700;color:#1a1a1a;">'+r.event+'</div>'
+          +'<div style="font-size:10px;color:#c8102e;margin:2px 0;">'+'★'.repeat(r.rating)+'</div>'
+          +'<div style="font-size:10px;color:#888;">'+r.author+' · '+r.date+'</div>'
+          +'</div>';
+      }).join('');
       }
     } catch(e) {
       newRevEl.innerHTML = '<div style="font-size:12px;color:#aaa;padding:8px 0;">Отзывов пока нет</div>';
