@@ -1342,45 +1342,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 // ── Концертные площадки Волгограда ────────────────────────────────
-var VENUES_DB = {
-  'Волгоград': [
-    {id:'ckz',name:'ЦКЗ Волгоградская Филармония',icon:'🎼',color:'#1a0533',
-     cat:'Концертный зал',addr:'пр. Ленина, 51',phone:'+7(8442)38-25-72',
-     capacity:800,href:'venue-ckz-oktyabr-volgograd.html',
-     desc:'Главная концертная площадка Волгограда. Классика, опера, балет, эстрада.',
-     events:['Симфоническая музыка','Органный концерт','Эстрадные шоу']},
-    {id:'arena',name:'Волгоград Арена',icon:'🏟️',color:'#003366',
-     cat:'Стадион',addr:'Остров Людникова, 1',phone:'+7(8442)50-10-00',
-     capacity:45000,href:'venue-arena.html',
-     desc:'Современный стадион мирового уровня. Концерты звёзд, спортивные события.',
-     events:['Крупные концерты','Спортивные события','Фестивали']},
-    {id:'dom_ofitserov',name:'Дом Офицеров',icon:'🏛️',color:'#2a1a0a',
-     cat:'Культурный центр',addr:'пр. Ленина, 50',phone:'+7(8442)94-00-88',
-     capacity:600,href:'venue-dom-ofitserov-volgograd.html',
-     desc:'Исторический культурный центр Волгограда. Концерты, выставки, мероприятия.',
-     events:['Рок-концерты','Вечеринки','Джаз-сессии']},
-    {id:'komsomol',name:'КЗ Комсомол',icon:'🎸',color:'#1a3300',
-     cat:'Клуб',addr:'ул. Советская, 14',phone:'+7(8442)23-56-78',
-     capacity:300,href:'#',
-     desc:'Популярный клуб Волгограда. Рок, металл, альтернативная музыка.',
-     events:['Rock Night','Metal Fest','Acoustic Sessions']},
-    {id:'muztetr',name:'Волгоградский музыкальный театр',icon:'🎭',color:'#33001a',
-     cat:'Театр',addr:'пр. Ленина, 10',phone:'+7(8442)38-08-22',
-     capacity:700,href:'theater-volgogradskiy-muzykalnyy-teatr.html',
-     desc:'Крупнейший музыкальный театр Нижней Волги. Оперы, балеты, мюзиклы.',
-     events:['Кармен','Лебединое озеро','Щелкунчик']},
-    {id:'restoran',name:'Ресторан-клуб Панорама',icon:'🍽️',color:'#1a1a00',
-     cat:'Ресторан-клуб',addr:'набережная 62-й Армии, 4',phone:'+7(8442)45-67-89',
-     capacity:200,href:'venue-restoran-city.html',
-     desc:'Ресторан с живой музыкой и панорамным видом на Волгу.',
-     events:['Живая музыка','Джаз-вечера','Корпоративы']},
-  ],
-  'Москва': [
-    {id:'olympic',name:'СК Олимпийский',icon:'🏟️',color:'#003366',cat:'Арена',addr:'Олимпийский пр., 16',phone:'',capacity:35000,href:'#',desc:'Крупнейшая концертная арена Москвы.',events:[]},
-    {id:'luzhniki',name:'Лужники',icon:'⚽',color:'#003300',cat:'Стадион',addr:'Лужники, 24',phone:'',capacity:81000,href:'#',desc:'Главный стадион России.',events:[]},
-    {id:'crocus',name:'Крокус Сити Холл',icon:'🎤',color:'#1a0a00',cat:'Концертный зал',addr:'65-66 км МКАД',phone:'',capacity:7500,href:'#',desc:'Самая большая концертная площадка России.',events:[]},
-  ],
-};
+// Используем полную базу площадок
+var VENUES_DB = FOOTER_VENUES_DB;
 
 function renderVenues(city) {
   city = city || localStorage.getItem('afishi_city') || 'Волгоград';
