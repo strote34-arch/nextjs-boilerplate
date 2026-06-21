@@ -686,6 +686,13 @@ footer{background:#111;color:#aaa;margin-top:48px;font-family:'PT Sans',sans-ser
 @media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr !important;gap:24px;}}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr !important;}.footer-bottom{flex-direction:column;text-align:center;}}
 </style>
+<style>
+.vf-btn{padding:7px 16px;border:1.5px solid var(--border,#e8e4dc);border-radius:20px;
+  background:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;
+  text-transform:uppercase;cursor:pointer;transition:.15s;color:#666;}
+.vf-btn:hover{border-color:#c8102e;color:#c8102e;}
+.vf-btn.active{background:#c8102e;border-color:#c8102e;color:#fff;}
+</style>
 </head>
 
 <body>
@@ -784,6 +791,15 @@ footer{background:#111;color:#aaa;margin-top:48px;font-family:'PT Sans',sans-ser
 <div class="main-layout">
   <div>
     <div id="resultsInfo" style="font-size:13px;color:var(--light);margin-bottom:16px;"></div>
+    <!-- Фильтры по типу -->
+    <div id="venueFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+      <button class="vf-btn active" data-cat="all"   onclick="filterVenues('all',this)">Все</button>
+      <button class="vf-btn"        data-cat="concert" onclick="filterVenues('concert',this)">🎸 Концерты</button>
+      <button class="vf-btn"        data-cat="theater" onclick="filterVenues('theater',this)">🎭 Театры</button>
+      <button class="vf-btn"        data-cat="club"    onclick="filterVenues('club',this)">🎵 Клубы</button>
+      <button class="vf-btn"        data-cat="opera"   onclick="filterVenues('opera',this)">🎵 Опера · Балет</button>
+      <button class="vf-btn"        data-cat="stadium" onclick="filterVenues('stadium',this)">🏟️ Стадионы</button>
+    </div>
     <div class="venues-grid" id="venuesGrid">
       <div class="empty"><div class="empty-icon">🎸</div><div>Определяем ваш город...</div></div>
     </div>
@@ -1104,6 +1120,42 @@ var FOOTER_VENUES_DB = {
       desc:'Камерная сцена для ценителей современной драматургии. Уютная атмосфера, смелые эксперименты.',
       events:['Три сестры — 14 июн','Вишнёвый сад — 21 июн']
     },
+    {
+      name:'Клуб «Рок-Сити»',
+      href:'concerts.html',
+      icon:'🎸', color:'#0d0d0d', cat:'Рок-клуб · Концерты',
+      capacity:400, addr:'ул. 7-й Гвардейской, 2',
+      phone:'+7 (8442) 33-10-10',
+      desc:'Главная рок-площадка Волгограда. Живая музыка каждые выходные, местные группы и гастролёры.',
+      events:['Рок-фестиваль «Волга» — 28 июн','Кавер-вечер Deep Purple — 21 июн','Местные группы — кажд. сб']
+    },
+    {
+      name:'Джаз-клуб «Диксиленд»',
+      href:'concerts.html',
+      icon:'🎷', color:'#0a1500', cat:'Джаз · Блюз · Живая музыка',
+      capacity:150, addr:'просп. Ленина, 18а',
+      phone:'+7 (8442) 55-88-90',
+      desc:'Уютный джаз-клуб в центре города. Живая музыка, атмосфера 1920-х, авторские коктейли.',
+      events:['Джаз-квартет «Волга» — 20 июн','Блюз-сессия — кажд. пт','Big Band — 27 июн']
+    },
+    {
+      name:'Планетарий (Лектории и концерты)',
+      href:'concerts.html',
+      icon:'🌟', color:'#000033', cat:'Лектории · Концерты под куполом',
+      capacity:250, addr:'ул. им. Маршала Чуйкова, 52',
+      phone:'+7 (8442) 38-78-77',
+      desc:'Уникальные музыкальные шоу под звёздным куполом. Симфонии под звёздами, лазерные концерты.',
+      events:['Лазерное шоу «Космос» — 22 июн','Симфония под звёздами — 29 июн']
+    },
+    {
+      name:'Бар-клуб «Цех»',
+      href:'concerts.html',
+      icon:'🎵', color:'#1a0a00', cat:'Клуб · Живая музыка',
+      capacity:300, addr:'ул. Рабоче-Крестьянская, 22',
+      phone:'+7 (8442) 44-33-22',
+      desc:'Живая музыка, stand-up, тематические вечеринки. Модная площадка для молодёжных событий.',
+      events:['Джем-сейшн — кажд. чт','Stand-Up вечер — 25 июн','Disco 90s — 28 июн']
+    },
   ],
   'Москва': [
     {
@@ -1360,10 +1412,10 @@ function renderVenues(city) {
         + v.events.slice(0,3).map(function(e){ return '<span style="display:inline-block;background:#f0ede8;font-size:10px;padding:2px 8px;border-radius:10px;margin:2px;">'+e+'</span>'; }).join('')
         +'</div>'
       : '';
-    return '<div class="venue-card" onclick="location.href=''+v.href+''">'
+    return '<div class="venue-card" onclick="location.href=\'' + v.href + '\'">'
       +'<div class="vc-img" style="background:'+v.color+';">'
       +'<span style="font-size:50px;">'+v.icon+'</span>'
-      +'<div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;font-family:Oswald,sans-serif;text-transform:uppercase;">'+v.cat+'</div>'
+      +'<div class="vc-cat" style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;font-family:Oswald,sans-serif;text-transform:uppercase;">'+v.cat+'</div>'
       +'<div style="position:absolute;top:8px;right:8px;background:#c8102e;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;">'+v.capacity.toLocaleString()+' мест</div>'
       +'</div>'
       +'<div class="vc-body">'
@@ -1412,6 +1464,31 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',fill); else fill();
 })();
+</script>
+
+<script>
+function filterVenues(cat, btn) {
+  // Кнопки
+  document.querySelectorAll('.vf-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+
+  var catMap = {
+    concert: ['Рок','Поп','Классика','Концерт','Арена','Шоу','Ледовые'],
+    theater: ['Театр','Спектакль','Драм'],
+    club:    ['Клуб','Джаз','Блюз','Живая музыка','Лекторий','Диско'],
+    opera:   ['Опера','Балет','Мюзикл','Оперетта'],
+    stadium: ['Стадион','Open Air'],
+  };
+
+  document.querySelectorAll('.venue-card').forEach(function(card) {
+    if (cat === 'all') { card.style.display = ''; return; }
+    var catEl = card.querySelector('.vc-cat');
+    var catText = catEl ? catEl.textContent : '';
+    var keywords = catMap[cat] || [];
+    var match = keywords.some(function(k){ return catText.indexOf(k) >= 0; });
+    card.style.display = match ? '' : 'none';
+  });
+}
 </script>
 </body>
 </html>
