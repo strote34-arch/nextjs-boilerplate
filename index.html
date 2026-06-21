@@ -2867,9 +2867,18 @@ function renderSidebar(city) {
       }).slice(0,5);
     popEl.innerHTML = popular.length ? popular.map(function(ev){
       var vCnt = _views[ev.id]||0;
-      var isFeat = _featured[ev.id] ? '⭐ ' : '';
-      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;cursor:pointer;" onclick=\"location.href=\'\1\'\">'
-        +'<div style="min-width:30px;height:30px;border-radius:50%;background:'+ev.color+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">'+ev.icon+'</div>'
+      var isFeat = _featured[ev.id] ? '\u2b50 ' : '';
+      // Определить страницу по типу события
+      var cat = (ev.cat||ev.type||ev.genre||'').toLowerCase();
+      var href = 'concerts.html';
+      if (cat.indexOf('театр')>=0||cat.indexOf('спектакл')>=0||cat.indexOf('theater')>=0||cat.indexOf('опера')>=0||cat.indexOf('балет')>=0) href='theater.html';
+      else if (cat.indexOf('кино')>=0||cat.indexOf('film')>=0||cat.indexOf('cinema')>=0) href='cinema.html';
+      else if (cat.indexOf('дет')>=0||cat.indexOf('kid')>=0||cat.indexOf('child')>=0) href='kids.html';
+      else if (cat.indexOf('выставк')>=0||cat.indexOf('exhibit')>=0) href='exhibits.html';
+      // Трекинг просмотров
+      try{var v=JSON.parse(localStorage.getItem('afishi_views')||'{}');v[ev.id]=(v[ev.id]||0)+1;localStorage.setItem('afishi_views',JSON.stringify(v));}catch(x){}
+      return '<a href="'+href+'" data-event-id="'+ev.id+'" style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;cursor:pointer;text-decoration:none;color:inherit;">'
+        +'<div style="min-width:32px;height:32px;border-radius:50%;background:'+ev.color+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">'+ev.icon+'</div>'
         +'<div style="flex:1;min-width:0;">'
         +'<div style="font-size:12px;font-weight:700;color:#1a1a1a;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+isFeat+ev.title+'</div>'
         +'<div style="font-size:10px;color:#aaa;">'+fmtD(ev.dateISO)+(vCnt?' · 👁 '+vCnt:'')+'</div>'
