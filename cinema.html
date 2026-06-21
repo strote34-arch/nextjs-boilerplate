@@ -1234,6 +1234,7 @@ function safeGet(id) {
         <div class="mtab" id="tab-trailer"  onclick="switchTab('trailer')">▶ Трейлер</div>
         <div class="mtab" id="tab-reviews"  onclick="switchTab('reviews')">Отзывы <span id="reviewCountBadge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:3px;"></span></div>
         <div class="mtab" id="tab-tickets"  onclick="switchTab('tickets')">🎟️ Купить билет</div>
+        <div class="mtab" id="tab-online"   onclick="switchTab('online')">📺 Смотреть онлайн</div>
       </div>
 
       <!-- Трейлер -->
@@ -3613,6 +3614,69 @@ window.closeModal = function() {
     }, 1000);
   });
 })();
+</script>
+
+<script>
+/* ── Онлайн-ссылки для каждого фильма ─────────────────────────── */
+var FILM_ONLINE = {"f001": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Холоп+3", "ivi": "https://www.ivi.ru/search/?q=Холоп+3", "okko": "https://okko.tv/search?query=Холоп+3"}, "f002": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Очень+страшное+кино+6", "ivi": "https://www.ivi.ru/search/?q=Очень+страшное+кино+6", "okko": ""}, "f003": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Властелины+Вселенной+2026", "ivi": "https://www.ivi.ru/search/?q=Властелины+Вселенной", "okko": ""}, "f004": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Майкл+Джексон+2026", "ivi": "https://www.ivi.ru/search/?q=Майкл+2026", "okko": "https://okko.tv/search?query=Майкл+2026"}, "f005": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Закулисье+реальности", "ivi": "https://www.ivi.ru/search/?q=Закулисье+реальности", "okko": ""}, "f006": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=День+разоблачения+2026", "ivi": "https://www.ivi.ru/search/?q=День+разоблачения", "okko": ""}, "f007": {"kp": "https://www.kinopoisk.ru/film/8908/", "ivi": "https://www.ivi.ru/search/?q=Убить+Билла", "okko": "https://okko.tv/search?query=Убить+Билла"}, "f008": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Зверолюция+2026", "ivi": "https://www.ivi.ru/search/?q=Зверолюция", "okko": ""}, "f009": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Школа+магических+зверей", "ivi": "https://www.ivi.ru/search/?q=Школа+магических+зверей", "okko": ""}, "f010": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Спилберг+2026", "ivi": "https://www.ivi.ru/search/?q=Спилберг+2026", "okko": ""}, "f011": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Ограбить+Лондон", "ivi": "https://www.ivi.ru/search/?q=Ограбить+Лондон", "okko": ""}, "f012": {"kp": "https://www.kinopoisk.ru/index.php?kp_query=Пассажир+2026", "ivi": "https://www.ivi.ru/search/?q=Пассажир+2026", "okko": ""}};
+
+/* Заполнить pane-online при открытии вкладки */
+var _origSwitchTab = window.switchTab;
+window.switchTab = function(name) {
+  if (_origSwitchTab) _origSwitchTab(name);
+  if (name === 'online') {
+    var f = window.currentFilm;
+    var box = document.getElementById('onlineBox');
+    if (!box || !f) return;
+    var links = FILM_ONLINE[f.id] || {};
+
+    var SERVICES = [
+      {key:'kp',   logo:'🎬', name:'Кинопоиск',   color:'#f60',   desc:'Онлайн-кинотеатр'},
+      {key:'okko', logo:'🎥', name:'Okko',          color:'#00b4ff',desc:'Смотреть в HD'},
+      {key:'ivi',  logo:'📺', name:'Иви',           color:'#5bc500',desc:'Фильмы онлайн'},
+    ];
+
+    var html = '<div style="margin-bottom:16px;">'
+      + '<div style="font-size:13px;color:#888;margin-bottom:14px;">Фильм может появиться на сервисах через 1–3 месяца после выхода в кино</div>';
+
+    SERVICES.forEach(function(s) {
+      var url = links[s.key];
+      html += '<a href="' + (url||'#') + '" target="_blank" '
+        + 'style="display:flex;align-items:center;gap:14px;padding:14px;'
+        + 'background:' + (url ? '#fff' : '#f9f9f7') + ';'
+        + 'border:1.5px solid ' + (url ? '#e8e4dc' : '#f0ede8') + ';'
+        + 'border-radius:10px;margin-bottom:10px;text-decoration:none;'
+        + 'opacity:' + (url ? '1' : '0.5') + ';'
+        + 'cursor:' + (url ? 'pointer' : 'default') + ';">'
+        + '<div style="width:44px;height:44px;border-radius:10px;background:' + s.color
+        + ';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">'
+        + s.logo + '</div>'
+        + '<div><div style="font-weight:700;font-size:14px;color:#1a1a1a;">' + s.name + '</div>'
+        + '<div style="font-size:12px;color:#888;">'
+        + (url ? s.desc + ' →' : 'Скоро появится') + '</div></div>'
+        + '</a>';
+    });
+
+    // Кнопка поиска на всех сервисах
+    var searchQ = encodeURIComponent(f.title + ' ' + f.year);
+    html += '<div style="border-top:1px solid #f0ede8;padding-top:14px;margin-top:4px;">'
+      + '<div style="font-size:12px;color:#888;margin-bottom:10px;">Поиск на других сервисах:</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<a href="https://www.kinopoisk.ru/index.php?kp_query=' + searchQ + '" target="_blank"'
+      + ' style="background:#f0ede8;color:#1a1a1a;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;text-decoration:none;">🎬 Кинопоиск</a>'
+      + '<a href="https://www.ivi.ru/search/?q=' + searchQ + '" target="_blank"'
+      + ' style="background:#f0ede8;color:#1a1a1a;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;text-decoration:none;">📺 Иви</a>'
+      + '<a href="https://okko.tv/search?query=' + searchQ + '" target="_blank"'
+      + ' style="background:#f0ede8;color:#1a1a1a;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;text-decoration:none;">🎥 Okko</a>'
+      + '<a href="https://www.kion.ru/search?q=' + searchQ + '" target="_blank"'
+      + ' style="background:#f0ede8;color:#1a1a1a;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;text-decoration:none;">🔴 KION</a>'
+      + '<a href="https://wink.ru/search?q=' + searchQ + '" target="_blank"'
+      + ' style="background:#f0ede8;color:#1a1a1a;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;text-decoration:none;">📡 Wink</a>'
+      + '</div></div></div>';
+
+    box.innerHTML = html;
+  }
+};
 </script>
 </body>
 </html>
