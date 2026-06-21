@@ -1073,7 +1073,7 @@ var FOOTER_VENUES_DB = {
       capacity:45000, addr:'ул. 51-й Гвардейской дивизии, 5',
       phone:'+7 (8442) 99-50-00',
       desc:'Стадион ЧМ-2018, вместимостью 45 000. Принимает масштабные open-air концерты и фестивали под открытым небом.',
-      events:['Кай Метов. 60 лет — 20 июн','Rock Night Deep Purple — 21 июн']
+      events:['Rock Night Deep Purple — 28 июн','Ротор — Краснодар — 29 июн']
     },
     {
       name:'Дом Офицеров',
@@ -1416,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var city = localStorage.getItem('afishi_city') || 'Волгоград';
   function fill() {
     var cc = document.getElementById('sidebarConcerts');
-    if (cc) cc.innerHTML = ['Кай Метов. 60 лет — 20 июн','Rock Night — 21 июн','Guf — 26 июн','Руки вверх! — 4 июл'].map(function(s){
+    if (cc) cc.innerHTML = ['Rock Night — 28 июн','Guf — 26 июн','Руки вверх! — 4 июл','Чиж & Co — 12 июл'].map(function(s){
       var p=s.split(' — '); return '<div style="padding:6px 0;border-bottom:1px solid #f5f3ef;"><div style="font-size:12px;font-weight:700;">'+p[0]+'</div><div style="font-size:10px;color:#888;">📅 '+p[1]+'</div></div>';
     }).join('');
     var ci = document.getElementById('sidebarCities');
