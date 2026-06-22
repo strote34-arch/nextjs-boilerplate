@@ -7532,5 +7532,34 @@ window.switchCity = function(city, btn) {
 };
 </script>
 
+
+<script>
+/* ── Инициализация страницы концертов ──────────────────────── */
+(function initConcertsPage() {
+  function run() {
+    try {
+      // Установить город
+      var city = (typeof currentCity !== 'undefined' && currentCity)
+        ? currentCity
+        : (localStorage.getItem('afishi_city') || 'Волгоград');
+      if (typeof currentCity !== 'undefined') window.currentCity = city;
+
+      // Заполнить фильтр площадок
+      if (typeof populateVenueFilter === 'function') populateVenueFilter(city);
+      // Отрисовать табы дат
+      if (typeof renderDateTabs === 'function') renderDateTabs();
+      // Синхронизировать с admin
+      if (typeof syncConcertsToAdmin === 'function') syncConcertsToAdmin();
+      // Главный рендер
+      if (typeof applyFilters === 'function') applyFilters();
+    } catch(e) { console.warn('initConcertsPage error:', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    setTimeout(run, 0);
+  }
+})();
+</script>
 </body>
 </html>
