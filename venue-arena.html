@@ -1001,7 +1001,10 @@ footer {
         🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
       </div>
     </div>
-  </header>
+        <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
 
 
 
@@ -1584,6 +1587,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }).join('');
   });
 })();
+</script>
+
+<!-- Мобильное меню -->
+<div id="mobileMenuOverlay" style="display:none;position:fixed;inset:0;z-index:1998;background:rgba(0,0,0,.5);" onclick="closeMobileMenu()"></div>
+<nav id="mobileMenu" style="display:none;position:fixed;top:0;right:0;bottom:0;width:280px;background:#111;z-index:1999;flex-direction:column;padding:0;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #222;">
+    <div style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;color:#fff;">Афиши<span style="color:#c8102e;">.ру</span></div>
+    <button onclick="closeMobileMenu()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+  </div>
+  <a href="index.html"           style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🏠 Главная</a>
+  <a href="concerts.html"        style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎸 Концерты</a>
+  <a href="theater.html"         style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎭 Театр</a>
+  <a href="cinema.html"          style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎬 Кино</a>
+  <a href="exhibits.html"        style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🖼 Выставки</a>
+  <a href="kids.html"            style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">👶 Детям</a>
+  <a href="articles.html"        style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">📝 Статьи</a>
+  <a href="map.html"             style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🗺 Карта</a>
+  <a href="venue-concert-city.html" style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎵 Площадки</a>
+  <a href="venue-restoran-city.html" style="display:block;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🍽 Рестораны</a>
+</nav>
+<script>
+function toggleMobileMenu() {
+  var menu = document.getElementById('mobileMenu');
+  var overlay = document.getElementById('mobileMenuOverlay');
+  var btn = document.getElementById('burgerBtn');
+  var isOpen = menu.style.transform === 'translateX(0%)';
+  if (isOpen) {
+    closeMobileMenu();
+  } else {
+    menu.style.display = 'flex';
+    overlay.style.display = 'block';
+    setTimeout(function(){ menu.style.transform = 'translateX(0%)'; }, 10);
+    btn && btn.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+function closeMobileMenu() {
+  var menu = document.getElementById('mobileMenu');
+  var overlay = document.getElementById('mobileMenuOverlay');
+  var btn = document.getElementById('burgerBtn');
+  menu.style.transform = 'translateX(100%)';
+  btn && btn.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(function(){
+    menu.style.display = 'none';
+    overlay.style.display = 'none';
+  }, 300);
+}
 </script>
 </body>
 </html>
