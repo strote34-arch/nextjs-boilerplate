@@ -980,6 +980,50 @@ function safeGet(id) {
   setTimeout(go, 300);
 })();
 </script>
+
+<style>
+/* ═══ CINEMA — мобильная адаптация ══════════════════════════════ */
+
+/* Планшет ≤900px — 3 колонки */
+@media(max-width:900px) {
+  .film-grid { grid-template-columns: repeat(3,1fr) !important; gap:12px; }
+}
+
+/* Большой смартфон ≤600px — 2 колонки */
+@media(max-width:600px) {
+  .film-grid { grid-template-columns: repeat(2,1fr) !important; gap:10px; }
+  .page-header { padding:0 12px 10px !important; }
+  .page-title  { font-size:20px !important; }
+  .filter-bar  { gap:6px !important; padding:8px 12px !important; flex-wrap:wrap; }
+  .filter-btn  { font-size:11px !important; padding:5px 10px !important; }
+  .film-card   { border-radius:6px !important; }
+  .fc-title    { font-size:12px !important; }
+  .fc-meta     { font-size:10px !important; }
+  .fc-actions  { flex-direction:column !important; gap:4px !important; }
+  .fc-btn      { font-size:11px !important; padding:6px 8px !important; width:100% !important; justify-content:center !important; }
+  /* Фильмы в списочном виде */
+  .film-list-card { flex-direction:column !important; }
+  .flc-poster  { width:100% !important; height:200px !important; }
+  /* Хлебные крошки и вкладки */
+  .breadcrumb  { font-size:11px !important; }
+  .page-tabs-bar { overflow-x:auto !important; scrollbar-width:none; }
+  /* Сайдбар скрыть */
+  .aside, aside { display:none !important; }
+  .main-layout  { grid-template-columns:1fr !important; }
+}
+
+/* Маленький смартфон ≤400px — 2 тесные колонки */
+@media(max-width:400px) {
+  .film-grid { grid-template-columns: repeat(2,1fr) !important; gap:8px; }
+  .fc-title  { font-size:11px !important; -webkit-line-clamp:2; }
+}
+
+/* touch-friendly кнопки на мобиле */
+@media(pointer:coarse) {
+  .film-card:hover { transform:none !important; box-shadow:var(--shadow) !important; }
+  .fc-btn { min-height:40px !important; }
+}
+</style>
 </head>
 <body>
 
