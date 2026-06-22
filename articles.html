@@ -1299,13 +1299,27 @@ function renderCatTabs() {
   var el = document.getElementById('catTabs');
   if (!el) return;
   el.innerHTML = cats.map(function(c,i){
-    return '<button class="cat-tab'+(i===0?' active':'')
-      +'" onclick="this.closest('div').querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active')});this.classList.add('active');renderArticles(''+c+''==='+''Все''+'?null:''+c+'')">'+c+'</button>';
+    var btn = document.createElement('button');
+    btn.className = 'cat-tab' + (i===0?' active':'');
+    btn.textContent = c;
+    return btn.outerHTML;
   }).join('');
 }
 
 document.addEventListener('DOMContentLoaded', function(){
   renderCatTabs();
+  // Навесить обработчики на кнопки категорий
+  var catTabsEl = document.getElementById('catTabs');
+  var cats = ['Все','Подборка','Театр','Кино','Гид','Семья','Выставки','Рецензия','Интервью'];
+  if (catTabsEl) {
+    catTabsEl.querySelectorAll('.cat-tab').forEach(function(btn, i){
+      btn.onclick = function(){
+        catTabsEl.querySelectorAll('.cat-tab').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderArticles(cats[i] === 'Все' ? null : cats[i]);
+      };
+    });
+  }
   renderArticles(null);
   var lbl = document.getElementById('cityTopLabel');
   if (lbl) lbl.textContent = localStorage.getItem('afishi_city') || 'Волгоград';
