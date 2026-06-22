@@ -1432,7 +1432,7 @@ window.saveEditedConcert = function saveEditedConcert() {
   var newVenue = (document.getElementById('ecm_new_venue')|| {}).value || '';
   // Авто-перенос: если жанр = Спектакль/Театр/Опера — принудительно section=theater
   var _genreVal = (document.getElementById('ecm_genre')|| {}).value || '';
-  var _theaterGenres = [,,,'Балет','Мюзикл','Оперетта'];
+  var _theaterGenres = [,'Балет','Мюзикл','Оперетта'];
   if (_theaterGenres.indexOf(_genreVal) >= 0 && section === 'concert') {
     section = 'theater';
   }
@@ -2520,7 +2520,7 @@ const CONCERTS = [
     desc:'Симфонический концерт с солистом Львом Клычковым.',
     photo:null,
     venues:[{name:'ЦКЗ Волгоградская Филармония',addr:'наб. 62-й Армии, 4, Волгоград',cap:'',times:['17:00'],city:'Волгоград'}],
-    ytId:'', zones:[]},,
+    ytId:'', zones:[]},
   {id:'vlg_dof01', title:'Неоклассик Оркестр и Хор. Идеальное свидание. 3000 свечей',
     artist:'Неоклассик Оркестр', genre:'Неоклассика', icon:'🎻', color:'#0a0a2e',
     date:'18 июля 2026', dateShort:'18 июл', dateISO:'2026-07-18', dayLabel:'Вт',
@@ -2674,14 +2674,14 @@ const CONCERTS = [
     desc:'Долгожданное сольное шоу Димы Билана с новой программой. Грандиозные декорации, световое шоу и полная коллекция главных хитов за 15 лет карьеры.',
     setlist:['Believe','Я ночной хулиган','Never Let You Go','Задыхаюсь','Держи'],
     venues:[
-      {name:'Крокус Сити Холл', addr:'65-66 км МКАД, Красногорск', cap:'6 200 мест', times:['19:00','21:30'], city:'Москва'},
+      {name:'Крокус Сити Холл', addr:'65-66 км МКАД, Красногорск', cap:'6 200 мест', times:['19:00','21:30'], city:'Москва'}
     ],
     ytId:'ZnHmskwqCCQ',
     zones:[
       {name:'Партер',      color:'#e53935', price:4500},
       {name:'Амфитеатр',   color:'#1e88e5', price:2800},
       {name:'Балкон',      color:'#43a047', price:1800},
-      {name:'VIP',         color:'#f4511e', price:7500},
+      {name:'VIP',         color:'#f4511e', price:7500}
     ],
   },
   {
@@ -2694,14 +2694,14 @@ const CONCERTS = [
     desc:'Торжественный гала-концерт в честь 178-летия Чайковского. Московский симфонический оркестр под управлением Владимира Спивакова исполнит лучшие произведения великого композитора.',
     setlist:['Лебединое озеро (сюита)','Концерт №1 для фортепиано','1812 год (торжественная увертюра)','Щелкунчик (сюита)'],
     venues:[
-      {name:'Большой зал Консерватории', addr:'ул. Б. Никитская, 13', cap:'1 737 мест', times:['19:30'], city:'Москва'},
+      {name:'Большой зал Консерватории', addr:'ул. Б. Никитская, 13', cap:'1 737 мест', times:['19:30'], city:'Москва'}
     ],
     ytId:'sIaT8Sj_SrA',
     zones:[
       {name:'Партер',     color:'#e53935', price:4500},
       {name:'Бельэтаж',   color:'#1e88e5', price:2800},
       {name:'Балкон 1',   color:'#43a047', price:1800},
-      {name:'Балкон 2',   color:'#8e24aa', price:900},
+      {name:'Балкон 2',   color:'#8e24aa', price:900}
     ],
   },
   {
@@ -2714,12 +2714,12 @@ const CONCERTS = [
     desc:'Летний джазовый фестиваль под открытым небом в Парке Горького. Семь коллективов, два сцены, еда и напитки от лучших ресторанов города. Вход — только по билетам.',
     setlist:['Igor Butman Quartet','St. Petersburg Jazz Philharmonic','Jazzist (Норвегия)','Нино Катамадзе & Insight'],
     venues:[
-      {name:'Парк Горького — Зелёный театр', addr:'ул. Крымский Вал, 9', cap:'4 000 мест', times:['15:00'], city:'Москва'},
+      {name:'Парк Горького — Зелёный театр', addr:'ул. Крымский Вал, 9', cap:'4 000 мест', times:['15:00'], city:'Москва'}
     ],
     zones:[
       {name:'VIP-зона (кресла)',  color:'#e53935', price:2000},
       {name:'Зрительская зона',   color:'#43a047', price:800},
-      {name:'Газон (без мест)',    color:'#8e24aa', price:500},
+      {name:'Газон (без мест)',    color:'#8e24aa', price:500}
     ],
   },
   {
@@ -2732,14 +2732,14 @@ const CONCERTS = [
     desc:'Американская рок-группа с мировым турне в поддержку нового альбома Origins. Thunder, Believer, Natural и десятки хитов — в грандиозном шоу с пиротехникой и LED-экранами.',
     setlist:['Thunder','Believer','Natural','Radioactive','Whatever It Takes','Demons','Enemy'],
     venues:[
-      {name:'ВТБ Арена', addr:'Ленинградское ш., 36', cap:'26 000 мест', times:['20:00'], city:'Москва'},
+      {name:'ВТБ Арена', addr:'Ленинградское ш., 36', cap:'26 000 мест', times:['20:00'], city:'Москва'}
     ],
     ytId:'NUsoVlDFqZg',
     zones:[
       {name:'Партер A (золото)', color:'#f4511e', price:9000},
       {name:'Партер B',          color:'#e53935', price:5500},
       {name:'Трибуна нижняя',    color:'#1e88e5', price:3500},
-      {name:'Трибуна верхняя',   color:'#43a047', price:2500},
+      {name:'Трибуна верхняя',   color:'#43a047', price:2500}
     ],
   },
   {
@@ -2752,7 +2752,7 @@ const CONCERTS = [
     desc:'Металлисты со всего мира стекаются на главное событие года! Metallica представит программу WorldWired с новыми треками из альбома Hardwired и классическими хитами с лазерным шоу и 360° экраном.',
     setlist:['Hardwired','Enter Sandman','Master of Puppets','One','Nothing Else Matters','Fade to Black','Seek & Destroy'],
     venues:[
-      {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000 мест', times:['19:30'], city:'Москва'},
+      {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000 мест', times:['19:30'], city:'Москва'}
     ],
     ytId:'WM8bTdBs-cw',
     zones:[
@@ -2760,7 +2760,7 @@ const CONCERTS = [
       {name:'Партер (стоячий)',     color:'#e53935', price:8000},
       {name:'Трибуна 1-й ярус',    color:'#1e88e5', price:5500},
       {name:'Трибуна 2-й ярус',    color:'#43a047', price:4000},
-      {name:'Бэк (дальние места)',  color:'#8e24aa', price:2500},
+      {name:'Бэк (дальние места)',  color:'#8e24aa', price:2500}
     ],
   },
   {
@@ -2773,12 +2773,12 @@ const CONCERTS = [
     desc:'Камерный акустический концерт легенды российского рока. Борзов исполнит хиты «Солнце», «Ковёр-вертолёт», «Темнота» и другие в минималистичной аранжировке.',
     setlist:['Солнце','Ковёр-вертолёт','Темнота','22','Летели облака'],
     venues:[
-      {name:'Клуб 16 Tons', addr:'ул. Прesnенский вал, 6', cap:'450 мест', times:['20:00'], city:'Москва'},
+      {name:'Клуб 16 Tons', addr:'ул. Прesnенский вал, 6', cap:'450 мест', times:['20:00'], city:'Москва'}
     ],
     zones:[
       {name:'Первый ряд (кресла)', color:'#e53935', price:1500},
       {name:'Партер (стоячий)',    color:'#43a047', price:800},
-      {name:'Балкон',              color:'#8e24aa', price:600},
+      {name:'Балкон',              color:'#8e24aa', price:600}
     ],
   },
   {
@@ -2791,14 +2791,14 @@ const CONCERTS = [
     desc:'Самое огненное шоу в истории рок-музыки! Немецкие индустриальные металлисты устраивают грандиозное пиротехническое представление с тоннами огня, дыма и невероятной энергетикой.',
     setlist:['Rammstein','Du hast','Sonne','Feuer Frei','Mutter','Amerika','Ich Will'],
     venues:[
-      {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000 мест', times:['20:00'], city:'Москва'},
+      {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000 мест', times:['20:00'], city:'Москва'}
     ],
     ytId:'Et6VDiBD5XE',
     zones:[
       {name:'Партер фронт (GA)',   color:'#b71c1c', price:11000},
       {name:'Партер основной',     color:'#e53935', price:6500},
       {name:'Сектор A',            color:'#1e88e5', price:4500},
-      {name:'Сектор B',            color:'#43a047', price:3000},
+      {name:'Сектор B',            color:'#43a047', price:3000}
     ],
   },
   {
@@ -2811,12 +2811,12 @@ const CONCERTS = [
     desc:'Ночь электронной музыки в главном клубе Москвы. Лайв-сет московского электронного проекта Soda Machine вместе с приглашёнными диджеями из Берлина и Амстердама.',
     setlist:['Live set 2 ч','DJ Sven Helbig (Berlin)','DJ Mo (Amsterdam)','After party до утра'],
     venues:[
-      {name:'Клуб Gazgolder', addr:'ул. Белозерская, 11', cap:'1 800 мест', times:['23:00'], city:'Москва'},
+      {name:'Клуб Gazgolder', addr:'ул. Белозерская, 11', cap:'1 800 мест', times:['23:00'], city:'Москва'}
     ],
     zones:[
       {name:'VIP-зона',           color:'#f4511e', price:2500},
       {name:'Основной зал',        color:'#1e88e5', price:1200},
-      {name:'Стандарт (вход)',     color:'#43a047', price:800},
+      {name:'Стандарт (вход)',     color:'#43a047', price:800}
     ],
   },
   {id:20, title:'Би-2 — Большой концерт', artist:'Би-2', genre:'Рок', icon:'🎸', color:'#1a0020',
@@ -2900,7 +2900,7 @@ const CONCERTS = [
     desc:'Рок-вечеринка. Арт-гостиная. Вход свободный.',
     photo:null,
     venues:[{name:'Ресторан Волгоград',addr:'ул. Мира, 12, Волгоград',cap:'',times:['20:00'],city:'Волгоград'}],
-    ytId:'', zones:[]},,
+    ytId:'', zones:[]},
 
   {id:'rvlg_004', title:'Поэтический вечер про любовь',
     artist:'Арт-гостиная Ресторана Волгоград', genre:'Концерт', icon:'📖', color:'#1a1a0a',
@@ -2952,54 +2952,54 @@ const VENUES = {
     {name:'Большой зал Консерватории', addr:'ул. Б. Никитская, 13', cap:'1 737'},
     {name:'Клуб 16 Tons', addr:'ул. Пресненский вал, 6', cap:'450'},
     {name:'Клуб Gazgolder', addr:'ул. Белозерская, 11', cap:'1 800'},
-    {name:'Парк Горького — Зелёный театр', addr:'Крымский вал, 9', cap:'4 000'},
+    {name:'Парк Горького — Зелёный театр', addr:'Крымский вал, 9', cap:'4 000'}
   ],
   'Волгоград': [
     {name:'ЦКЗ Волгоградская Филармония', addr:'наб. 62-й Армии, 4, Волгоград', cap:'1 040', url:'venue-filarmonia.html'},
     {name:'Дом Офицеров', addr:'просп. Ленина, 31', cap:'800', url:'venue-dom-oficerov.html'},
     {name:'Кроп Арена', url:'venue-krop-arena-volgograd.html', addr:'Университетский просп., 107 (ТЦ «Акварель»)', cap:'2 000'},
     {name:'Стадион Волгоград Арена', addr:'просп. Ленина, 76, Волгоград', cap:'45 000'},
-    {name:'Набережная 62-й Армии', addr:'Набережная 62-й Армии', cap:'Открытая'},
+    {name:'Набережная 62-й Армии', addr:'Набережная 62-й Армии', cap:'Открытая'}
   ],
   'Санкт-Петербург': [
     {name:'СКК «Петербургский»', addr:'пр. Юрия Гагарина, 8', cap:'25 000'},
     {name:'БКЗ «Октябрьский»', addr:'Лиговский пр-т, 6', cap:'3 800'},
-    {name:'Клуб «Зал Ожидания»', addr:'наб. Обводного кан., 154', cap:'1 200'},
+    {name:'Клуб «Зал Ожидания»', addr:'наб. Обводного кан., 154', cap:'1 200'}
   ],
   'Екатеринбург': [
     {name:'Ледовый дворец «Уктус»', addr:'ул. Щербакова, 4', cap:'12 000'},
-    {name:'Клуб «Подземка»', addr:'пр-т Ленина, 50', cap:'600'},
+    {name:'Клуб «Подземка»', addr:'пр-т Ленина, 50', cap:'600'}
   ],
   'Казань': [
-    {name:'КЗ им. С. Сайдашева', addr:'пл. Свободы, 3', cap:'1 200'},
+    {name:'КЗ им. С. Сайдашева', addr:'пл. Свободы, 3', cap:'1 200'}
   ],
   'Краснодар': [
-    {name:'Олимп Холл', addr:'ул. Стадионная, 1', cap:'5 000'},
+    {name:'Олимп Холл', addr:'ул. Стадионная, 1', cap:'5 000'}
   ],
   'Нижний Новгород': [
     {name:'Нижегородская Филармония', addr:'ул. Пискунова, 9',    cap:'800'},
     {name:'ДК «Октябрь»',             addr:'пр. Ленина, 23',       cap:'900'},
-    {name:'Нижегородский цирк',       addr:'пр. Ленина, 8',        cap:'2 000'},
+    {name:'Нижегородский цирк',       addr:'пр. Ленина, 8',        cap:'2 000'}
   ],
   'Ростов-на-Дону': [
     {name:'Ледовый Дворец Спорта',    addr:'ул. Зорге, 105',       cap:'5 000'},
     {name:'Набережная Дона',          addr:'Набережная Дона',       cap:'4 000'},
-    {name:'Театральная площадь',      addr:'Большая Садовая, 35',  cap:'3 000'},
+    {name:'Театральная площадь',      addr:'Большая Садовая, 35',  cap:'3 000'}
   ],
   'Уфа': [
     {name:'Площадь Ленина',           addr:'пл. Ленина, 1',        cap:'6 000'},
     {name:'Уфа-Арена',                addr:'ул. Р. Зорге, 80',     cap:'8 000'},
-    {name:'ДК «Нефтяник»',            addr:'ул. Аксакова, 51',     cap:'1 200'},
+    {name:'ДК «Нефтяник»',            addr:'ул. Аксакова, 51',     cap:'1 200'}
   ],
   'Пермь': [
     {name:'Дворец Молодёжи',          addr:'б-р Гагарина, 65а',    cap:'1 500'},
     {name:'Пермская Филармония',      addr:'ул. Ленина, 51',        cap:'1 000'},
-    {name:'ДК им. Солдатова',         addr:'ул. Советская, 49',    cap:'800'},
+    {name:'ДК им. Солдатова',         addr:'ул. Советская, 49',    cap:'800'}
   ],
   'Красноярск': [
     {name:'Красноярская Филармония',  addr:'ул. Ленина, 108',       cap:'1 000'},
     {name:'Студия Голоса',            addr:'ул. Мира, 106',         cap:'600'},
-    {name:'КЦ «Сибирь»',             addr:'ул. Карла Маркса, 80',  cap:'1 200'},
+    {name:'КЦ «Сибирь»',             addr:'ул. Карла Маркса, 80',  cap:'1 200'}
   ]};
 
 const DATES_LIST = [];
@@ -3925,7 +3925,7 @@ function openModal(id, goTickets=false) {
       var url = (typeof VENUE_URL_MAP !== 'undefined') && VENUE_URL_MAP[vn];
       return url ? '<a href="' + url + '" style="color:var(--red);text-decoration:none;">' + vn + ' →</a>' : vn;
     })()],
-    ['Цены', `от ${(c.price|| 0).toLocaleString('ru')} до ${(c.priceMax|| 0).toLocaleString('ru')} ₽`],
+    ['Цены', `от ${(c.price|| 0).toLocaleString('ru')} до ${(c.priceMax|| 0).toLocaleString('ru')} ₽`]
   ].map(([k,v])=>`<tr><td style="color:#888;padding:5px 0;width:110px;font-size:12px;vertical-align:top;">${k}</td><td style="font-size:13px;font-weight:700;padding:5px 0;">${v}</td></tr>`).join('');
 
   // Venues tab
@@ -4360,7 +4360,7 @@ function _showSharePanel(title, url) {
     {e:'✈️', n:'Telegram',  h:'https://t.me/share/url?url='+enc(url)+'&text='+enc(title)},
     {e:'🟢', n:'WhatsApp',  h:'https://wa.me/?text='+enc(title+' '+url)},
     {e:'🔵', n:'ВКонтакте', h:'https://vk.com/share.php?url='+enc(url)+'&title='+enc(title)},
-    {e:'✉️', n:'Email',     h:'mailto:?subject='+enc(title)+'&body='+enc(url)},
+    {e:'✉️', n:'Email',     h:'mailto:?subject='+enc(title)+'&body='+enc(url)}
   ];
   var btnHtml = links.map(function(l){
     return `<button onclick="window.open('${l.h}','_blank')" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#f9f7f4;border:1.5px solid #e0e0e0;border-radius:8px;padding:14px 8px;cursor:pointer;font-size:11px;font-weight:700;color:#444;" onmouseover="this.style.borderColor='#c8102e'" onmouseout="this.style.borderColor='#e0e0e0'"><span style="font-size:24px;">${l.e}</span>${l.n}</button>`;
@@ -5116,7 +5116,7 @@ function _afishiToast(msg) {
     const ids = [
       `rvBadge_${pageId}_${itemId}`,
       `exRevBadge`,
-      `revBadge`,
+      `revBadge`
     ];
     ids.forEach(id => {
       const el = document.getElementById(id);
@@ -5482,7 +5482,7 @@ window.addEventListener('error', function(e) {
         '<a href="cinema.html">Кино</a>',
         '<a href="exhibits.html">Выставки</a>',
         '<a href="kids.html">Детям</a>',
-        '<a href="articles.html">Статьи</a>',
+        '<a href="articles.html">Статьи</a>'
       ].join('');
     }
 
