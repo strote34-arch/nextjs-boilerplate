@@ -1432,7 +1432,7 @@ window.saveEditedConcert = function saveEditedConcert() {
   var newVenue = (document.getElementById('ecm_new_venue')|| {}).value || '';
   // Авто-перенос: если жанр = Спектакль/Театр/Опера — принудительно section=theater
   var _genreVal = (document.getElementById('ecm_genre')|| {}).value || '';
-  var _theaterGenres = ['Спектакль','Театр','Опера','Балет','Мюзикл','Оперетта'];
+  var _theaterGenres = [,,,'Балет','Мюзикл','Оперетта'];
   if (_theaterGenres.indexOf(_genreVal) >= 0 && section === 'concert') {
     section = 'theater';
   }
@@ -2152,7 +2152,7 @@ const CONCERTS = [
     venues:[{name:'ЦКЗ Волгоградская Филармония',addr:'наб. 62-й Армии, 4, Волгоград',cap:'1040',times:['19:00'],city:'Волгоград'}],
     photo:'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'fil_n04', title:'Взрослые игры', artist:'ЦКЗ Волгоградская Филармония',
-    genre:'Спектакль', icon:'🎭', color:'#0a1a1a',
+    genre:icon:'🎭', color:'#0a1a1a',
     date:'5 августа 2026', dateShort:'5 авг', dateISO:'2026-08-05', dayLabel:'',
     age:'18+', duration:'2 ч', rating:0, votes:0,
     price:1500, priceMax:3000, hot:false, newShow:false, city:'Волгоград',
@@ -2239,22 +2239,8 @@ const CONCERTS = [
     desc:'Казачьи народные песни и танцы в живом исполнении.',
     venues:[{name:'Ресторан «Волгоград»',addr:'ул. Мира, 12, Волгоград',cap:'200',times:['18:00'],city:'Волгоград'}],
     photo:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
-  {id:'vlg_onegin_moy', title:'Спектакль «Мой Онегин»',
-    artist:'Гастрольный спектакль', genre:'Театр', icon:'🎭', color:'#0a001a',
-    date:'TBD 2026', dateShort:'TBD', dateISO:'2026-12-01', dayLabel:'',
-    age:'12+', duration:'2 ч', rating:0, votes:0,
-    price:1500, priceMax:5000, hot:false, newShow:false, city:'Волгоград',
-    desc:'Гастрольный спектакль в Волгограде.',
-    venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=400&h=600&fit=crop', pushkin:false, cat:'theater'},
-  {id:'vlg_fil_osen_roman', title:'Спектакль «Осенний роман»',
-    artist:'Гастрольный спектакль', genre:'Театр', icon:'🎭', color:'#1a000a',
-    date:'8 декабря 2026', dateShort:'8 дек', dateISO:'2026-12-08', dayLabel:'Вт',
-    age:'12+', duration:'2 ч', rating:0, votes:0,
-    price:2000, priceMax:6000, hot:false, newShow:false, city:'Волгоград',
-    desc:'Гастрольный спектакль в Волгограде.',
-    venues:[{name:'ЦКЗ Волгоградская Филармония',addr:'наб. 62-й Армии, 4, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1516307365426-bea591f05011?w=400&h=600&fit=crop', pushkin:false, cat:'theater'},
+  
+  
   {id:'vlg_dof_grigoriev', title:'Евгений Григорьев — концерт',
     artist:'Е. Григорьев', genre:'Эстрада', icon:'🎤', color:'#1a1a0a',
     date:'28 ноября 2026', dateShort:'28 ноя', dateISO:'2026-11-28', dayLabel:'Сб',
@@ -2263,14 +2249,7 @@ const CONCERTS = [
     desc:'Е. Григорьев в Волгограде.',
     venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
     photo:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
-  {id:'vlg_dof_schastye', title:'Спектакль «Счастье по приговору»',
-    artist:'Гастрольный спектакль', genre:'Театр', icon:'🎭', color:'#0a1a1a',
-    date:'27 ноября 2026', dateShort:'27 ноя', dateISO:'2026-11-27', dayLabel:'Пт',
-    age:'12+', duration:'2 ч', rating:0, votes:0,
-    price:1500, priceMax:4500, hot:false, newShow:false, city:'Волгоград',
-    desc:'Гастрольный спектакль в Волгограде.',
-    venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1516307365426-bea591f05011?w=400&h=600&fit=crop', pushkin:false, cat:'theater'},
+  
   {id:'vlg_dof_saltykov', title:'Владислав Салтыков — концерт',
     artist:'В. Салтыков', genre:'Рок', icon:'🎸', color:'#1a0000',
     date:'9 ноября 2026', dateShort:'9 ноя', dateISO:'2026-11-09', dayLabel:'Пн',
@@ -2279,14 +2258,7 @@ const CONCERTS = [
     desc:'В. Салтыков в Волгограде.',
     venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
     photo:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
-  {id:'vlg_dof_avokado', title:'Спектакль «Операция Авокадо»',
-    artist:'Гастрольный спектакль', genre:'Театр', icon:'🎭', color:'#001a0a',
-    date:'6 ноября 2026', dateShort:'6 ноя', dateISO:'2026-11-06', dayLabel:'Пт',
-    age:'12+', duration:'2 ч', rating:0, votes:0,
-    price:1500, priceMax:4000, hot:false, newShow:false, city:'Волгоград',
-    desc:'Гастрольный спектакль в Волгограде.',
-    venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=400&h=600&fit=crop', pushkin:false, cat:'theater'},
+  
   {id:'vlg_dof_pol_moria', title:'Оркестр Поля Мориа',
     artist:'Оркестр Поля Мориа', genre:'Классика', icon:'🎻', color:'#0a0a1a',
     date:'21 октября 2026', dateShort:'21 окт', dateISO:'2026-10-21', dayLabel:'Ср',
@@ -2295,14 +2267,7 @@ const CONCERTS = [
     desc:'Оркестр Поля Мориа в Волгограде.',
     venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
     photo:'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
-  {id:'vlg_dof_ironiya', title:'Спектакль «Ирония любви»',
-    artist:'Гастрольный спектакль', genre:'Театр', icon:'🎭', color:'#1a000a',
-    date:'8 октября 2026', dateShort:'8 окт', dateISO:'2026-10-08', dayLabel:'Чт',
-    age:'12+', duration:'2 ч', rating:0, votes:0,
-    price:1500, priceMax:4500, hot:false, newShow:false, city:'Волгоград',
-    desc:'Гастрольный спектакль в Волгограде.',
-    venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1516307365426-bea591f05011?w=400&h=600&fit=crop', pushkin:false, cat:'theater'},
+  
   {id:'vlg_dof_sorokin', title:'Владимир Сорокин — концерт',
     artist:'В. Сорокин', genre:'Эстрада', icon:'🎤', color:'#001a00',
     date:'7 октября 2026', dateShort:'7 окт', dateISO:'2026-10-07', dayLabel:'Ср',
@@ -2546,16 +2511,7 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop&auto=format',
     venues:[{name:'ЦКЗ Волгоградская Филармония',addr:'наб. 62-й Армии, 4, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
     ytId:'', zones:[]},
-  {id:'opera_001', title:'Царицынская опера — «Евгений Онегин»',
-    artist:'Царицынская опера', genre:'Опера', icon:'🎶', color:'#1a0a1a',
-    date:'по расписанию', dateShort:'15 мая', dateISO:'2026-07-14', dayLabel:'Пт',
-    age:'12+', duration:'2 ч 30 мин', rating:0, votes:0,
-    price:500, priceMax:3000, hot:false, newShow:true, city:'Волгоград',
-    photo:'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=400&h=600&fit=crop', cat:'theater', pushkin:true,
-    desc:'Музыкальный спектакль по мотивам оперы Чайковского и романа Пушкина.',
-    photo:null,
-    venues:[{name:'Царицынская опера',addr:'пр. Ленина, 97, Волгоград',cap:'',times:['18:00'],city:'Волгоград'}],
-    ytId:'', zones:[]},
+  
   {id:'fil_030', title:'Концерт симфонической музыки. Солист Лев Клычков',
     artist:'Волгоградский симфонический оркестр', genre:'Концерт', icon:'🎤', color:'#0a0a1a',
     date:'16 июля 2026', dateShort:'16 июл', dateISO:'2026-07-16', dayLabel:'Сб',
@@ -3816,7 +3772,7 @@ function renderVenuesSidebar() {
             metro:  v.metro || '',
             id:     v.id    || 'user_' + Date.now(),
             type:   (function(){
-              var map = {theater:'Театр', concert:'Концерт', cinema:'Кинотеатр',
+              var map = {theater:concert:'Концерт', cinema:'Кинотеатр',
                          museum:'Выставка', exhibit:'Выставка', circus:'Театр',
                          club:'Клуб', restaurant:'Площадка', kids:'Детям'};
               return map[v.type] || v.type || 'Площадка';
