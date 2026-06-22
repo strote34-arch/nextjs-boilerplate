@@ -902,7 +902,16 @@ var AFISHI_WORKER = 'https://afishi-geo.strote34.workers.dev';
         🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
       </div>
     </div>
-      <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+      <button id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()" style="display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;background:rgba(255,255,255,.15);border:none;border-radius:6px;margin-left:8px;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0;"><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span></button>
+<script>
+(function(){
+  var btn=document.getElementById('burgerBtn');
+  if(!btn) return;
+  function checkW(){ btn.style.display = window.innerWidth<=768 ? 'flex' : 'none'; }
+  checkW();
+  window.addEventListener('resize', checkW);
+})();
+</script>
     </header>
 
 <!-- HERO -->
