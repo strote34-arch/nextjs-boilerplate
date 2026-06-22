@@ -3772,7 +3772,7 @@ function renderVenuesSidebar() {
             metro:  v.metro || '',
             id:     v.id    || 'user_' + Date.now(),
             type:   (function(){
-              var map = {theater:concert:'Концерт', cinema:'Кинотеатр',
+              var map = {theater:'Театр', concert:'Концерт', cinema:'Кинотеатр',
                          museum:'Выставка', exhibit:'Выставка', circus:'Театр',
                          club:'Клуб', restaurant:'Площадка', kids:'Детям'};
               return map[v.type] || v.type || 'Площадка';
