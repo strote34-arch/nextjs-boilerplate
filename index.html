@@ -2284,7 +2284,7 @@ function renderHeader(activePage) {
       <div class="search-box">
         🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
       </div>
-      <button id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()" style="display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;background:rgba(255,255,255,.15);border:none;border-radius:6px;margin-left:8px;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0;"><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span></button>
+      <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
     </div>
 </header>
 
@@ -3095,11 +3095,17 @@ function closeMobileMenu() {
 }
 </script>
 <script>
-/* Burger visibility */
-(function(){
-  function b(){var e=document.getElementById('burgerBtn');if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
-  b();window.addEventListener('resize',b);
-})();
+/* Burger visibility — вызывается при загрузке и resize */
+function checkBurger(){
+  var e=document.getElementById('burgerBtn');
+  if(e) e.style.display=window.innerWidth<=768?'flex':'none';
+}
+checkBurger();
+window.addEventListener('resize',checkBurger);
+/* Повторная проверка после renderPage (рендерит header динамически) */
+document.addEventListener('DOMContentLoaded',function(){
+  setTimeout(checkBurger,100);
+});
 </script>
 </body>
 </html>
