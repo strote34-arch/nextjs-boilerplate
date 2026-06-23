@@ -2840,6 +2840,8 @@ function renderPage(city) {
 document.addEventListener('DOMContentLoaded', function() {
   var city = localStorage.getItem('afishi_city') || 'Волгоград';
   renderPage(city);
+  // Показать бургер после рендера шапки
+  if (typeof showBurger === 'function') showBurger();
 });
 </script>
 
