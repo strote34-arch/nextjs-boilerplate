@@ -4127,7 +4127,14 @@ function previewMailing() {
   var subject = (document.getElementById('ml-subject')||{}).value || 'Тема';
   var body = (document.getElementById('ml-body')||{}).value || '';
   var win = window.open('', '_blank');
-  if (win) { win.document.write('<title>' + subject + '</title><body style="font-family:sans-serif;max-width:600px;margin:40px auto;"><h2>' + subject + '</h2><p>' + body.replace(/\n/g,'<br>') + '</p></body>'); }
+  if (win) { win.document.write('<title>' + subject + '</title><body style="font-family:sans-serif;max-width:600px;margin:40px auto;"><h2>' + subject + '</h2><p>' + body.replace(/\n/g,'<br>') + '</p><script>
+/* Burger visibility */
+(function(){
+  function b(){var e=document.getElementById('burgerBtn');if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
+  b();window.addEventListener('resize',b);
+})();
+</script>
+</body>'); }
 }
 
 // ── Cities ─────────────────────────────────────────────
