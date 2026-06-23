@@ -555,8 +555,10 @@ function closeMobileMenu() {
 <script>
 /* Burger visibility */
 (function(){
-  function b(){var e=document.getElementById('burgerBtn');if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
+  function b(){var e=document.getElementById('burgerBtn');
+  if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
   b();window.addEventListener('resize',b);
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(b,200);});
 })();
 </script>
 </body>

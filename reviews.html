@@ -640,7 +640,7 @@ footer {
       </div>
     </div>
       
-          <button id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()" style="display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;background:rgba(255,255,255,.15);border:none;border-radius:6px;margin-left:8px;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0;"><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span><span style="display:block;width:20px;height:2px;background:#fff;border-radius:2px;"></span></button>
+          <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </header>
 
 <!-- HERO -->
@@ -3934,8 +3934,10 @@ function closeMobileMenu() {
 <script>
 /* Burger visibility */
 (function(){
-  function b(){var e=document.getElementById('burgerBtn');if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
+  function b(){var e=document.getElementById('burgerBtn');
+  if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
   b();window.addEventListener('resize',b);
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(b,200);});
 })();
 </script>
 </body>
