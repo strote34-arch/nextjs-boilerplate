@@ -3047,39 +3047,47 @@ function renderSidebar(city) {
 })();
 </script>
 
-<!-- Мобильное меню -->
-<div id="mobileMenuOverlay" style="display:none;position:fixed;inset:0;z-index:1998;background:rgba(0,0,0,.5);" onclick="closeMobileMenu()"></div>
-<nav id="mobileMenu" style="display:none;position:fixed;top:0;right:0;bottom:0;width:280px;background:#111;z-index:1999;flex-direction:column;padding:0;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #222;">
-    <div style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;color:#fff;">Афиши<span style="color:#c8102e;">.ру</span></div>
-    <button onclick="closeMobileMenu()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+<!-- ☰ Мобильное меню -->
+<div id="menuOverlay" onclick="menuClose()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;"></div>
+<nav id="menuDrawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:280px;background:#1a1a1a;z-index:1001;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.4);">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 16px;border-bottom:1px solid #333;">
+    <span style="font-family:Oswald,sans-serif;font-size:20px;color:#fff;font-weight:700;">Афиши<span style="color:#c8102e;">.ру</span></span>
+    <button onclick="menuClose()" style="background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;padding:4px;">✕</button>
   </div>
-  <a href="index.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🏠 Главная</a>
-  <a href="concerts.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎸 Концерты</a>
-  <a href="theater.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎭 Театр</a>
-  <a href="cinema.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎬 Кино</a>
-  <a href="exhibits.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🖼 Выставки</a>
-  <a href="kids.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">👶 Детям</a>
-  <a href="articles.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">📝 Статьи</a>
-  <a href="map.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🗺 Карта</a>
-  <a href="venue-concert-city.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;border-bottom:1px solid #222;font-family:Oswald,sans-serif;font-size:15px;">🎵 Площадки</a>
-  <a href="venue-restoran-city.html" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#fff;text-decoration:none;font-family:Oswald,sans-serif;font-size:15px;">🍽 Рестораны</a>
+  <a href="index.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🏠 Главная</a>
+  <a href="concerts.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🎸 Концерты</a>
+  <a href="theater.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🎭 Театр</a>
+  <a href="cinema.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🎬 Кино</a>
+  <a href="exhibits.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🖼 Выставки</a>
+  <a href="kids.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">👶 Детям</a>
+  <a href="articles.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">📝 Статьи</a>
+  <a href="map.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🗺 Карта</a>
+  <a href="venue-concert-city.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:14px;">🎵 Площадки</a>
+  <a href="venue-restoran-city.html" style="display:flex;gap:10px;padding:13px 18px;color:#fff;text-decoration:none;font-size:14px;">🍽 Рестораны</a>
 </nav>
 <script>
-function toggleMobileMenu(){
-  var m=document.getElementById('mobileMenu'),o=document.getElementById('mobileMenuOverlay'),b=document.getElementById('burgerBtn');
-  if(m.style.transform==='translateX(0%)'){closeMobileMenu();}
-  else{m.style.display='flex';o.style.display='block';setTimeout(function(){m.style.transform='translateX(0%)';},10);if(b)b.classList.add('open');document.body.style.overflow='hidden';}
+function menuOpen(){
+  var d=document.getElementById('menuDrawer'),o=document.getElementById('menuOverlay');
+  if(!d||!o) return;
+  d.style.display='block'; o.style.display='block';
+  document.body.style.overflow='hidden';
 }
-function closeMobileMenu(){
-  var m=document.getElementById('mobileMenu'),o=document.getElementById('mobileMenuOverlay'),b=document.getElementById('burgerBtn');
-  m.style.transform='translateX(100%)';if(b)b.classList.remove('open');document.body.style.overflow='';
-  setTimeout(function(){m.style.display='none';o.style.display='none';},300);
+function menuClose(){
+  var d=document.getElementById('menuDrawer'),o=document.getElementById('menuOverlay');
+  if(!d||!o) return;
+  d.style.display='none'; o.style.display='none';
+  document.body.style.overflow='';
 }
-function checkBurger(){var e=document.getElementById('burgerBtn');if(e)e.style.display=window.innerWidth<=768?'flex':'none';}
-checkBurger();
-window.addEventListener('resize',checkBurger);
-document.addEventListener('DOMContentLoaded',function(){setTimeout(checkBurger,200);});
+function toggleMobileMenu(){ var d=document.getElementById('menuDrawer'); if(d&&d.style.display==='block'){menuClose();}else{menuOpen();} }
+/* Burger: показывать на мобиле после рендера шапки */
+function showBurger(){
+  var e=document.getElementById('burgerBtn');
+  if(e) e.style.display=window.innerWidth<=768?'flex':'none';
+}
+showBurger();
+window.addEventListener('resize', showBurger);
+/* Повторно после renderPage */
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger, 300); });
 </script>
 </body>
 </html>
