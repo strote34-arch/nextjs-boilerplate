@@ -959,6 +959,26 @@ footer {
   setTimeout(go, 300);
 })();
 </script>
+<script>
+/* ── Городские кнопки ──────────────────────────────── */
+function renderCityPills(city) {
+  var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар'];
+  var el = document.getElementById('cityPillsContainer');
+  if (!el) return;
+  el.innerHTML = '<span class="city-label">Город:</span>'
+    + cities.map(function(c){
+        var active = c === city ? ' active' : '';
+        return '<button class="city-pill'+active+'" onclick="switchCity(this.textContent.trim(),this)">'+c+'</button>';
+      }).join('');
+}
+
+// Делегирование кликов для ec-link карточек
+document.addEventListener('click', function(e) {
+  var card = e.target.closest('.ec-link');
+  if (card && card.dataset.href) location.href = card.dataset.href;
+});
+
+</script>
 </head>
 <body>
 
@@ -1604,6 +1624,7 @@ function renderKidsPage(city) {
 
 document.addEventListener('DOMContentLoaded', function() {
   var city = localStorage.getItem('afishi_city') || 'Волгоград';
+  if (typeof renderCityPills === 'function') renderCityPills(city);
   renderKidsPage(city);
 });
 </script>
