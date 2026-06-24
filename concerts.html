@@ -3787,7 +3787,7 @@ function makeListCard(c) {
       <div style="color:var(--yellow);font-size:13px;">${stars} <strong>${c.rating}</strong></div>
       <div style="font-size:12px;color:var(--light);">${((c.votes|| 0)/1000).toFixed(1)}K голосов</div>
       <div style="font-size:15px;font-weight:700;">от ${(c.price|| 0).toLocaleString('ru')} ₽</div>
-      <button class="c-buy" style="width:100%;padding:8px 0;" onclick="event.stopPropagation();openModal(this.closest('.concert-list-item')?.dataset?.cid||'',true)">Купить билет</button>
+      <button class="c-buy" style="width:100%;padding:8px 0;" onclick="event.stopPropagation();openModal(this.closest('.concert-list-item')?.(dataset&&dataset.cid)||'',true)">Купить билет</button>
     </div>`;
   el.dataset.cid = String(c.id);
   el.onclick=function(){ openModal(this.dataset.cid); };
@@ -4294,7 +4294,7 @@ function renderSeatMap() {
 
 function updateTotal() {
   const cnt=ckState.seats.length||1;
-  const total=(ckState.zone?.price|| 0)*cnt;
+  const total=(ckState.(zone&&zone.price)|| 0)*cnt;
   document.getElementById('ck-cnt').textContent=ckState.seats.length;
   document.getElementById('ck-total').textContent=total.toLocaleString('ru')+' ₽';
 }
@@ -4305,7 +4305,7 @@ function ckStep(n) {
   if(n===3){
     const c=currentConcert;
     const cnt=Math.max(ckState.seats.length,1);
-    const total=(ckState.zone?.price|| 0)*cnt;
+    const total=(ckState.(zone&&zone.price)|| 0)*cnt;
     var _cko=document.getElementById('ck-order'); if(_cko) _cko.innerHTML=`
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Ваш заказ</div>
       <div>🎸 <strong>${c.title}</strong></div>
@@ -4319,7 +4319,7 @@ function ckStep(n) {
 function ckBuy() {
   const c=currentConcert;
   const cnt=Math.max(ckState.seats.length,1);
-  const total=(ckState.zone?.price|| 0)*cnt;
+  const total=(ckState.(zone&&zone.price)|| 0)*cnt;
   document.getElementById('ck-success').innerHTML=`
     <div>🎸 <strong>${c.title}</strong></div>
     <div>📅 ${fmtEventDate(c.date)}, ${ckState.time}</div>
@@ -5127,7 +5127,7 @@ function _afishiToast(msg) {
     if (!_user) return openAuth(() => _buildReviewPane(el));
     const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
     const row    = el.querySelector('.rv-stars');
-    const score  = parseInt(row?.dataset.val || '0');
+    const score  = parseInt((row&&row.dataset).val || '0');
     const title  = el.querySelector('.rv-title-inp')?.value.trim() || '';
     const text   = el.querySelector('.rv-text-inp')?.value.trim()  || '';
     const msgEl  = el.querySelector('.rv-msg');
