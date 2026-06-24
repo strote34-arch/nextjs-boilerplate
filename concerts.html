@@ -4294,7 +4294,7 @@ function renderSeatMap() {
 
 function updateTotal() {
   const cnt=ckState.seats.length||1;
-  const total=(ckState.(zone&&zone.price)|| 0)*cnt;
+  const total=((ckState.zone&&ckState.zone.price)|| 0)*cnt;
   document.getElementById('ck-cnt').textContent=ckState.seats.length;
   document.getElementById('ck-total').textContent=total.toLocaleString('ru')+' ₽';
 }
@@ -4305,7 +4305,7 @@ function ckStep(n) {
   if(n===3){
     const c=currentConcert;
     const cnt=Math.max(ckState.seats.length,1);
-    const total=(ckState.(zone&&zone.price)|| 0)*cnt;
+    const total=((ckState.zone&&ckState.zone.price)|| 0)*cnt;
     var _cko=document.getElementById('ck-order'); if(_cko) _cko.innerHTML=`
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Ваш заказ</div>
       <div>🎸 <strong>${c.title}</strong></div>
@@ -4319,7 +4319,7 @@ function ckStep(n) {
 function ckBuy() {
   const c=currentConcert;
   const cnt=Math.max(ckState.seats.length,1);
-  const total=(ckState.(zone&&zone.price)|| 0)*cnt;
+  const total=((ckState.zone&&ckState.zone.price)|| 0)*cnt;
   document.getElementById('ck-success').innerHTML=`
     <div>🎸 <strong>${c.title}</strong></div>
     <div>📅 ${fmtEventDate(c.date)}, ${ckState.time}</div>
