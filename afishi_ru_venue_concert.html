@@ -1064,15 +1064,15 @@ function renderHallMap() {
       <text x="200" y="37" text-anchor="middle" fill="white" font-size="11" font-family="Oswald" font-weight="600">СЦЕНА</text>
       <!-- Fan zone -->
       <rect x="100" y="60" width="200" height="60" rx="4" fill="${v.zones[0]?.color||'#e53935'}" opacity=".85" style="cursor:pointer;" onclick="selectZoneFromMap(0)"/>
-      <text x="200" y="87" text-anchor="middle" fill="white" font-size="10" font-family="Oswald">${v.zones[0]?.name?.split('(')[0]}</text>
+      <text x="200" y="87" text-anchor="middle" fill="white" font-size="10" font-family="Oswald">${v.zones[0]?.(name&&name.split)('(')[0]}</text>
       <text x="200" y="101" text-anchor="middle" fill="white" font-size="9">${v.zones[0]?.price.toLocaleString('ru')} ₽</text>
       <!-- Parterre -->
       <rect x="60"  y="130" width="280" height="60" rx="4" fill="${v.zones[1]?.color||'#1e88e5'}" opacity=".8" style="cursor:pointer;" onclick="selectZoneFromMap(1)"/>
-      <text x="200" y="157" text-anchor="middle" fill="white" font-size="10" font-family="Oswald">${v.zones[1]?.name?.split('(')[0]}</text>
+      <text x="200" y="157" text-anchor="middle" fill="white" font-size="10" font-family="Oswald">${v.zones[1]?.(name&&name.split)('(')[0]}</text>
       <text x="200" y="171" text-anchor="middle" fill="white" font-size="9">${v.zones[1]?.price.toLocaleString('ru')} ₽</text>
       <!-- Balcony -->
       <rect x="20"  y="200" width="360" height="60" rx="4" fill="${v.zones[2]?.color||'#43a047'}" opacity=".75" style="cursor:pointer;" onclick="selectZoneFromMap(2)"/>
-      <text x="200" y="227" text-anchor="middle" fill="white" font-size="10" font-family="Oswald">${v.zones[2]?.name?.split('(')[0]}</text>
+      <text x="200" y="227" text-anchor="middle" fill="white" font-size="10" font-family="Oswald">${v.zones[2]?.(name&&name.split)('(')[0]}</text>
       <text x="200" y="241" text-anchor="middle" fill="white" font-size="9">${v.zones[2]?.price.toLocaleString('ru')} ₽</text>
     </svg>`;
   } else {
@@ -1094,7 +1094,7 @@ function renderHallMap() {
 function renderZoneLegend() {
   const v = currentVenue;
   document.getElementById('zoneLegend').innerHTML = v.zones.map((z,i)=>`
-    <div class="zone-leg-row ${tpState.zone?.name===z.name?'sel':''}" onclick="selectZoneFromMap(${i})">
+    <div class="zone-leg-row ${tpState.(zone&&zone.name)===z.name?'sel':''}" onclick="selectZoneFromMap(${i})">
       <div class="zone-dot" style="background:${z.color};"></div>
       <div class="zone-leg-name">${z.name}</div>
       <div>
@@ -1211,7 +1211,7 @@ function openTicket(concertId, preTime, zoneIdx) {
   zonesEl.innerHTML = '';
   v.zones.forEach((z,i)=>{
     const d=document.createElement('div');
-    d.className='zone-pick'+(tpState.zone?.name===z.name?' sel':'');
+    d.className='zone-pick'+(tpState.(zone&&zone.name)===z.name?' sel':'');
     d.innerHTML=`
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:14px;height:14px;border-radius:3px;background:${z.color};flex-shrink:0;"></div>
@@ -1241,14 +1241,14 @@ function tpStep(n) {
   if (n===2) renderTpSeats();
   if (n===3) {
     const cnt=Math.max(tpState.seats.length,1);
-    const total=(tpState.zone?.price||0)*cnt;
+    const total=(tpState.(zone&&zone.price)||0)*cnt;
     const c = tpState.concert;
     document.getElementById('tp-order').innerHTML=`
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Ваш заказ</div>
-      <div>🎸 <strong>${c?.title||''}</strong></div>
-      <div>📍 ${currentVenue?.name||''}</div>
+      <div>🎸 <strong>${(c&&c.title)||''}</strong></div>
+      <div>📍 ${(currentVenue&&currentVenue.name)||''}</div>
       <div>🕐 ${tpState.time}</div>
-      <div>🎟️ ${tpState.zone?.name} × ${cnt}</div>
+      <div>🎟️ ${tpState.(zone&&zone.name)} × ${cnt}</div>
       <div style="margin-top:10px;font-size:18px;font-weight:700;color:var(--red);">Итого: ${total.toLocaleString('ru')} ₽</div>`;
   }
 }
@@ -1272,15 +1272,15 @@ function renderTpSeats() {
       const s=document.createElement('button');
       s.className='seat'+(taken.has(key)?' taken':'');
       const chosen=tpState.seats.includes(key);
-      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':(zone?.color||'#4caf50');
+      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':((zone&&zone.color)||'#4caf50');
       s.title=`Ряд ${labels[r]}, место ${c+1}`;
       if(!taken.has(key)) s.onclick=()=>{
         const i=tpState.seats.indexOf(key);
-        if(i>=0){tpState.seats.splice(i,1);s.style.background=zone?.color||'#4caf50';}
+        if(i>=0){tpState.seats.splice(i,1);s.style.background=(zone&&zone.color)||'#4caf50';}
         else{tpState.seats.push(key);s.style.background='#c8102e';}
         const cnt=tpState.seats.length||1;
         document.getElementById('tp-cnt').textContent=tpState.seats.length;
-        document.getElementById('tp-total').textContent=((zone?.price||0)*cnt).toLocaleString('ru')+' ₽';
+        document.getElementById('tp-total').textContent=(((zone&&zone.price)||0)*cnt).toLocaleString('ru')+' ₽';
       };
       row.appendChild(s);
     }
@@ -1291,12 +1291,12 @@ function renderTpSeats() {
 function tpBuy() {
   const c=tpState.concert;
   const cnt=Math.max(tpState.seats.length,1);
-  const total=(tpState.zone?.price||0)*cnt;
+  const total=(tpState.(zone&&zone.price)||0)*cnt;
   document.getElementById('tp-success').innerHTML=`
-    <div>🎸 <strong>${c?.title||''}</strong></div>
-    <div>📍 ${currentVenue?.name||''}</div>
+    <div>🎸 <strong>${(c&&c.title)||''}</strong></div>
+    <div>📍 ${(currentVenue&&currentVenue.name)||''}</div>
     <div>🕐 ${tpState.time}</div>
-    <div>🎟️ ${tpState.zone?.name} × ${cnt} шт.</div>
+    <div>🎟️ ${tpState.(zone&&zone.name)} × ${cnt} шт.</div>
     <div style="margin-top:8px;font-weight:700;color:var(--red);">Оплачено: ${total.toLocaleString('ru')} ₽</div>`;
   tpStep(4);
 }

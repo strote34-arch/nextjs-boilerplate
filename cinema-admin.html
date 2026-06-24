@@ -739,7 +739,7 @@ function testCinema(id) {
   fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url), {timeout: 10000})
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var status = data.status?.http_code || 200;
+      var status = data.(status&&status.http_code) || 200;
       btn.textContent = '✅';
       btn.style.background = '#27ae60';
       appendLog('[Тест ' + id + '] HTTP ' + status + ' — ' + url);

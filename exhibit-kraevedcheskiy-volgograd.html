@@ -1275,7 +1275,7 @@ window._mapPanel = function(addr, name, city, metro) {
     if (!_user) return openAuth(() => _buildReviewPane(el));
     const pageId = el.dataset.rvPage, itemId = el.dataset.rvItem;
     const row    = el.querySelector('.rv-stars');
-    const score  = parseInt(row?.dataset.val || '0');
+    const score  = parseInt((row&&row.dataset).val || '0');
     const title  = el.querySelector('.rv-title-inp')?.value.trim() || '';
     const text   = el.querySelector('.rv-text-inp')?.value.trim()  || '';
     const msgEl  = el.querySelector('.rv-msg');
