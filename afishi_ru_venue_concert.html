@@ -1094,7 +1094,7 @@ function renderHallMap() {
 function renderZoneLegend() {
   const v = currentVenue;
   document.getElementById('zoneLegend').innerHTML = v.zones.map((z,i)=>`
-    <div class="zone-leg-row ${tpState.(zone&&zone.name)===z.name?'sel':''}" onclick="selectZoneFromMap(${i})">
+    <div class="zone-leg-row ${(tpState.zone&&tpState.zone.name)===z.name?'sel':''}" onclick="selectZoneFromMap(${i})">
       <div class="zone-dot" style="background:${z.color};"></div>
       <div class="zone-leg-name">${z.name}</div>
       <div>
@@ -1211,7 +1211,7 @@ function openTicket(concertId, preTime, zoneIdx) {
   zonesEl.innerHTML = '';
   v.zones.forEach((z,i)=>{
     const d=document.createElement('div');
-    d.className='zone-pick'+(tpState.(zone&&zone.name)===z.name?' sel':'');
+    d.className='zone-pick'+((tpState.zone&&tpState.zone.name)===z.name?' sel':'');
     d.innerHTML=`
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:14px;height:14px;border-radius:3px;background:${z.color};flex-shrink:0;"></div>
@@ -1241,14 +1241,14 @@ function tpStep(n) {
   if (n===2) renderTpSeats();
   if (n===3) {
     const cnt=Math.max(tpState.seats.length,1);
-    const total=(tpState.(zone&&zone.price)||0)*cnt;
+    const total=((tpState.zone&&tpState.zone.price)||0)*cnt;
     const c = tpState.concert;
     document.getElementById('tp-order').innerHTML=`
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Ваш заказ</div>
       <div>🎸 <strong>${(c&&c.title)||''}</strong></div>
       <div>📍 ${(currentVenue&&currentVenue.name)||''}</div>
       <div>🕐 ${tpState.time}</div>
-      <div>🎟️ ${tpState.(zone&&zone.name)} × ${cnt}</div>
+      <div>🎟️ ${(tpState.zone&&tpState.zone.name)} × ${cnt}</div>
       <div style="margin-top:10px;font-size:18px;font-weight:700;color:var(--red);">Итого: ${total.toLocaleString('ru')} ₽</div>`;
   }
 }
@@ -1291,12 +1291,12 @@ function renderTpSeats() {
 function tpBuy() {
   const c=tpState.concert;
   const cnt=Math.max(tpState.seats.length,1);
-  const total=(tpState.(zone&&zone.price)||0)*cnt;
+  const total=((tpState.zone&&tpState.zone.price)||0)*cnt;
   document.getElementById('tp-success').innerHTML=`
     <div>🎸 <strong>${(c&&c.title)||''}</strong></div>
     <div>📍 ${(currentVenue&&currentVenue.name)||''}</div>
     <div>🕐 ${tpState.time}</div>
-    <div>🎟️ ${tpState.(zone&&zone.name)} × ${cnt} шт.</div>
+    <div>🎟️ ${(tpState.zone&&tpState.zone.name)} × ${cnt} шт.</div>
     <div style="margin-top:8px;font-weight:700;color:var(--red);">Оплачено: ${total.toLocaleString('ru')} ₽</div>`;
   tpStep(4);
 }

@@ -2770,7 +2770,7 @@ function renderCkZones() {
     return;
   }
   c.zones.forEach(z => {
-    const sel=ckState.(zone&&zone.name)===z.name;
+    const sel=(ckState.zone&&ckState.zone.name)===z.name;
     const d=document.createElement('div');
     d.className='zone-row'+(sel?' sel':'');
     const priceStr = z.price ? z.price.toLocaleString('ru') + ' ₽' : 'цена не указана';
@@ -2797,11 +2797,11 @@ function renderSeatMap() {
       const s=document.createElement('button');
       s.className='seat'+(taken.has(key)?' taken':'');
       const chosen=ckState.seats.includes(key);
-      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':(ckState.(zone&&zone.color)|'#4caf50');
+      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':((ckState.zone&&ckState.zone.color)|'#4caf50');
       s.title=`Ряд ${labels[r]}, место ${c+1}`;
       if(!taken.has(key)) s.onclick=()=>{
         const i=ckState.seats.indexOf(key);
-        if(i>=0){ckState.seats.splice(i,1);s.style.background=ckState.(zone&&zone.color)|'#4caf50';}
+        if(i>=0){ckState.seats.splice(i,1);s.style.background=(ckState.zone&&ckState.zone.color)|'#4caf50';}
         else{ckState.seats.push(key);s.style.background='#c8102e';}
         updateTotal();
       };
@@ -2813,7 +2813,7 @@ function renderSeatMap() {
 
 function updateTotal() {
   const cnt=ckState.seats.length|1;
-  const total=(ckState.(zone&&zone.price)|0)*cnt;
+  const total=((ckState.zone&&ckState.zone.price)|0)*cnt;
   document.getElementById('ck-cnt').textContent=ckState.seats.length;
   document.getElementById('ck-total').textContent=total.toLocaleString('ru')+' ₽';
 }
@@ -2824,13 +2824,13 @@ function ckStep(n) {
   if(n===3){
     const c=currentConcert;
     const cnt=Math.max(ckState.seats.length,1);
-    const total=(ckState.(zone&&zone.price)|0)*cnt;
+    const total=((ckState.zone&&ckState.zone.price)|0)*cnt;
     var _cko=document.getElementById('ck-order'); if(_cko) _cko.innerHTML=`
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px;">Ваш заказ</div>
       <div>🎸 <strong>${c.title}</strong></div>
       <div>📅 ${fmtEventDate(c.date)}, ${ckState.time}</div>
       <div>📍 ${ckState.venue}</div>
-      <div>🎟️ ${ckState.(zone&&zone.name)} × ${cnt}</div>
+      <div>🎟️ ${(ckState.zone&&ckState.zone.name)} × ${cnt}</div>
       <div style="margin-top:10px;font-size:18px;font-weight:700;color:var(--red);">Итого: ${total.toLocaleString('ru')} ₽</div>`;
   }
 }
@@ -2838,12 +2838,12 @@ function ckStep(n) {
 function ckBuy() {
   const c=currentConcert;
   const cnt=Math.max(ckState.seats.length,1);
-  const total=(ckState.(zone&&zone.price)|0)*cnt;
+  const total=((ckState.zone&&ckState.zone.price)|0)*cnt;
   document.getElementById('ck-success').innerHTML=`
     <div>🎸 <strong>${c.title}</strong></div>
     <div>📅 ${fmtEventDate(c.date)}, ${ckState.time}</div>
     <div>📍 ${ckState.venue}</div>
-    <div>🎟️ ${ckState.(zone&&zone.name)} × ${cnt} шт.</div>
+    <div>🎟️ ${(ckState.zone&&ckState.zone.name)} × ${cnt} шт.</div>
     <div style="margin-top:8px;font-weight:700;color:var(--red);">Оплачено: ${total.toLocaleString('ru')} ₽</div>`;
   ckStep(4);
 }
