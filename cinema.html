@@ -1684,9 +1684,9 @@ function renderAll() {
   });
   if (activeGenre) films = films.filter(f => f.genre === activeGenre);
   if (activeFormats.size) films = films.filter(f => [...activeFormats].every(fmt => f.formats.includes(fmt)));
-  const cinemaVal = document.getElementById('cinemaFilter')?.value || '';
+  const cinemaVal = (document.getElementById('cinemaFilter')||{}).value || '';
   if (cinemaVal) films = films.filter(f => f.cinemas.includes(cinemaVal));
-  const sort = document.getElementById('sortFilter')?.value || '';
+  const sort = (document.getElementById('sortFilter')||{}).value || '';
   if (sort==='rating') films.sort((a,b)=>b.rating-a.rating);
   else if (sort==='price') films.sort((a,b)=>a.price-b.price);
   else if (sort==='alpha') films.sort((a,b)=>a.title.localeCompare(b.title,'ru'));
@@ -2096,7 +2096,7 @@ function renderReviewsPane() {
     </div>
     <div style="flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-self:center;">
       <div style="font-size:13px;color:var(--mid);">👍 Рекомендуют: <strong>${Math.round(reviews.filter(r=>r.score>=4).length/reviews.length*100)}%</strong></div>
-      <div style="font-size:13px;color:var(--mid);">📅 Последний отзыв: <strong>${reviews[0]?.date|| '—'}</strong></div>
+      <div style="font-size:13px;color:var(--mid);">📅 Последний отзыв: <strong>${(reviews[0]&&reviews[0].date)|| '—'}</strong></div>
     </div>`;
 
   initStarPicker();
@@ -2113,7 +2113,7 @@ function renderReviewList() {
   const f = currentFilm;
   if (!f) return;
   const reviews = getOrSeedReviews(f.id);
-  const sort = document.getElementById('reviewSort')?.value || 'new';
+  const sort = (document.getElementById('reviewSort')||{}).value || 'new';
   let sorted = [...reviews];
   if (sort==='top') sorted.sort((a,b)=>b.helpful-a.helpful);
   else if (sort==='pos') sorted = sorted.filter(r=>r.score>=4).sort((a,b)=>b.score-a.score);
@@ -2182,7 +2182,7 @@ function submitReview() {
   const f = currentFilm;
   const name = (document.getElementById('reviewName')||{value:''}).value.trim();
   const text = (document.getElementById('reviewText')||{value:''}).value.trim();
-  const titleVal = (document.getElementById('reviewTitle')?.value|| '').trim();
+  const titleVal = ((document.getElementById('reviewTitle')||{}).value|| '').trim();
   const msg = document.getElementById('reviewFormMsg');
 
   const showErr = (t) => { if(!msg) return; msg.textContent=t; msg.style.color='#c8102e'; msg.style.display='inline'; setTimeout(()=>msg.style.display='none',3000); };
@@ -3464,9 +3464,9 @@ function updateFooterVenues(city) {
 // Запустить при загрузке
 document.addEventListener('DOMContentLoaded', function() {
   var city = (typeof currentCity !== 'undefined' && currentCity)
-  if (typeof renderCityPills === 'function') renderCityPills(city);
     ? currentCity
     : (localStorage.getItem('afishi_city') || 'Волгоград');
+  if (typeof renderCityPills === 'function') renderCityPills(city);
   updateFooterVenues(city);
 });
 

@@ -3781,7 +3781,7 @@ function makeListCard(c) {
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--red);margin-bottom:3px;">${c.genre} · ${c.age}</div>
       <div style="font-family:'PT Serif',serif;font-size:16px;font-weight:700;margin-bottom:4px;">${c.title}</div>
       <div style="font-size:13px;color:${isToday(c.date)?'var(--red)':isTomorrow(c.date)?'#e65100':'var(--mid)'};font-weight:${isToday(c.date) || isTomorrow(c.date)?'700':'400'};margin-bottom:4px;">📅 ${fmtEventDate(c.date)}${isToday(c.date)?' — Сегодня':isTomorrow(c.date)?' — Завтра':''} ${(c.venues&&c.venues[0]&&c.venues[0].times&&c.venues[0].times[0])?'· ⏰ '+(c.venues[0].times[0]):c.time?'· ⏰ '+c.time:''}</div>
-      <div style="font-size:13px;color:var(--mid);">📍 ${c.venues[0]?.name||''}, ${c.venues[0]?.addr||''}</div>
+      <div style="font-size:13px;color:var(--mid);">📍 ${(c.venues&&c.venues[0]&&c.venues[0].name)||''}, ${(c.venues&&c.venues[0]&&c.venues[0].addr)||''}</div>
     </div>
     <div class="cli-right">
       <div style="color:var(--yellow);font-size:13px;">${stars} <strong>${c.rating}</strong></div>
@@ -4251,7 +4251,7 @@ function renderCkZones() {
     return;
   }
   c.zones.forEach(z => {
-    const sel=ckState.zone?.name===z.name;
+    const sel=(ckState.zone&&ckState.zone.name)===z.name;
     const d=document.createElement('div');
     d.className='zone-row'+(sel?' sel':'');
     const priceStr = z.price ? z.price.toLocaleString('ru') + ' ₽' : 'цена не указана';
@@ -4278,11 +4278,11 @@ function renderSeatMap() {
       const s=document.createElement('button');
       s.className='seat'+(taken.has(key)?' taken':'');
       const chosen=ckState.seats.includes(key);
-      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':(ckState.zone?.color||'#4caf50');
+      s.style.background=taken.has(key)?'#ddd':chosen?'#c8102e':((ckState.zone&&ckState.zone.color)||'#4caf50');
       s.title=`Ряд ${labels[r]}, место ${c+1}`;
       if(!taken.has(key)) s.onclick=()=>{
         const i=ckState.seats.indexOf(key);
-        if(i>=0){ckState.seats.splice(i,1);s.style.background=ckState.zone?.color||'#4caf50';}
+        if(i>=0){ckState.seats.splice(i,1);s.style.background=(ckState.zone&&ckState.zone.color)||'#4caf50';}
         else{ckState.seats.push(key);s.style.background='#c8102e';}
         updateTotal();
       };
@@ -4311,7 +4311,7 @@ function ckStep(n) {
       <div>🎸 <strong>${c.title}</strong></div>
       <div>📅 ${fmtEventDate(c.date)}, ${ckState.time}</div>
       <div>📍 ${ckState.venue}</div>
-      <div>🎟️ ${ckState.zone?.name} × ${cnt}</div>
+      <div>🎟️ ${(ckState.zone&&ckState.zone.name)} × ${cnt}</div>
       <div style="margin-top:10px;font-size:18px;font-weight:700;color:var(--red);">Итого: ${total.toLocaleString('ru')} ₽</div>`;
   }
 }
@@ -4324,7 +4324,7 @@ function ckBuy() {
     <div>🎸 <strong>${c.title}</strong></div>
     <div>📅 ${fmtEventDate(c.date)}, ${ckState.time}</div>
     <div>📍 ${ckState.venue}</div>
-    <div>🎟️ ${ckState.zone?.name} × ${cnt} шт.</div>
+    <div>🎟️ ${(ckState.zone&&ckState.zone.name)} × ${cnt} шт.</div>
     <div style="margin-top:8px;font-weight:700;color:var(--red);">Оплачено: ${total.toLocaleString('ru')} ₽</div>`;
   ckStep(4);
 }
