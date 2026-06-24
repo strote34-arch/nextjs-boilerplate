@@ -7447,9 +7447,9 @@ function updateFooterVenues(city) {
 // Запустить при загрузке
 document.addEventListener('DOMContentLoaded', function() {
   var city = (typeof currentCity !== 'undefined' && currentCity)
-  if (typeof renderCityPills === 'function') renderCityPills(city);
     ? currentCity
     : (localStorage.getItem('afishi_city') || 'Волгоград');
+  if (typeof renderCityPills === 'function') renderCityPills(city);
   updateFooterVenues(city);
 });
 
