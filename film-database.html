@@ -3299,6 +3299,13 @@ function loadYtPlayer(ytId) {
 // INIT
 // ================================================================
 document.addEventListener('DOMContentLoaded', function() {
+  // Установить город
+  var _city = localStorage.getItem('afishi_city') || 'Волгоград';
+  var _hint = document.getElementById('cityHint');
+  if (_hint) {
+    var _gen = {'Москва':'Москве','Санкт-Петербург':'Санкт-Петербурге','Екатеринбург':'Екатеринбурге','Казань':'Казани','Краснодар':'Краснодаре','Волгоград':'Волгограде','Новосибирск':'Новосибирске','Нижний Новгород':'Нижнем Новгороде'};
+    _hint.textContent = _gen[_city] || (_city + 'е');
+  }
   var fSort = document.getElementById('fSort');
   if (fSort) fSort.value = 'new_first';
   applyFilters();
