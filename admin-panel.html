@@ -4136,5 +4136,1979 @@ function previewMailing() {
   document.addEventListener('DOMContentLoaded',function(){setTimeout(b,200);});
 })();
 </script>
+</body>'); }
+}
+
+// ── Cities ─────────────────────────────────────────────
+var CITIES_LIST = [
+  {name:'Волгоград', flag:'🏙️', events:120, active:true},
+  {name:'Москва', flag:'🏛️', events:450, active:true},
+  {name:'Санкт-Петербург', flag:'🎭', events:280, active:true},
+  {name:'Краснодар', flag:'☀️', events:95, active:true},
+  {name:'Казань', flag:'🕌', events:110, active:true},
+  {name:'Екатеринбург', flag:'⚙️', events:88, active:true},
+  {name:'Нижний Новгород', flag:'🏗️', events:72, active:false},
+  {name:'Самара', flag:'🚀', events:65, active:false},
+];
+function renderCities() {
+  // Обновить список мониторинга городов
+  if (typeof renderCitiesMonitorList === 'function') renderCitiesMonitorList();
+  // Обновить статус мониторинга
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var statusEl = document.getElementById('monitorStatus');
+  if (statusEl) {
+    var cities = loadMonitorCities();
+    var total = Object.values(cities).reduce(function(sum, c){ return sum + (c.sites||[]).filter(function(s){ return s.active; }).length; }, 0);
+    statusEl.innerHTML = lastRun
+      ? '🕐 Последняя проверка: ' + new Date(lastRun).toLocaleString('ru') + ' · Источников: ' + total
+      : '⏰ Запускается каждую <strong>субботу в 00:00</strong> · Источников: ' + total;
+  }
+  var el = document.getElementById('citiesList');
+  if (!el) return;
+  el.innerHTML = CITIES_LIST.map(function(c,i){
+    return '<div class="city-row">' +
+      '<div class="city-flag">' + c.flag + '</div>' +
+      '<div class="city-name">' + c.name + '</div>' +
+      '<div class="city-count">' + c.events + ' событий</div>' +
+      '<label class="toggle-sw">' +
+        '<input type="checkbox" ' + (c.active?'checked':'') + ' onchange="toggleCity(' + i + ',this.checked)">' +
+        '<span class="toggle-slider"></span>' +
+      '</label>' +
+    '</div>';
+  }).join('');
+}
+function toggleCity(idx, val) {
+  CITIES_LIST[idx].active = val;
+  showToastAdmin('✅ Настройка города сохранена');
+}
+function saveGeoSettings() {
+  var enabled = (document.getElementById('geo-enabled')||{}).checked;
+  var fallback = (document.getElementById('geo-fallback')||{}).value || 'Волгоград';
+  try { localStorage.setItem('afishi_geo_settings', JSON.stringify({enabled:enabled, fallback:fallback})); } catch(e) {}
+  showToastAdmin('✅ Настройки геолокации сохранены');
+}
+
+// ── Stats ─────────────────────────────────────────────
+// ── Яндекс.Метрика ─────────────────────────────────────────────
+function saveYMCounter() {
+  var id = (document.getElementById('ym-counter-id')||{}).value || '';
+  id = id.trim().replace(/[^0-9]/g,'');
+  if (!id) { showToastAdmin('❌ Введите номер счётчика'); return; }
+  try { localStorage.setItem('afishi_ym_counter', id); } catch(e) {}
+  updateCounterStatus();
+  showToastAdmin('✅ Яндекс.Метрика ' + id + ' сохранена');
+}
+
+function copyYMCode() {
+  var id = (document.getElementById('ym-counter-id')||{}).value || '';
+  id = id.trim().replace(/\D/g,'') || localStorage.getItem('afishi_ym_counter') || '';
+  if (!id) { showToastAdmin('❌ Сначала введите номер счётчика'); return; }
+    var NL = '\n';
+  var code = '<!-- Яндекс.Метрика -->' + NL +
+    '<script type="text/javascript">' + NL +
+    '(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};' + NL +
+    'm[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],' + NL +
+    'k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})' + NL +
+    '(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");' + NL +
+    'ym(' + id + ',"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true});' + NL +
+    '<\/script>' + NL +
+    '<noscript><div><img src="https://mc.yandex.ru/watch/' + id + '" style="position:absolute;left:-9999px;" alt=""/></div></noscript>' + NL +
+    '<!-- /Яндекс.Метрика -->';
+  var el = document.getElementById('ym-code-preview');
+  if (el) { el.textContent = code; el.style.display = 'block'; }
+  navigator.clipboard.writeText(code).then(function(){ showToastAdmin('📋 Код Яндекс.Метрики скопирован'); }).catch(function(){ showToastAdmin('Код показан ниже — скопируйте вручную'); });
+}
+
+// ── Google Analytics ────────────────────────────────────────────
+function saveGACounter() {
+  var id = (document.getElementById('ga-measurement-id')||{}).value || '';
+  id = id.trim().toUpperCase();
+  if (!id || !id.startsWith('G-')) { showToastAdmin('❌ Формат: G-XXXXXXXXXX'); return; }
+  try { localStorage.setItem('afishi_ga_counter', id); } catch(e) {}
+  updateCounterStatus();
+  showToastAdmin('✅ Google Analytics ' + id + ' сохранён');
+}
+
+function copyGACode() {
+  var id = (document.getElementById('ga-measurement-id')||{}).value || '';
+  id = id.trim().toUpperCase() || localStorage.getItem('afishi_ga_counter') || '';
+  if (!id) { showToastAdmin('❌ Сначала введите Measurement ID'); return; }
+    var NL2 = '\n';
+  var code = '<!-- Google Analytics 4 -->' + NL2 +
+    '<script async src="https://www.googletagmanager.com/gtag/js?id=' + id + '"><\/script>' + NL2 +
+    '<script>' + NL2 +
+    '  window.dataLayer = window.dataLayer || [];' + NL2 +
+    '  function gtag(){dataLayer.push(arguments);}' + NL2 +
+    '  gtag("js", new Date());' + NL2 +
+    '  gtag("config", "' + id + '");' + NL2 +
+    '<\/script>' + NL2 +
+    '<!-- /Google Analytics 4 -->';
+  var el = document.getElementById('ga-code-preview');
+  if (el) { el.textContent = code; el.style.display = 'block'; }
+  navigator.clipboard.writeText(code).then(function(){ showToastAdmin('📋 Код Google Analytics скопирован'); }).catch(function(){ showToastAdmin('Код показан ниже — скопируйте вручную'); });
+}
+
+function updateCounterStatus() {
+  var ymId = localStorage.getItem('afishi_ym_counter') || '';
+  var gaId = localStorage.getItem('afishi_ga_counter') || '';
+  var ymStatus = document.getElementById('ym-status');
+  var gaStatus = document.getElementById('ga-status');
+  var ymInp = document.getElementById('ym-counter-id');
+  var gaInp = document.getElementById('ga-measurement-id');
+  if (ymStatus) { ymStatus.textContent = ymId ? '✅ ' + ymId : 'не подключён'; ymStatus.style.background = ymId ? '#d4edda' : '#eee'; ymStatus.style.color = ymId ? '#155724' : '#666'; }
+  if (gaStatus) { gaStatus.textContent = gaId ? '✅ ' + gaId : 'не подключён'; gaStatus.style.background = gaId ? '#d4edda' : '#eee'; gaStatus.style.color = gaId ? '#155724' : '#666'; }
+  if (ymInp && ymId) ymInp.value = ymId;
+  if (gaInp && gaId) gaInp.value = gaId;
+}
+
+// ══ ГЛАВНАЯ СТРАНИЦА ══════════════════════════════════════════
+function renderHomepage() {
+  var cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(e) {}
+  var el = function(id) { return document.getElementById(id); };
+  if (el('hp_feat_title')) el('hp_feat_title').value = cfg.title || '';
+  if (el('hp_feat_sub'))   el('hp_feat_sub').value   = cfg.subtitle || '';
+  if (el('hp_feat_link'))  el('hp_feat_link').value  = cfg.link || '';
+  if (el('hp_feat_img'))   el('hp_feat_img').value   = cfg.img || '';
+  if (el('hp_feat_active')) el('hp_feat_active').checked = cfg.active !== false;
+
+  // Блоки
+  var blocks = JSON.parse(localStorage.getItem('afishi_homepage_blocks') || 'null') || [
+    {id:'concerts', label:'🎵 Концерты', active:true},
+    {id:'theater',  label:'🎭 Театр и спектакли', active:true},
+    {id:'cinema',   label:'🎬 Кино', active:true},
+    {id:'exhibits', label:'🖼️ Выставки', active:true},
+    {id:'kids',     label:'🧒 Детям', active:true},
+    {id:'pushkin',  label:'🏛️ Пушкинская карта', active:true},
+    {id:'hot',      label:'🔥 Горячие события', active:true},
+    {id:'venues',   label:'📍 Площадки', active:true},
+  ];
+  var list = document.getElementById('hp_blocks_list');
+  if (!list) return;
+  list.innerHTML = blocks.map(function(b) {
+    return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f7f4;border-radius:6px;cursor:pointer;">' +
+      '<input type="checkbox" data-block="'+b.id+'" '+(b.active?'checked':'')+' onchange="toggleBlock(this)">' +
+      '<span style="font-size:13px;">'+b.label+'</span>' +
+    '</label>';
+  }).join('');
+}
+
+function saveHomepage() {
+  var cfg = {
+    title:    (document.getElementById('hp_feat_title')||{}).value || '',
+    subtitle: (document.getElementById('hp_feat_sub')||{}).value   || '',
+    link:     (document.getElementById('hp_feat_link')||{}).value  || '',
+    img:      (document.getElementById('hp_feat_img')||{}).value   || '',
+    active:   (document.getElementById('hp_feat_active')||{}).checked !== false,
+  };
+  try { localStorage.setItem('afishi_featured', JSON.stringify(cfg)); } catch(e) {}
+  showToastAdmin('✅ Главная страница сохранена');
+}
+
+function toggleBlock(chk) {
+  var blocks = JSON.parse(localStorage.getItem('afishi_homepage_blocks') || 'null') || [];
+  var id = chk.dataset.block;
+  var b = blocks.find(function(x){ return x.id===id; });
+  if (b) b.active = chk.checked;
+  try { localStorage.setItem('afishi_homepage_blocks', JSON.stringify(blocks)); } catch(e) {}
+}
+
+function saveHomepageBlocks() {
+  var checkboxes = document.querySelectorAll('#hp_blocks_list input[data-block]');
+  var blocks = [];
+  var labels = {concerts:'🎵 Концерты',theater:'🎭 Театр',cinema:'🎬 Кино',exhibits:'🖼️ Выставки',
+    kids:'🧒 Детям',pushkin:'🏛️ Пушкинская карта',hot:'🔥 Горячие события',venues:'📍 Площадки'};
+  checkboxes.forEach(function(cb) {
+    blocks.push({id:cb.dataset.block, label:labels[cb.dataset.block]||cb.dataset.block, active:cb.checked});
+  });
+  try { localStorage.setItem('afishi_homepage_blocks', JSON.stringify(blocks)); } catch(e) {}
+  showToastAdmin('✅ Блоки сохранены');
+}
+
+// ══ ПОДВАЛ ════════════════════════════════════════════════════
+function renderFooterEditor() { loadFooter(); }
+
+function loadFooter() {
+  var cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('afishi_footer_config') || '{}'); } catch(e) {}
+  var fields = {ft_phone:'phone', ft_email:'email', ft_addr:'addr', ft_hours:'hours',
+                ft_vk:'vk', ft_tg:'tg', ft_ok:'ok', ft_yt:'yt',
+                ft_slogan:'slogan', ft_copy:'copyright', ft_disc:'disclaimer'};
+  Object.keys(fields).forEach(function(elId) {
+    var el = document.getElementById(elId);
+    if (el) el.value = cfg[fields[elId]] || '';
+  });
+}
+
+function saveFooter() {
+  var fields = {ft_phone:'phone', ft_email:'email', ft_addr:'addr', ft_hours:'hours',
+                ft_vk:'vk', ft_tg:'tg', ft_ok:'ok', ft_yt:'yt',
+                ft_slogan:'slogan', ft_copy:'copyright', ft_disc:'disclaimer'};
+  var cfg = {};
+  Object.keys(fields).forEach(function(elId) {
+    var el = document.getElementById(elId);
+    if (el && el.value) cfg[fields[elId]] = el.value;
+  });
+  try { localStorage.setItem('afishi_footer_config', JSON.stringify(cfg)); } catch(e) {}
+  showToastAdmin('✅ Подвал сохранён — откройте любую страницу сайта чтобы проверить');
+}
+
+// ══ МОНИТОРИНГ ПЛОЩАДОК ═══════════════════════════════════════
+
+var DEFAULT_MONITOR_CITIES = {
+  'Волгоград': {
+    sites: [
+      {name:'ЦКЗ Волгоградская Филармония', url:'https://volgphil.ru/afisha/', active:true},
+      {name:'НЭТ — Новый экспериментальный театр', url:'https://neatvolg.ru/afisha/', active:true},
+      {name:'Царицынская опера', url:'https://tzopera.ru/afisha/', active:true},
+      {name:'ТЮЗ', url:'https://volgogradtuz.ru/afisha/', active:true},
+      {name:'Кроп Арена', url:'https://krop-arena.ru/events/', active:true},
+      {name:'Ресторан Волгоград', url:'https://restvlg.ru/', active:true},
+      {name:'КассирРу Волгоград', url:'https://vlg.kassir.ru/', active:true},
+      {name:'Афиша.Волгоград ВКонтакте', url:'https://vk.com/afisha_volgograd', active:true},
+      {name:'Т-Банк Афиша Волгоград', url:'https://www.tbank.ru/gorod/afisha/volgograd/concerts/', active:true},
+      {name:'Яндекс.Афиша Волгоград', url:'https://afisha.yandex.ru/volgograd/concert', active:true},
+      {name:'КонцертГорода Волгоград', url:'https://koncertgoroda.ru/volgograd', active:true},
+      {name:'АфишаГо Волгоград', url:'https://vlg.afishago.ru/events/', active:true},
+    ]
+  },
+  'Москва': {
+    sites: [
+      {name:'KassirRu Москва', url:'https://www.kassir.ru/', active:true},
+      {name:'Афиша Москва', url:'https://www.afisha.ru/msk/', active:true},
+      {name:'Яндекс.Афиша Москва', url:'https://afisha.yandex.ru/moscow/', active:true},
+      {name:'Ticketland Москва', url:'https://www.ticketland.ru/', active:true},
+      {name:'Большой театр', url:'https://www.bolshoi.ru/timetable/', active:true},
+    ]
+  },
+  'Санкт-Петербург': {
+    sites: [
+      {name:'КассирРу СПб', url:'https://spb.kassir.ru/', active:true},
+      {name:'Афиша СПб', url:'https://www.afisha.ru/spb/', active:true},
+      {name:'Яндекс.Афиша СПб', url:'https://afisha.yandex.ru/saint-petersburg/', active:true},
+      {name:'Мариинский театр', url:'https://www.mariinsky.ru/playbill/playbill/', active:true},
+    ]
+  },
+  'Екатеринбург': {
+    sites: [
+      {name:'КассирРу Екб', url:'https://ekb.kassir.ru/', active:true},
+      {name:'Яндекс.Афиша Екб', url:'https://afisha.yandex.ru/yekaterinburg/', active:true},
+      {name:'66.ru Афиша', url:'https://66.ru/afisha/', active:false},
+    ]
+  },
+  'Казань': {
+    sites: [
+      {name:'КассирРу Казань', url:'https://kazan.kassir.ru/', active:true},
+      {name:'Яндекс.Афиша Казань', url:'https://afisha.yandex.ru/kazan/', active:true},
+    ]
+  },
+  'Краснодар': {
+    sites: [
+      {name:'КассирРу Краснодар', url:'https://krd.kassir.ru/', active:true},
+      {name:'Яндекс.Афиша Краснодар', url:'https://afisha.yandex.ru/krasnodar/', active:true},
+    ]
+  }
+};
+
+function loadMonitorCities() {
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem('afishi_monitor_cities') || '{}'); } catch(e) {}
+  return Object.keys(saved).length ? saved : DEFAULT_MONITOR_CITIES;
+}
+
+function saveMonitorCities(data) {
+  try { localStorage.setItem('afishi_monitor_cities', JSON.stringify(data)); } catch(e) {}
+}
+
+function renderCitiesMonitorList() {
+  var el = document.getElementById('citiesMonitorList');
+  if (!el) return;
+  var cities = loadMonitorCities();
+  var html = Object.keys(cities).map(function(city) {
+    var sites = cities[city].sites || [];
+    return '<div style="margin-bottom:16px;">' +
+      '<div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;color:var(--mid);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;">' +
+        '🏙️ ' + city +
+        '<button onclick="addMonitorSite(' + JSON.stringify(city) + ')" style="background:none;border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:10px;font-family:Oswald,sans-serif;cursor:pointer;">+ сайт</button>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        sites.map(function(s, idx) {
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f9f7f4;border-radius:6px;">' +
+            '<input type="checkbox" ' + (s.active?'checked':'') + ' onchange="toggleMonitorSite(' + JSON.stringify(city) + ',' + idx + ',this.checked)">' +
+            '<a href="' + s.url + '" target="_blank" style="flex:1;font-size:12px;color:var(--dark);text-decoration:none;">' + s.name + '</a>' +
+            '<span style="font-size:10px;color:#bbb;max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + s.url + '</span>' +
+            '<button onclick="removeMonitorSite(' + JSON.stringify(city) + ',' + idx + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:14px;padding:0 4px;">×</button>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  el.innerHTML = html || '<div style="color:#bbb;font-size:13px;">Нет городов</div>';
+}
+
+function toggleMonitorSite(city, idx, active) {
+  var cities = loadMonitorCities();
+  if (cities[city] && cities[city].sites[idx]) {
+    cities[city].sites[idx].active = active;
+    saveMonitorCities(cities);
+  }
+}
+
+function removeMonitorSite(city, idx) {
+  if (!confirm('Удалить сайт из мониторинга?')) return;
+  var cities = loadMonitorCities();
+  if (cities[city]) { cities[city].sites.splice(idx, 1); saveMonitorCities(cities); }
+  renderCitiesMonitorList();
+}
+
+function addMonitorSite(city) {
+  var url = prompt('URL сайта для мониторинга (например: https://example.ru/afisha/):');
+  if (!url) return;
+  var name = prompt('Название площадки:');
+  if (!name) return;
+  var cities = loadMonitorCities();
+  if (!cities[city]) cities[city] = {sites:[]};
+  cities[city].sites.push({name:name, url:url.trim(), active:true});
+  saveMonitorCities(cities);
+  renderCitiesMonitorList();
+  showToastAdmin('✅ Сайт добавлен: ' + name);
+}
+
+function addMonitorCity() {
+  var city = prompt('Название города:');
+  if (!city) return;
+  var cities = loadMonitorCities();
+  if (!cities[city]) cities[city] = {sites:[]};
+  saveMonitorCities(cities);
+  renderCitiesMonitorList();
+  showToastAdmin('✅ Город добавлен: ' + city);
+}
+
+function setupSaturdayMonitor() {
+  // Проверить — нужно ли запускать (каждую субботу в 00:00)
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var now = new Date();
+  var isSaturday = now.getDay() === 6;
+  var isAfterMidnight = now.getHours() < 2; // 00:00-02:00
+  var oneDayMs = 86400000;
+  var needsRun = isSaturday && isAfterMidnight && (Date.now() - lastRun > oneDayMs);
+  if (needsRun) runMonitorNow();
+}
+
+function runMonitorNow() {
+  var cities = loadMonitorCities();
+  var activeSites = [];
+  Object.keys(cities).forEach(function(city) {
+    (cities[city].sites || []).forEach(function(s) {
+      if (s.active) activeSites.push({city:city, name:s.name, url:s.url});
+    });
+  });
+
+  // Сохранить лог запуска
+  var log = {
+    runAt: new Date().toLocaleString('ru'),
+    sites: activeSites.length,
+    status: 'completed',
+    note: 'Автоматическая проверка. Для реального парсинга нужен серверный скрипт (PHP/Python).'
+  };
+  var logs = [];
+  try { logs = JSON.parse(localStorage.getItem('afishi_monitor_log') || '[]'); } catch(e) {}
+  logs.unshift(log);
+  if (logs.length > 20) logs = logs.slice(0, 20);
+  try { localStorage.setItem('afishi_monitor_log', JSON.stringify(logs)); } catch(e) {}
+  localStorage.setItem('afishi_monitor_last_run', String(Date.now()));
+
+  // Обновить статус
+  var statusEl = document.getElementById('monitorStatus');
+  if (statusEl) {
+    statusEl.innerHTML = '✅ Проверка завершена · ' + log.runAt + ' · Сайтов в мониторинге: ' + activeSites.length + '<br>' +
+      '<span style="color:#888;font-size:11px;">⚠️ Для реального автоматического парсинга нужен серверный cron-скрипт. ' +
+      'Сейчас отмечается факт проверки. Добавьте PHP-скрипт на хостинг для реального мониторинга.</span>';
+  }
+  showToastAdmin('🔍 Проверка запущена: ' + activeSites.length + ' сайтов');
+}
+
+function showMonitorLog() {
+  var logs = [];
+  try { logs = JSON.parse(localStorage.getItem('afishi_monitor_log') || '[]'); } catch(e) {}
+  if (!logs.length) { showToastAdmin('Журнал мониторинга пуст'); return; }
+  var lines = [];
+  logs.forEach(function(l) { lines.push(l.runAt + ' | ' + l.sites + ' сайтов | ' + l.status); });
+  window.alert('Журнал мониторинга (' + lines.length + ' записей):\n' + lines.join(', '));
+}
+</script>
+
+
+<script>
+
+// ══ НЕДОСТАЮЩИЕ ФУНКЦИИ ════════════════════════════════════════
+
+// isPastEvent — проверка что событие прошло
+function isPastEvent(ev) {
+  var iso = ev.dateISO || ev.dateStart || ev.date || '';
+  if (!iso) return false;
+  var datePart = iso.slice(0,10);
+  var p = datePart.split('-');
+  if (p.length !== 3) return false;
+  var now = new Date();
+  // Дата начала: берём дату мероприятия + время начала
+  var evStart = new Date(+p[0], +p[1]-1, +p[2], 0, 0, 0, 0);
+  var timeStr = ev.time || ev.timeStart || '';
+  if (timeStr) {
+    var tp = timeStr.split(':');
+    evStart.setHours(parseInt(tp[0])||0, parseInt(tp[1])||0, 0, 0);
+  } else {
+    // Если время не задано — считаем прошедшим только на следующий день
+    evStart.setHours(23, 59, 59, 0);
+  }
+  return now >= evStart;
+}
+
+// renderStats — статистика сайта
+function renderStats() {
+  renderDashboardFull();
+}
+
+// renderArticles — заглушка для раздела Статьи
+function renderArticles() {
+  var el = document.getElementById('panel-articles');
+  if (!el) return;
+  var content = el.querySelector('.articles-list');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:32px;color:#bbb;">Статьи загружаются...</div>';
+}
+
+// renderMailing — заглушка для раздела Рассылка
+function renderMailing() {
+  // Рассылка требует серверной части — показать статус
+  var el = document.getElementById('mailing-status');
+  if (el) el.textContent = 'Для рассылки настройте SMTP на сервере.';
+}
+
+// renderShows — спектакли
+function renderShows() {
+  renderList('events', 'all');
+}
+
+// ══ ДАШБОРД ════════════════════════════════════════════════════
+function renderDashboardFull() {
+  // Читаем все данные из localStorage
+  var _pending_ev  = getLS('afishi_pending_events')  || [];
+  var _pending_vn  = getLS('afishi_pending_venues')  || [];
+  var _pending_fm  = getLS('afishi_pending_films')   || [];
+  var _accounts    = getLS('afishi_accounts')        || [];
+
+  var events  = _pending_ev.length;
+  var venues  = _pending_vn.length;
+  var films   = _pending_fm.length;
+  var users   = _accounts.length;
+  var pending = _pending_ev.filter(function(x){ return x && x.status==='pending'; }).length
+              + _pending_vn.filter(function(x){ return x && x.status==='pending'; }).length;
+
+  // Прошедшие
+  var today = new Date(); today.setHours(0,0,0,0);
+  var pastLS = _pending_ev.filter(function(x){
+    if (!x) return false;
+    var iso = x.dateISO || x.dateStart || '';
+    if (!iso) return false;
+    var d = new Date(iso.slice(0,10)); d.setHours(0,0,0,0);
+    return !isNaN(d) && d < today;
+  }).length;
+  var past = pastLS + 16; // + статические архивные
+
+  // Отзывы — все форматы
+  var reviews = 0;
+  try {
+    var _rv1 = getLS('afishi_reviews');
+    if (_rv1 && typeof _rv1 === 'object' && !Array.isArray(_rv1)) {
+      Object.values(_rv1).forEach(function(arr) { if (Array.isArray(arr)) reviews += arr.length; });
+    }
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('afishi_reviews_')) {
+        var arr2 = getLS(k);
+        if (Array.isArray(arr2)) reviews += arr2.length;
+      }
+    }
+  } catch(e) {}
+
+  // Записать в DOM — ищем ОБА варианта id (stat-grid новый + старый)
+  var ids = {
+    'ds-events':  events,
+    'ds-venues':  venues,
+    'ds-films':   films,
+    'ds-users':   users,
+    'ds-pending': pending,
+    'ds-reviews': reviews,
+    'ds-past':    past
+  };
+  Object.keys(ids).forEach(function(id) {
+    document.querySelectorAll('#' + id).forEach(function(el) {
+      el.textContent = ids[id];
+    });
+  });
+
+  // Pending список
+  setTimeout(function() {
+    try { renderList('events','all'); } catch(e) {}
+    try { renderList('venues','all'); } catch(e) {}
+    try { renderList('films','all');  } catch(e) {}
+    // Блок "Ожидают модерации" в дашборде
+    var dp = document.getElementById('dashPending');
+    if (dp) {
+      var pev = _pending_ev.filter(function(x){ return x && x.status==='pending'; });
+      if (!pev.length) {
+        dp.innerHTML = '<span style="color:#1a6c2e;font-size:13px;">✓ Нет событий на модерации</span>';
+      } else {
+        dp.innerHTML = pev.slice(0,5).map(function(ev) {
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0ede8;">'
+            + '<span style="font-size:12px;background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;flex-shrink:0;">Концерт</span>'
+            + '<span style="font-size:13px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(ev.title||'—')+'</span>'
+            + '<span style="font-size:11px;color:#888;flex-shrink:0;">'+(ev.dateISO||ev.dateStart||'')+'</span>'
+            + '<button data-eid="'+ev.id+'" onclick="approveEvent(this.dataset.eid)" style="background:#1a6c2e;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">✓</button>'
+            + '</div>';
+        }).join('')
+        + (pev.length > 5 ? '<div style="text-align:center;margin-top:8px;font-size:12px;color:#888;">и ещё '+(pev.length-5)+'...</div>' : '');
+      }
+    }
+  }, 100);
+}
+
+// Автоинициализация при загрузке
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof checkAuth === 'function') checkAuth();
+  if (typeof renderDashboardFull === 'function') renderDashboardFull();
+});
+
+
+// ══════════════════════════════════════════════════════════
+// УПРАВЛЕНИЕ ПО ГОРОДАМ — Скоро в продаже и Горячие билеты
+// ══════════════════════════════════════════════════════════
+
+function getCityManagerData(city) {
+  try {
+    var all = JSON.parse(localStorage.getItem('afishi_city_manager') || '{}');
+    return all[city] || { coming: [], hot: [] };
+  } catch(e) { return { coming: [], hot: [] }; }
+}
+
+function saveCityManagerData(city, data) {
+  try {
+    var all = JSON.parse(localStorage.getItem('afishi_city_manager') || '{}');
+    all[city] = data;
+    localStorage.setItem('afishi_city_manager', JSON.stringify(all));
+  } catch(e) {}
+}
+
+function loadCityManager() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var data = getCityManagerData(city);
+  renderComingSoonList(data.coming || []);
+  renderHotPinnedList(data.hot || []);
+}
+
+function saveCityManager() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var coming = collectComingSoonItems();
+  var hot    = collectHotPinnedItems();
+  saveCityManagerData(city, { coming, hot });
+  var saved = document.getElementById('cityManagerSaved');
+  if (saved) { saved.style.display='inline'; setTimeout(function(){ saved.style.display='none'; }, 2000); }
+}
+
+// ── Скоро в продаже ────────────────────────────────────────
+function renderComingSoonList(items) {
+  var el = document.getElementById('comingSoonList');
+  if (!el) return;
+  el.innerHTML = '';
+  (items.length ? items : []).forEach(function(item, i) {
+    el.innerHTML += comingSoonRow(item, i);
+  });
+}
+
+function comingSoonRow(item, i) {
+  return '<div class="cs-row" data-idx="'+i+'" style="display:flex;gap:10px;align-items:flex-start;background:#f9f7f4;border-radius:8px;padding:12px;">' +
+    '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">' +
+      '<input class="cs-title" placeholder="Название концерта / артист" value="'+(item.title||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%;">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<input class="cs-date" placeholder="Дата (напр: с 15 августа)" value="'+(item.date||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:140px;">' +
+        '<input class="cs-genre" placeholder="Жанр" value="'+(item.genre||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:100px;">' +
+        '<input class="cs-price" placeholder="Цена, ₽" value="'+(item.price||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:100px;">' +
+      '</div>' +
+      '<input class="cs-link" placeholder="Ссылка на билеты (необязательно)" value="'+(item.link||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:100%;">' +
+    '</div>' +
+    '<button onclick="removeComingSoonItem('+i+')" style="background:#fee;border:1px solid #fcc;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:14px;flex-shrink:0;">🗑️</button>' +
+  '</div>';
+}
+
+function addComingSoonItem() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var data = getCityManagerData(city);
+  if ((data.coming||[]).length >= 5) { showToastAdmin('Максимум 5 анонсов'); return; }
+  var coming = collectComingSoonItems();
+  coming.push({ title:'', date:'', genre:'', price:'', link:'' });
+  renderComingSoonList(coming);
+}
+
+function removeComingSoonItem(idx) {
+  var items = collectComingSoonItems();
+  items.splice(idx, 1);
+  renderComingSoonList(items);
+}
+
+function collectComingSoonItems() {
+  var rows = document.querySelectorAll('#comingSoonList .cs-row');
+  var items = [];
+  rows.forEach(function(row) {
+    items.push({
+      title: row.querySelector('.cs-title').value.trim(),
+      date:  row.querySelector('.cs-date').value.trim(),
+      genre: row.querySelector('.cs-genre').value.trim(),
+      price: row.querySelector('.cs-price').value.trim(),
+      link:  row.querySelector('.cs-link').value.trim()
+    });
+  });
+  return items.filter(function(i){ return i.title; });
+}
+
+// ── Горячие билеты ─────────────────────────────────────────
+function renderHotPinnedList(items) {
+  var el = document.getElementById('hotPinnedList');
+  if (!el) return;
+  el.innerHTML = '';
+  (items.length ? items : []).forEach(function(item, i) {
+    el.innerHTML += hotPinnedRow(item, i);
+  });
+}
+
+function hotPinnedRow(item, i) {
+  return '<div class="hp-row" data-idx="'+i+'" style="display:flex;gap:10px;align-items:flex-start;background:#fff8f0;border:1px solid #ffe4b5;border-radius:8px;padding:12px;">' +
+    '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">' +
+      '<input class="hp-title" placeholder="Название / артист" value="'+(item.title||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%;">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<input class="hp-date" placeholder="Дата" value="'+(item.date||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:140px;">' +
+        '<input class="hp-price" placeholder="от ... ₽" value="'+(item.price||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:120px;">' +
+      '</div>' +
+    '</div>' +
+    '<button onclick="removeHotPinnedItem('+i+')" style="background:#fee;border:1px solid #fcc;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:14px;flex-shrink:0;">🗑️</button>' +
+  '</div>';
+}
+
+function addHotPinnedItem() {
+  var city = document.getElementById('cityManagerSelect').value;
+  var data = getCityManagerData(city);
+  if ((data.hot||[]).length >= 3) { showToastAdmin('Максимум 3 события'); return; }
+  var hot = collectHotPinnedItems();
+  hot.push({ title:'', date:'', price:'' });
+  renderHotPinnedList(hot);
+}
+
+function removeHotPinnedItem(idx) {
+  var items = collectHotPinnedItems();
+  items.splice(idx, 1);
+  renderHotPinnedList(items);
+}
+
+function collectHotPinnedItems() {
+  var rows = document.querySelectorAll('#hotPinnedList .hp-row');
+  var items = [];
+  rows.forEach(function(row) {
+    items.push({
+      title: row.querySelector('.hp-title').value.trim(),
+      date:  row.querySelector('.hp-date').value.trim(),
+      price: row.querySelector('.hp-price').value.trim()
+    });
+  });
+  return items.filter(function(i){ return i.title; });
+}
+
+// showPanel intercept перенесён в heroAside блок
+
+
+// ── Hero Aside Admin ───────────────────────────────────────
+var _heroAsideDefaults = [
+  {badge:'Театр',title:'«Мастер и Маргарита» — МХТ им. Чехова',
+   meta:'1 июля · 19:00 · от 1 200 ₽',bg:'linear-gradient(135deg,#0d1b2a,#1b4f72)',
+   icon:'🎭',link:'theater.html'},
+  {badge:'Выставка',title:'Айвазовский & Куинджи — Третьяковка',
+   meta:'до 20 августа · от 400 ₽',bg:'linear-gradient(135deg,#0b3d0b,#1e7a1e)',
+   icon:'🖼️',link:'exhibits.html'}
+];
+
+var _heroAsideBgs = [
+  'linear-gradient(135deg,#0d1b2a,#1b4f72)',
+  'linear-gradient(135deg,#0b3d0b,#1e7a1e)',
+  'linear-gradient(135deg,#2a0a0a,#6a1a1a)',
+  'linear-gradient(135deg,#1a0a2e,#4a0a6e)',
+  'linear-gradient(135deg,#1a1a00,#5a5a00)',
+];
+var _heroAsideIcons = ['🎭','🖼️','🎸','🎬','🎪','🎨','📸','🎤','🏛️','🎻'];
+
+function loadHomepageCity() { loadHeroAsideAdmin(); }
+
+function loadHeroAsideAdmin() {
+  var cards = [];
+  var city = (document.getElementById('homepageCitySelect') || {}).value || 'Волгоград';
+  var _allHero = {};
+  try { _allHero = JSON.parse(localStorage.getItem('afishi_hero_aside_cities') || '{}'); } catch(e) {}
+  cards = _allHero[city] || [];
+  // Фоллбэк — старый ключ
+  if (!cards.length) { try { cards = JSON.parse(localStorage.getItem('afishi_hero_aside') || '[]'); } catch(e) {} }
+  if (!cards.length) cards = _heroAsideDefaults;
+  var el = document.getElementById('heroAsideAdmin');
+  if (!el) return;
+  el.innerHTML = cards.slice(0,2).map(function(c,i) {
+    var iconOpts = _heroAsideIcons.map(function(ic){
+      return '<option'+(ic===c.icon?' selected':'')+'>'+ic+'</option>';
+    }).join('');
+    var bgSwatches = _heroAsideBgs.map(function(bg){
+      var sel = bg===(c.bg||_heroAsideBgs[i]) ? 'outline:2px solid #c8102e;' : '';
+      return '<div class="ha-bg-swatch" data-bg="'+bg+'" style="width:28px;height:28px;border-radius:4px;background:'+bg+';cursor:pointer;flex-shrink:0;'+sel+'"></div>';
+    }).join('');
+    return '<div class="ha-card-row" style="background:#f9f7f4;border-radius:8px;padding:14px;">'
+      + '<div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#444;">Анонс '+(i+1)+'</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+        + '<div style="display:flex;gap:8px;">'
+          + '<select class="ha-icon" style="width:60px;font-size:18px;border:1px solid var(--border);border-radius:6px;padding:6px;">'+iconOpts+'</select>'
+          + '<input class="ha-badge" placeholder="Бейдж (Театр, Выставка...)" value="'+(c.badge||'')+'" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">'
+        + '</div>'
+        + '<input class="ha-title" placeholder="Заголовок анонса" value="'+(c.title||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:100%;">'
+        + '<input class="ha-meta" placeholder="Подзаголовок (дата, цена)" value="'+(c.meta||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:100%;">'
+        + '<input class="ha-link" placeholder="Ссылка (concerts.html...)" value="'+(c.link||'')+'" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:100%;">'
+        + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
+          + '<span style="font-size:12px;color:#888;flex-shrink:0;">Фон:</span>'
+          + bgSwatches
+          + '<input class="ha-bg-val" type="hidden" value="'+(c.bg||_heroAsideBgs[i])+'">'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.classList.contains('ha-bg-swatch')) return;
+  var row = e.target.closest('div[style*="background:#f9f7f4"]');
+  if (!row) return;
+  row.querySelectorAll('.ha-bg-swatch').forEach(function(d){ d.style.outline=''; });
+  e.target.style.outline = '2px solid #c8102e';
+  var inp = row.querySelector('.ha-bg-val');
+  if (inp) inp.value = e.target.dataset.bg;
+});
+
+function saveHeroAside() {
+  var rows = document.querySelectorAll('#heroAsideAdmin > div');
+  var cards = [];
+  rows.forEach(function(row) {
+    cards.push({
+      icon:  row.querySelector('.ha-icon').value,
+      badge: row.querySelector('.ha-badge').value.trim(),
+      title: row.querySelector('.ha-title').value.trim(),
+      meta:  row.querySelector('.ha-meta').value.trim(),
+      link:  row.querySelector('.ha-link').value.trim(),
+      bg:    row.querySelector('.ha-bg-val').value || _heroAsideBgs[0]
+    });
+  });
+  var _cityHP = (document.getElementById('homepageCitySelect') || {}).value || 'Волгоград';
+  var _allHeroSave = {};
+  try { _allHeroSave = JSON.parse(localStorage.getItem('afishi_hero_aside_cities') || '{}'); } catch(e) {}
+  _allHeroSave[_cityHP] = cards;
+  localStorage.setItem('afishi_hero_aside_cities', JSON.stringify(_allHeroSave));
+  localStorage.setItem('afishi_hero_aside', JSON.stringify(cards)); // совместимость
+  var saved = document.getElementById('heroAsideSaved');
+  if (saved) { saved.style.display='inline'; setTimeout(function(){ saved.style.display='none'; }, 2000); }
+}
+
+// Автозагрузка при открытии панели главной
+(function() {
+  var origShow = window.showPanel;
+  window.showPanel = function(name, el) {
+    if (typeof origShow === 'function') origShow(name, el);
+    if (name === 'homepage') setTimeout(loadHeroAsideAdmin, 50);
+    if (name === 'reviews-panel') setTimeout(function(){ renderReviews('all'); }, 50);
+    if (name === 'cities')   setTimeout(loadCityManager, 50);
+  };
+})();
+
+
+function approveEvent(id) {
+  if (!id) return;
+  try {
+    var evs = JSON.parse(localStorage.getItem('afishi_pending_events') || '[]');
+    evs = evs.map(function(e) {
+      if (String(e.id) === String(id)) e.status = 'approved';
+      return e;
+    });
+    localStorage.setItem('afishi_pending_events', JSON.stringify(evs));
+    renderDashboardFull();
+    showToastAdmin('Мероприятие одобрено');
+  } catch(e) { console.error(e); }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// ОТЗЫВЫ — чтение из всех форматов localStorage
+// ══════════════════════════════════════════════════════════
+function _getAllReviews() {
+  var all = [];
+  // Формат 1: afishi_reviews = { "concerts::id": [{...}], ... }
+  try {
+    var db = JSON.parse(localStorage.getItem('afishi_reviews') || 'null');
+    if (db && typeof db === 'object' && !Array.isArray(db)) {
+      Object.entries(db).forEach(function(entry) {
+        var key = entry[0], arr = entry[1];
+        if (Array.isArray(arr)) arr.forEach(function(r) {
+          all.push(Object.assign({}, r, {_source: key, _fmt: 1}));
+        });
+      });
+    }
+  } catch(e) {}
+  // Формат 2: afishi_reviews_<type>_<id> = [{...}]
+  try {
+    for (var i=0; i<localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('afishi_reviews_')) {
+        var arr2 = JSON.parse(localStorage.getItem(k) || '[]');
+        if (Array.isArray(arr2)) arr2.forEach(function(r) {
+          all.push(Object.assign({}, r, {_source: k, _fmt: 2}));
+        });
+      }
+    }
+  } catch(e) {}
+  return all;
+}
+
+function renderReviews(filter) {
+  filter = filter || 'all';
+  var panel = document.getElementById('panel-reviews-panel');
+  if (!panel) return;
+  var container = document.getElementById('reviewsList');
+  if (!container) return;
+
+  var all = _getAllReviews();
+
+  if (filter === 'pending') all = all.filter(function(r){ return r.status === 'pending' || !r.status; });
+  if (filter === 'approved') all = all.filter(function(r){ return r.status === 'approved'; });
+
+  // Обновить счётчик
+  var ds = document.getElementById('ds-reviews');
+  if (ds) ds.textContent = _getAllReviews().length;
+
+  if (!all.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">'
+      + '<div style="font-size:36px;margin-bottom:12px;">💬</div>'
+      + '<div style="font-size:14px;">Отзывов пока нет</div>'
+      + '<div style="font-size:12px;margin-top:8px;">Они появятся когда пользователи начнут оставлять отзывы на сайте</div>'
+      + '</div>';
+    return;
+  }
+
+  container.innerHTML = all.map(function(r, idx) {
+    var score = r.score || r.rating || 0;
+    var stars = '★'.repeat(Math.min(5,score)) + '☆'.repeat(5-Math.min(5,score));
+    var statusBg = r.status==='approved' ? '#d4edda' : r.status==='rejected' ? '#f8d7da' : '#fff3cd';
+    var statusTxt = r.status==='approved' ? '✓ Одобрен' : r.status==='rejected' ? '✗ Отклонён' : '⏳ На модерации';
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">'
+        + '<div style="flex:1;">'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+            + '<span style="font-weight:700;font-size:14px;">'+(r.name||r.author||'Аноним')+'</span>'
+            + '<span style="color:#f0a500;">' + stars + '</span>'
+            + '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+statusBg+';font-weight:700;">'+statusTxt+'</span>'
+          + '</div>'
+          + (r.title ? '<div style="font-weight:700;font-size:13px;margin-bottom:4px;">'+r.title+'</div>' : '')
+          + '<div style="font-size:13px;color:#444;line-height:1.5;">'+(r.text||r.comment||'')+'</div>'
+          + '<div style="font-size:11px;color:#aaa;margin-top:6px;">'+(r.date||r.createdAt||'')+(r._source?' · '+r._source:'')+'</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
+          + '<button data-ridx="'+idx+'" onclick="approveReview(this.dataset.ridx)" style="background:#1a6c2e;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">✓ Одобрить</button>'
+          + '<button data-ridx="'+idx+'" onclick="rejectReview(this.dataset.ridx)" style="background:#dc3545;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">✗ Отклонить</button>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function approveReview(idx) {
+  _updateReviewStatus(parseInt(idx), 'approved');
+}
+function rejectReview(idx) {
+  _updateReviewStatus(parseInt(idx), 'rejected');
+}
+function _updateReviewStatus(idx, status) {
+  var all = _getAllReviews();
+  var rev = all[idx];
+  if (!rev) return;
+  // Обновить в localStorage
+  if (rev._fmt === 1) {
+    var db = {};
+    try { db = JSON.parse(localStorage.getItem('afishi_reviews') || '{}'); } catch(e) {}
+    if (db[rev._source]) {
+      db[rev._source] = db[rev._source].map(function(r) {
+        if ((r.text||'') === (rev.text||'') && (r.date||'') === (rev.date||'')) r.status = status;
+        return r;
+      });
+      localStorage.setItem('afishi_reviews', JSON.stringify(db));
+    }
+  } else {
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem(rev._source) || '[]'); } catch(e) {}
+    arr = arr.map(function(r) {
+      if ((r.text||'') === (rev.text||'') && (r.date||'') === (rev.date||'')) r.status = status;
+      return r;
+    });
+    localStorage.setItem(rev._source, JSON.stringify(arr));
+  }
+  renderReviews();
+  showToastAdmin(status === 'approved' ? 'Отзыв одобрен' : 'Отзыв отклонён');
+}
+
+function clearAllReviews() {
+  if (!confirm('Удалить ВСЕ отзывы? Это действие нельзя отменить.')) return;
+  localStorage.removeItem('afishi_reviews');
+  for (var i=localStorage.length-1; i>=0; i--) {
+    var k = localStorage.key(i);
+    if (k && k.startsWith('afishi_reviews_')) localStorage.removeItem(k);
+  }
+  renderReviews();
+  showToastAdmin('Все отзывы удалены');
+}
+
+function filterEventsList() {
+  renderList('events', 'all');
+}
+
+function openAddEventModal() {
+  var modal = document.getElementById('editModal');
+  var body  = document.getElementById('editModalBody');
+  if (!modal || !body) return;
+  window._newEventId = 'ev_' + Date.now();
+  var genreOpts = ['Концерт','Рок','Поп','Хип-хоп','Электронная','Классика','Фестиваль','Другое']
+    .map(function(g){ return '<option value="'+g+'">'+g+'</option>'; }).join('');
+  var cityOpts = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар']
+    .map(function(c){ return '<option>'+c+'</option>'; }).join('');
+
+  body.innerHTML =
+    '<div style="padding:4px 0;">' +
+    '<div style="font-family:Oswald,sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;">✚ Новое мероприятие</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      '<input id="aev_title" placeholder="Название *" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<input id="aev_artist" placeholder="Артист / исполнитель" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<div style="display:flex;gap:8px;">' +
+        '<input id="aev_date" type="date" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;">' +
+        '<input id="aev_time" type="time" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;">' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<select id="aev_genre" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' + genreOpts + '</select>' +
+        '<select id="aev_city" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' + cityOpts + '</select>' +
+      '</div>' +
+      '<select id="aev_venue" onchange="autoFillVenueAddr()" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%;">' +
+      '<option value="">— Выберите площадку —</option>' +
+      '<option value="Стадион Волгоград Арена">🏟️ Стадион Волгоград Арена</option>' +
+      '<option value="Выставочный комплекс ВолгоградЭКСПО">🏛️ Выставочный комплекс ВолгоградЭКСПО</option>' +
+      '<option value="ЦКЗ Волгоградская Филармония">🎼 ЦКЗ Волгоградская Филармония</option>' +
+      '<option value="Дом Офицеров">🏛️ Дом Офицеров</option>' +
+      '<option value="Ресторан «Волгоград»">🍷 Ресторан «Волгоград»</option>' +
+      '<option value="НЭТ — Новый Экспериментальный Театр">🎭 НЭТ — Новый Экспериментальный Театр</option>' +
+      '<option value="Царицынская опера">🎶 Царицынская опера</option>' +
+      '<option value="ТЮЗ — Театр юного зрителя">🎪 ТЮЗ — Театр юного зрителя</option>' +
+      '<option value="Волгоградский цирк">🎡 Волгоградский цирк</option>' +
+      '<option value="Другое">• Другое</option>' +
+      '</select>' +
+      '<input id="aev_addr" placeholder="Адрес площадки" readonly style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:#f9f7f4;width:100%;color:#555;" title="Заполняется автоматически при выборе площадки">' +
+      '<input id="aev_price" type="number" placeholder="Цена от (₽)" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<input id="aev_photo" placeholder="Фото (URL)" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+      '<select id="aev_status" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">' +
+        '<option value="approved">✅ Опубликовать сразу</option>' +
+        '<option value="pending">⏳ На модерацию</option>' +
+      '</select>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;margin-top:16px;">' +
+      '<button onclick="saveNewEventAdmin()" class="btn-red" style="flex:1;padding:10px;">💾 Сохранить</button>' +
+      '<button onclick="closeModal()" style="flex:1;padding:10px;background:#f4f2ee;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:Oswald,sans-serif;font-weight:700;">Отмена</button>' +
+    '</div>' +
+    '</div>';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function saveNewEventAdmin() {
+  var id = window._newEventId || ('ev_' + Date.now());
+  var title  = (document.getElementById('aev_title')  || {}).value || '';
+  var artist = (document.getElementById('aev_artist') || {}).value || '';
+  var date   = (document.getElementById('aev_date')   || {}).value || '';
+  var time   = (document.getElementById('aev_time')   || {}).value || '';
+  var genre  = (document.getElementById('aev_genre')  || {}).value || 'Концерт';
+  var city   = (document.getElementById('aev_city')   || {}).value || 'Волгоград';
+  var venue  = (document.getElementById('aev_venue')  || {}).value || '';
+  var addr_v = (document.getElementById('aev_addr')   || {}).value || (VENUE_ADDR_MAP && VENUE_ADDR_MAP[venue] ? VENUE_ADDR_MAP[venue] : '');
+  var price  = parseInt((document.getElementById('aev_price') || {}).value) || 0;
+  var photo  = (document.getElementById('aev_photo')  || {}).value || '';
+  var status = (document.getElementById('aev_status') || {}).value || 'approved';
+
+  if (!title || !date) { showToastAdmin('Укажите название и дату'); return; }
+
+  var ev = {
+    id: id, title: title, artist: artist || title,
+    genre: genre, icon: '🎤', color: '#1a0a2e',
+    dateISO: date, dateStart: date, time: time,
+    date: (function() {
+      var mn=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+      var d=new Date(date); return !isNaN(d)?(d.getDate()+' '+mn[d.getMonth()]):'';
+    })(),
+    city: city, venue: venue, addr: addr_v, price: price, photo: photo,
+    status: status, submittedBy: 'admin',
+    submittedAt: new Date().toLocaleDateString('ru'),
+    cat: 'concert', age: '6+', hot: false
+  };
+
+  try {
+    var pev = JSON.parse(localStorage.getItem('afishi_pending_events') || '[]');
+    pev.unshift(ev);
+    localStorage.setItem('afishi_pending_events', JSON.stringify(pev));
+    if (photo) {
+      var cp = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}');
+      cp[id] = photo;
+      localStorage.setItem('afishi_concert_photos', JSON.stringify(cp));
+    }
+  } catch(e) {}
+
+  closeModal();
+  renderList('events', 'all');
+  renderDashboardFull();
+  showToastAdmin('✅ Мероприятие добавлено!');
+}
+
+// ── Автообновление вкладки мероприятий каждые 60 секунд ──────────
+(function() {
+  var _evRefreshTimer = null;
+  var _origShowPanel = window.showPanel;
+  window.showPanel = function(name, el) {
+    if (typeof _origShowPanel === 'function') _origShowPanel(name, el);
+    if (name === 'events') {
+      // Запустить таймер обновления
+      if (_evRefreshTimer) clearInterval(_evRefreshTimer);
+      _evRefreshTimer = setInterval(function() {
+        var panel = document.getElementById('panel-events');
+        if (!panel || panel.style.display === 'none') {
+          clearInterval(_evRefreshTimer);
+          return;
+        }
+        // Тихо обновить — событие могло перейти в прошедшие
+        var activeBtn = panel.querySelector('.ev-filter-active');
+        var status = activeBtn ? activeBtn.dataset.status : 'all';
+        renderList('events', status);
+      }, 60000); // каждую минуту
+    } else {
+      if (_evRefreshTimer) { clearInterval(_evRefreshTimer); _evRefreshTimer = null; }
+    }
+  };
+})();
+
+function deleteEventByTitle(titleKeyword) {
+  if (!confirm('Удалить все мероприятия содержащие "' + titleKeyword + '" из базы?')) return;
+  var deleted = 0;
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var before = arr.length;
+      arr = arr.filter(function(ev) {
+        return !(ev.title || '').toLowerCase().includes(titleKeyword.toLowerCase());
+      });
+      deleted += before - arr.length;
+      localStorage.setItem(key, JSON.stringify(arr));
+    } catch(e) {}
+  });
+  renderList('events', 'all');
+  renderDashboardFull();
+  showToastAdmin('Удалено ' + deleted + ' событий с "' + titleKeyword + '"');
+}
+
+// Автоудаление устаревших/неверных мероприятий из localStorage
+(function() {
+  var BAD_TITLES = ['scorpions','50th anniversary','каста — живой','arena волгоград'];
+  var BAD_VENUES = ['arena волгоград'];
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var filtered = arr.filter(function(ev) {
+        var t = (ev.title || '').toLowerCase();
+        var v = (ev.venue || '').toLowerCase();
+        var badTitle = BAD_TITLES.some(function(b){ return t.includes(b); });
+        var badVenue = BAD_VENUES.some(function(b){ return v === b; });
+        return !badTitle && !badVenue;
+      });
+      if (filtered.length !== arr.length) {
+        localStorage.setItem(key, JSON.stringify(filtered));
+      }
+    } catch(e) {}
+  });
+  // Исправить адрес стадиона во всех событиях
+  ['afishi_pending_events','afishi_approved_events'].forEach(function(key) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      var changed = false;
+      arr = arr.map(function(ev) {
+        var v = (ev.venue || '').toLowerCase();
+        if (v.includes('стадион волгоград арена') || v.includes('волгоград арена')) {
+          if (ev.addr !== 'просп. Ленина, 76, Волгоград') {
+            ev.addr = 'просп. Ленина, 76, Волгоград';
+            ev.venue = 'Стадион Волгоград Арена';
+            changed = true;
+          }
+        }
+        if (v.includes('экспо') || v.includes('expocentr')) {
+          if (ev.addr !== 'пр. Ленина, 46А, Волгоград') {
+            ev.addr = 'пр. Ленина, 46А, Волгоград';
+            changed = true;
+          }
+        }
+        return ev;
+      });
+      if (changed) localStorage.setItem(key, JSON.stringify(arr));
+    } catch(e) {}
+  });
+})();
+
+// ── Карта адресов площадок ──────────────────────────────────────
+var VENUE_ADDR_MAP = {
+  'Стадион Волгоград Арена':               'просп. Ленина, 76, Волгоград',
+  'Выставочный комплекс ВолгоградЭКСПО':   'пр. Ленина, 46А, Волгоград',
+  'ЦКЗ Волгоградская Филармония':          'наб. 62-й Армии, 4, Волгоград',
+  'Дом Офицеров':                          'просп. Ленина, 31, Волгоград',
+  'Ресторан «Волгоград»':                  'ул. Мира, 12, Волгоград',
+  'НЭТ — Новый Экспериментальный Театр':  'ул. Рабоче-Крестьянская, 15А, Волгоград',
+  'Царицынская опера':                     'просп. Ленина, 97, Волгоград',
+  'ТЮЗ — Театр юного зрителя':            'ул. Рабоче-Крестьянская, 16, Волгоград',
+  'Волгоградский цирк':                    'ул. Маршала Чуйкова, 22, Волгоград',
+};
+
+function autoFillVenueAddr() {
+  var sel = document.getElementById('aev_venue');
+  var addr = document.getElementById('aev_addr');
+  if (!sel || !addr) return;
+  var venueName = sel.value;
+  addr.value = VENUE_ADDR_MAP[venueName] || '';
+}
+
+function closeModal() {
+  var m = document.getElementById('editModal');
+  if (m) m.style.display = 'none';
+  m = document.getElementById('editModalOuter');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  _editCtx = null;
+}
+</script>
+
+<script>
+/* ── adminLogin final override — runs after all other scripts ── */
+(function() {
+  var _safe = function() {
+    var ov = document.getElementById('_sli_ov');
+    if (ov) { ov.style.display='flex'; return; }
+    var d = document.createElement('div');
+    d.id = '_sli_ov';
+    d.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;';
+    d.innerHTML = [
+      '<div style="background:#fff;border-radius:12px;padding:28px 32px;width:360px;max-width:92vw;box-shadow:0 24px 72px rgba(0,0,0,.45);">',
+      '<div style="font-family:Oswald,sans-serif;font-size:24px;font-weight:700;margin-bottom:4px;">🔐 Вход в панель</div>',
+      '<div style="font-size:12px;color:#999;margin-bottom:20px;">Афиши.ру · Администраторам</div>',
+      '<label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">EMAIL</label>',
+      '<input id="_sli_e" type="email" value="admin@afishi.ru" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;margin-bottom:12px;">',
+      '<label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">ПАРОЛЬ</label>',
+      '<input id="_sli_p" type="password" placeholder="Введите пароль" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;margin-bottom:6px;">',
+      '<div id="_sli_err" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:12px;"></div>',
+      '<button onclick="window._doAdminLogin()" style="width:100%;background:#c8102e;color:#fff;border:none;border-radius:6px;padding:13px;font-family:Oswald,sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;cursor:pointer;margin-bottom:8px;">ВОЙТИ</button>',
+      '<button onclick="document.getElementById(\'_sli_ov\').style.display=\'none\'" style="width:100%;background:none;border:1px solid #ddd;border-radius:6px;padding:10px;cursor:pointer;font-size:13px;color:#777;">Отмена</button>',
+      '<div style="margin-top:14px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #f0f0f0;padding-top:12px;">admin@afishi.ru / Afishi2018!</div>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(d);
+    var pEl = document.getElementById('_sli_p');
+    if (pEl) { pEl.focus(); pEl.onkeydown = function(e){ if(e.key==='Enter') window._doAdminLogin(); }; }
+  };
+
+  window._doAdminLogin = function() {
+    var e = (document.getElementById('_sli_e')||{}).value||'';
+    var p = (document.getElementById('_sli_p')||{}).value||'';
+    var err = document.getElementById('_sli_err');
+    var creds = [
+      {email:'admin@afishi.ru', pass:'Afishi2018!', name:'Администратор', role:'admin'},
+      {email:'strote34@gmail.com', pass:'admin2026', name:'Серго', role:'admin'}
+    ];
+    var found = creds.filter(function(c){ return c.email===e.trim().toLowerCase() && c.pass===p; })[0];
+    if (found) {
+      try { localStorage.setItem('afishi_user', JSON.stringify({email:found.email, name:found.name, role:found.role, loginAt:Date.now()})); } catch(x){}
+      location.reload();
+    } else {
+      if (err) err.textContent = '❌ Неверный email или пароль';
+      var pin = document.getElementById('_sli_p');
+      if (pin) { pin.style.borderColor='#c8102e'; setTimeout(function(){ pin.style.borderColor=''; }, 2000); }
+    }
+  };
+
+  /* Override adminLogin ПОСЛЕ всех скриптов */
+  window.adminLogin = _safe;
+
+  /* Показать форму при загрузке если не авторизован */
+  document.addEventListener('DOMContentLoaded', function() {
+    var u = null;
+    try { u = JSON.parse(localStorage.getItem('afishi_user')||'null'); } catch(x){}
+    if (!u || (u.role !== 'admin' && u.role !== 'moderator')) {
+      setTimeout(_safe, 200);
+    }
+  });
+})();
+</script>
+
+<footer>
+  <!-- CTA полоса -->
+  <div class="footer-top">
+    <div class="footer-top-inner">
+      <div>
+        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
+        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
+      </div>
+      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
+    </div>
+  </div>
+
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Колонка 1: Логотип + описание + соцсети -->
+      <div>
+        <div class="footer-logo">Афиши<span>.ру</span></div>
+        <div class="footer-desc">
+          Крупнейший агрегатор событий и мероприятий в России.
+          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
+          Основан в 2002 году.
+        </div>
+        <div class="footer-socials">
+          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
+          </a>
+          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
+          </a>
+          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
+          </a>
+          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
+            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Колонка 2: Разделы -->
+      <div>
+        <div class="footer-col-title">Разделы</div>
+        <div class="footer-links">
+          <a href="concerts.html">🎸 Концерты</a>
+          <a href="theater.html">🎭 Театр и балет</a>
+          <a href="cinema.html">🎬 Кино</a>
+          <a href="exhibits.html">🖼️ Выставки</a>
+          <a href="kids.html">🧸 Детям</a>
+          <a href="articles.html">📝 Статьи</a>
+          <a href="film-database.html">📽️ База фильмов</a>
+          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
+            🏛 Пушкинская карта
+          </a>
+        </div>
+      </div>
+
+      <!-- Колонка 3: Площадки Волгограда -->
+      <div>
+        <div class="footer-col-title">Площадки</div>
+        <div class="footer-links">
+          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
+          <a href="venue-arena.html">Стадион Волгоград Арена</a>
+          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
+          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
+          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
+          <a href="cinema-pobeda-volgograd.html">Кино «Победа»</a>
+          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
+        </div>
+      </div>
+
+      <!-- Колонка 4: Города -->
+      <div>
+        <div class="footer-col-title">Города</div>
+        <div class="footer-links">
+          <a href="index.html">Волгоград</a>
+          <a href="index.html">Москва</a>
+          <a href="index.html">Санкт-Петербург</a>
+          <a href="index.html">Екатеринбург</a>
+          <a href="index.html">Казань</a>
+          <a href="index.html">Краснодар</a>
+          <a href="index.html">Ростов-на-Дону</a>
+          <a href="index.html">Новосибирск</a>
+        </div>
+      </div>
+
+      <!-- Колонка 5: Компания -->
+      <div>
+        <div class="footer-col-title">Компания</div>
+        <div class="footer-links">
+          <a href="about.html">О проекте</a>
+          <a href="advertise.html">Реклама на сайте</a>
+          <a href="event-add.html">Добавить событие</a>
+          <a href="venue-add.html">Добавить площадку</a>
+          <a href="loyalty.html">АфишиПлюс ⭐</a>
+          <a href="partners.html">Партнёрам</a>
+          <a href="jobs.html">Вакансии</a>
+          <a href="admin-info.html">Администраторам</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="footer-divider">
+
+  <div class="footer-bottom">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span>© 2002–2026 afishi.ru</span>
+      <span class="footer-badge">🌆 Волгоград</span>
+      <span class="footer-badge">🔒 18+</span>
+    </div>
+    <div class="footer-bottom-links">
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="sitemap.html">Карта сайта</a>
+      <a href="admin-info.html">Администраторам</a>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+// ── Seed demo reviews if none exist ─────────────────────────────
+// Формат: afishi_reviews_<type>_<id> = [{author,rating,text,...}]
+(function() {
+  try {
+    // Проверить есть ли уже отзывы
+    var hasReviews = false;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && (k.startsWith('afishi_reviews_') || k === 'afishi_reviews')) {
+        try {
+          var v = JSON.parse(localStorage.getItem(k) || 'null');
+          if (v && (Array.isArray(v) && v.length > 0 || typeof v === 'object' && Object.keys(v).length > 0)) {
+            hasReviews = true; break;
+          }
+        } catch(e) {}
+      }
+    }
+    if (hasReviews) return;
+
+    // Записать 5 демо-отзывов в формате объекта (Format 1)
+    // ключ: 'events::eventId' → [{review}]
+    var demoDB = {
+      'concerts::vlg_kmet60': [{
+        id:'rv001', author:'Анна М.', city:'Волгоград', rating:5,
+        text:'Отличный концерт! Звук был великолепный, много живых эмоций. Однозначно рекомендую!',
+        date:'2026-06-10', status:'approved'
+      }],
+      'concerts::vlg_rock_night': [{
+        id:'rv002', author:'Дмитрий К.', city:'Волгоград', rating:4,
+        text:'Атмосфера была потрясающей, трибьют сыгран профессионально. Немного не хватило громкости.',
+        date:'2026-06-12', status:'approved'
+      }],
+      'theater::vlg_carmen': [{
+        id:'rv003', author:'Мария С.', city:'Волгоград', rating:5,
+        text:'Великолепная постановка! Сопрано просто невероятное. Буду рекомендовать всем знакомым.',
+        date:'2026-06-08', status:'approved'
+      }],
+      'theater::vlg_buratino': [{
+        id:'rv004', author:'Алексей Т.', city:'Волгоград', rating:4,
+        text:'Дети в восторге! Яркие костюмы, динамичный сюжет. Чуть длиннее антракт — было бы лучше.',
+        date:'2026-06-11', status:'pending'
+      }],
+      'concerts::vlg_simfonia': [{
+        id:'rv005', author:'Ольга Р.', city:'Волгоград', rating:5,
+        text:'Завораживающее исполнение Бетховена. Зал заполнен, публика аплодировала стоя!',
+        date:'2026-06-09', status:'approved'
+      }],
+      'kids::vlg_circus': [{
+        id:'rv006', author:'Наташа Д.', city:'Волгоград', rating:5,
+        text:'Дети просто в восторге! Очень красочное шоу, клоуны смешные, животные послушные. Приедем ещё!',
+        date:'2026-06-14', status:'approved'
+      }],
+    };
+    localStorage.setItem('afishi_reviews', JSON.stringify(demoDB));
+  } catch(e) {}
+})();
+</script>
+
+<script>
+/* ── Управление популярными заведениями/событиями ─────────────────
+   localStorage: afishi_featured = {id: true/false}
+   localStorage: afishi_views    = {id: count}
+──────────────────────────────────────────────────────────────────── */
+
+// ── Список заведений для добавления в популярные ──────────────────
+var VENUES_FOR_POPULAR = [
+  {id:'vlg_ckz',     name:'ЦКЗ Волгоградская Филармония', city:'Волгоград', icon:'🎼'},
+  {id:'vlg_arena',   name:'Волгоград Арена',               city:'Волгоград', icon:'🏟️'},
+  {id:'vlg_dom_off', name:'Дом Офицеров',                  city:'Волгоград', icon:'🏛️'},
+  {id:'vlg_komsomol',name:'КЗ Комсомол',                   city:'Волгоград', icon:'🎸'},
+  {id:'vlg_muztetr', name:'Волг. музыкальный театр',       city:'Волгоград', icon:'🎭'},
+  {id:'vlg_restoran',name:'Ресторан-клуб Панорама',        city:'Волгоград', icon:'🍽️'},
+  {id:'panorama',    name:'Панорама Сталинградской битвы', city:'Волгоград', icon:'⚔️'},
+  {id:'mashkov',     name:'Музей ИЗО им. Машкова',         city:'Волгоград', icon:'🖼️'},
+  {id:'kraeved',     name:'Краеведческий музей',           city:'Волгоград', icon:'🏛️'},
+];
+
+// ── Получить featured ──────────────────────────────────────────────
+function _getFeatured() {
+  try { return JSON.parse(localStorage.getItem('afishi_featured') || '{}'); } catch(e){ return {}; }
+}
+function _setFeatured(obj) {
+  try { localStorage.setItem('afishi_featured', JSON.stringify(obj)); } catch(e){}
+}
+
+// ── Получить просмотры ─────────────────────────────────────────────
+function _getViews() {
+  try { return JSON.parse(localStorage.getItem('afishi_views') || '{}'); } catch(e){ return {}; }
+}
+
+// ── Показать список featured в admin panel ─────────────────────────
+function renderFeaturedVenuesList() {
+  var el = document.getElementById('featuredVenuesList');
+  if (!el) return;
+  var featured = _getFeatured();
+  var items = VENUES_FOR_POPULAR.filter(function(v){ return featured[v.id]; });
+  
+  if (!items.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;padding:4px 0;">Нет закреплённых. Нажмите «Управление популярными».</div>';
+    return;
+  }
+  
+  el.innerHTML = items.map(function(v){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fff;border-radius:6px;margin-bottom:6px;">'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span style="font-size:18px;">'+v.icon+'</span>'
+      +'<div><div style="font-size:13px;font-weight:700;">'+v.name+'</div>'
+      +'<div style="font-size:11px;color:#888;">'+v.city+'</div>'
+      +'</div></div>'
+      +'<button onclick="removeFromFeatured(\''+v.id+'\')" '
+      +'style="background:none;border:1px solid #e0e0e0;color:#888;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">✕ Убрать</button>'
+      +'</div>';
+  }).join('');
+}
+
+function removeFromFeatured(id) {
+  var f = _getFeatured();
+  delete f[id];
+  _setFeatured(f);
+  renderFeaturedVenuesList();
+  showToastAdmin('✅ Удалено из популярных');
+}
+
+// ── Модал управления популярными ──────────────────────────────────
+function openPopularManager() {
+  var ov = document.getElementById('_popManagerOv');
+  if (ov) { ov.remove(); }
+  
+  var featured = _getFeatured();
+  var views    = _getViews();
+  
+  // Объединить VENUES_FOR_POPULAR + события из CONCERTS_DB (если доступен)
+  var allItems = VENUES_FOR_POPULAR.slice();
+  
+  // Сортировать: featured сначала, потом по просмотрам
+  allItems.sort(function(a, b) {
+    var fa = featured[a.id] ? 1 : 0;
+    var fb = featured[b.id] ? 1 : 0;
+    if (fb !== fa) return fb - fa;
+    return (views[b.id]||0) - (views[a.id]||0);
+  });
+  
+  var d = document.createElement('div');
+  d.id = '_popManagerOv';
+  d.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;';
+  
+  var rows = allItems.map(function(v){
+    var isFeat = featured[v.id] ? true : false;
+    var viewCnt = views[v.id] || 0;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0ede8;">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-size:22px;min-width:28px;">'+v.icon+'</span>'
+      +'<div>'
+      +'<div style="font-size:13px;font-weight:700;color:#1a1a1a;">'+v.name+'</div>'
+      +'<div style="font-size:11px;color:#888;">'+v.city+' · 👁 '+viewCnt+' просм.'+(isFeat?' · ⭐ в топе':'')+'</div>'
+      +'</div></div>'
+      +'<button onclick="_toggleFeatured(\''+v.id+'\',this)" '
+      +'data-featured="'+isFeat+'" '
+      +'style="min-width:120px;background:'+(isFeat?'#c8102e':'#f0ede8')+';color:'+(isFeat?'#fff':'#555')+';'
+      +'font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;'
+      +'border:none;border-radius:6px;padding:7px 12px;cursor:pointer;">'
+      +(isFeat?'⭐ В топе':'＋ Добавить в топ')+'</button>'
+      +'</div>';
+  }).join('');
+  
+  d.innerHTML = '<div style="background:#fff;border-radius:12px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;">'
+    +'<div style="background:linear-gradient(135deg,#1a0a2e,#c8102e);padding:20px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div>'
+    +'<div style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;color:#fff;">⭐ Управление «Популярным»</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;">Выберите заведения для блока 🔥 Популярное на сайте</div>'
+    +'</div>'
+    +'<button onclick="document.getElementById(\'_popManagerOv\').remove()" '
+    +'style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px 24px;">'
+    +'<div style="font-size:12px;color:#888;background:#f9f7f4;border-radius:6px;padding:10px 14px;margin-bottom:14px;">'
+    +'💡 Заведения с ⭐ показываются первыми в блоке «Популярное» на всех страницах сайта. Остальные сортируются по просмотрам.</div>'
+    + rows
+    +'</div></div>';
+  
+  document.body.appendChild(d);
+  d.addEventListener('click', function(e){ if(e.target===d) d.remove(); });
+}
+
+function _toggleFeatured(id, btn) {
+  var f = _getFeatured();
+  var wasActive = f[id] === true;
+  if (wasActive) {
+    delete f[id];
+    btn.style.background = '#f0ede8';
+    btn.style.color = '#555';
+    btn.textContent = '＋ Добавить в топ';
+    btn.dataset.featured = 'false';
+    showToastAdmin('✅ Убрано из топа: ' + id);
+  } else {
+    f[id] = true;
+    btn.style.background = '#c8102e';
+    btn.style.color = '#fff';
+    btn.textContent = '⭐ В топе';
+    btn.dataset.featured = 'true';
+    showToastAdmin('⭐ Добавлено в топ: ' + id);
+  }
+  _setFeatured(f);
+  // Обновить список в panel
+  renderFeaturedVenuesList();
+}
+
+// ── Статистика просмотров ──────────────────────────────────────────
+function showViewStats() {
+  var views = _getViews();
+  var featured = _getFeatured();
+  
+  var ids = Object.keys(views).sort(function(a,b){ return views[b]-views[a]; });
+  
+  if (!ids.length) {
+    alert('Просмотров пока нет. Они накапливаются когда пользователи кликают на события/заведения на сайте.');
+    return;
+  }
+  
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;';
+  
+  var rows = ids.slice(0,20).map(function(id, i) {
+    var cnt = views[id];
+    var isFeat = featured[id] ? ' ⭐' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f3ef;">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-family:Oswald,sans-serif;font-size:11px;color:#aaa;min-width:20px;">#'+(i+1)+'</span>'
+      +'<div style="font-size:13px;font-weight:600;color:#1a1a1a;">'+id+isFeat+'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:#c8102e;">👁 '+cnt+'</span>'
+      +'<button onclick="_toggleFeaturedById(\''+id+'\')" '
+      +'style="font-size:10px;padding:4px 8px;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;background:'+(featured[id]?'#c8102e':'none')+';color:'+(featured[id]?'#fff':'#666')+'">'
+      +(featured[id]?'⭐ Убрать':'＋ В топ')+'</button>'
+      +'</div></div>';
+  }).join('');
+  
+  d.innerHTML = '<div style="background:#fff;border-radius:12px;width:500px;max-width:95vw;max-height:80vh;overflow-y:auto;">'
+    +'<div style="background:#1a0a2e;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-family:Oswald,sans-serif;font-size:18px;font-weight:700;color:#fff;">👁 Статистика просмотров</div>'
+    +'<button onclick="this.closest(\'div[style*=\\"position:fixed\\"]\')" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:16px;width:28px;height:28px;border-radius:50%;cursor:pointer;" onclick="this.parentElement.parentElement.parentElement.remove()">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px 24px;">'
+    +(ids.length ? rows : '<div style="color:#aaa;text-align:center;padding:20px;">Нет данных</div>')
+    +'<div style="margin-top:16px;text-align:right;">'
+    +'<button onclick="this.closest(\'[style*=z-index]\').remove()" style="background:#f0ede8;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;">Закрыть</button>'
+    +'<button onclick="if(confirm(\'Сбросить все просмотры?\'))localStorage.removeItem(\'afishi_views\');location.reload();" style="margin-left:8px;background:#c8102e;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;">🗑 Сбросить всё</button>'
+    +'</div></div></div>';
+    
+  d.addEventListener('click', function(e){ if(e.target===d) d.remove(); });
+  document.body.appendChild(d);
+}
+
+function _toggleFeaturedById(id) {
+  var f = _getFeatured();
+  if (f[id]) { delete f[id]; } else { f[id] = true; }
+  _setFeatured(f);
+  renderFeaturedVenuesList();
+  showViewStats(); // обновить модал
+}
+
+// ── Инициализация при загрузке панели ─────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  renderFeaturedVenuesList();
+});
+</script>
+
+<script>
+/* ── Рендеринг панели источников ─────────────────────────────────── */
+function renderSourcesPanel() {
+  // Заполнить список источников из DEFAULT_MONITOR_CITIES
+  var srcEl = document.getElementById('citiesMonitorListSources');
+  if (srcEl) {
+    var cities = loadMonitorCities ? loadMonitorCities() : (window.DEFAULT_MONITOR_CITIES || {});
+    var totalSites = 0;
+    var html = Object.keys(cities).map(function(city) {
+      var sites = cities[city].sites || [];
+      totalSites += sites.filter(function(s){ return s.active; }).length;
+      return '<div style="margin-bottom:20px;">'
+        + '<div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;padding:10px 14px;background:#1a0a2e;color:#fff;border-radius:8px 8px 0 0;">'
+        + '<span>🏙️ ' + city + '</span>'
+        + '<span style="margin-left:auto;font-size:11px;opacity:.6;">' + sites.length + ' источников</span>'
+        + '<button onclick="addMonitorSite(' + JSON.stringify(city) + ');renderSourcesPanel();" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-family:Oswald,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;">+ сайт</button>'
+        + '</div>'
+        + '<div style="border:1px solid #f0ede8;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">'
+        + sites.map(function(s, idx) {
+            return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f5f3ef;background:'+(s.active?'#fff':'#fafafa')+';transition:background .15s;">'
+              + '<input type="checkbox" ' + (s.active?'checked':'') + ' onchange="toggleMonitorSite(' + JSON.stringify(city) + ',' + idx + ',this.checked);renderSourcesPanel();" style="accent-color:#c8102e;">'
+              + '<div style="flex:1;min-width:0;">'
+              + '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + s.name + '</div>'
+              + '<a href="' + s.url + '" target="_blank" style="font-size:11px;color:#c8102e;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">' + s.url + '</a>'
+              + '</div>'
+              + '<a href="' + s.url + '" target="_blank" style="background:#f0ede8;color:#1a1a1a;font-family:Oswald,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 10px;border-radius:4px;text-decoration:none;white-space:nowrap;">Открыть →</a>'
+              + '<button onclick="removeMonitorSite(' + JSON.stringify(city) + ',' + idx + ');renderSourcesPanel();" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:16px;padding:0 4px;line-height:1;" title="Удалить">×</button>'
+              + '</div>';
+          }).join('')
+        + '</div>'
+        + '</div>';
+    }).join('');
+    srcEl.innerHTML = html || '<div style="color:#aaa;text-align:center;padding:24px;">Источники не найдены. Нажмите «✚ Добавить город».</div>';
+    var t = document.getElementById('totalSourceCount2');
+    if (t) t.textContent = totalSites;
+  }
+  // Статус последней проверки
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var statusEl = document.getElementById('monitorStatus');
+  if (statusEl && lastRun) {
+    var total = 0;
+    var mc = loadMonitorCities ? loadMonitorCities() : {};
+    Object.values(mc).forEach(function(c){ total += (c.sites||[]).filter(function(s){ return s.active; }).length; });
+    statusEl.innerHTML = '🕐 Последняя проверка: ' + new Date(lastRun).toLocaleString('ru') + ' · Источников: ' + total;
+  }
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+
+  function rowHtml(ev, isPast) {
+    var pastStyle = isPast ? 'opacity:.5;' : '';
+    var pastBadge = isPast ? '<span style="background:#e0e0e0;color:#888;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;margin-left:6px;">ПРОШЛО</span>' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;'+pastStyle+'">'
+      +'<div><span style="font-size:14px;margin-right:8px;">'+(ev.icon||'🎵')+'</span>'
+      +'<span style="font-size:13px;font-weight:700;">'+ev.title+'</span>'+pastBadge+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span style="font-size:11px;color:#888;">'+(ev.dateISO||ev.date||'')+'</span>'
+      +'<span style="font-size:11px;color:#888;">'+(ev.venue||ev.city||'')+'</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+(ev.price?'#1a6c2e':'#888')+';">'+(ev.price?'от '+ev.price+' ₽':'—')+'</span>'
+      +'</div></div>';
+  }
+
+  // Концерты
+  var concEl = document.getElementById('src-concerts-list');
+  if (concEl && typeof CONCERTS !== 'undefined') {
+    var city = localStorage.getItem('afishi_city') || 'Волгоград';
+    var arr = CONCERTS.filter(function(c){ return c.city === city; })
+      .sort(function(a,b){ return (a.dateISO||'') < (b.dateISO||'') ? -1 : 1; });
+    concEl.innerHTML = arr.length
+      ? arr.map(function(ev){ return rowHtml(ev, ev.dateISO && ev.dateISO < todayISO); }).join('')
+      : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных</div>';
+  }
+
+  // Спектакли
+  var thEl = document.getElementById('src-theater-list');
+  if (thEl && typeof THEATERS_DB !== 'undefined') {
+    var city2 = localStorage.getItem('afishi_city') || 'Волгоград';
+    var rows = [];
+    (THEATERS_DB[city2] || []).forEach(function(th){
+      (th.events || []).forEach(function(ev){
+        var pastCheck = ev.dateISO ? ev.dateISO < todayISO : false;
+        rows.push('<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;'+(pastCheck?'opacity:.5;':'')+'">'
+          +'<div><span style="font-size:14px;margin-right:8px;">'+(th.icon||'🎭')+'</span>'
+          +'<span style="font-size:13px;font-weight:700;">'+ev.title+'</span>'
+          +(pastCheck?'<span style="background:#e0e0e0;color:#888;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;margin-left:6px;">ПРОШЛО</span>':'')
+          +'</div>'
+          +'<div style="display:flex;gap:8px;align-items:center;">'
+          +'<span style="font-size:11px;color:#888;">'+(ev.date||ev.dateISO||'')+'</span>'
+          +'<span style="font-size:11px;color:#888;">'+th.name+'</span>'
+          +'<span style="font-size:11px;font-weight:700;color:#1a6c2e;">'+(ev.price||'—')+'</span>'
+          +'</div></div>');
+      });
+    });
+    thEl.innerHTML = rows.length ? rows.join('') : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных</div>';
+  }
+
+  // Фильмы
+  var filmEl = document.getElementById('src-films-list');
+  if (filmEl && typeof FILMS !== 'undefined') {
+    var films = (FILMS || []).slice(0, 20);
+    filmEl.innerHTML = films.length
+      ? films.map(function(f){
+          var pastCheck = f.dateISO ? f.dateISO < todayISO : false;
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;'+(pastCheck?'opacity:.5;':'')+'">'
+            +'<div><span style="font-size:14px;margin-right:8px;">'+(f.icon||'🎬')+'</span>'
+            +'<span style="font-size:13px;font-weight:700;">'+f.title+'</span>'
+            +(pastCheck?'<span style="background:#e0e0e0;color:#888;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;margin-left:6px;">ПРОШЛО</span>':'')
+            +'</div>'
+            +'<div style="font-size:11px;color:#888;">'+(f.date||f.dateISO||'')+'</div>'
+            +'</div>';
+        }).join('')
+      : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных</div>';
+  }
+
+  // Выставки
+  var exEl = document.getElementById('src-exhibits-list');
+  if (exEl && typeof EXHIBITS_DB !== 'undefined') {
+    var city3 = localStorage.getItem('afishi_city') || 'Волгоград';
+    var exArr = EXHIBITS_DB[city3] || [];
+    exEl.innerHTML = exArr.length
+      ? exArr.map(function(e){
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f3ef;">'
+            +'<div><span style="font-size:14px;margin-right:8px;">'+(e.icon||'🖼️')+'</span>'
+            +'<a href="'+(e.url||'exhibits.html')+'" target="_blank" style="font-size:13px;font-weight:700;color:#c8102e;text-decoration:none;">'+e.name+'</a></div>'
+            +'<div style="font-size:11px;color:#888;">'+(e.addr||'')+'</div>'
+            +'</div>';
+        }).join('')
+      : '<div style="padding:12px;color:#aaa;font-size:12px;">Нет данных для '+city3+'</div>';
+  }
+
+  // Статистика для авто-проверки
+  var totalSrc = (typeof CONCERTS !== 'undefined' ? CONCERTS.length : 0)
+    + (typeof FILMS !== 'undefined' ? FILMS.length : 0);
+  var tEl = document.getElementById('totalSourceCount');
+  if (tEl) tEl.textContent = totalSrc;
+
+  // Последняя проверка
+  var lastRun = localStorage.getItem('afishi_monitor_last_run') || '0';
+  var statusEl = document.getElementById('lastCheckTime');
+  if (statusEl) {
+    var cities = loadMonitorCities();
+    var total = Object.values(cities).reduce(function(sum, c){ return sum + (c.sites||[]).filter(function(s){ return s.active; }).length; }, 0);
+    statusEl.innerHTML = lastRun ? '🕐 Последняя проверка: ' + new Date(parseInt(lastRun)).toLocaleString('ru') : '⏳ Никогда не запускалась';
+  }
+
+  // Бейдж авто-проверки
+  var badge = document.getElementById('nb-autocheck');
+  if (badge) {
+    var newCount = countNewSources();
+    badge.textContent = newCount || '';
+    badge.style.display = newCount ? '' : 'none';
+  }
+}
+
+function countNewSources() {
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  if (!lastRun) return 0;
+  var count = 0;
+  if (typeof CONCERTS !== 'undefined') {
+    CONCERTS.forEach(function(c){ if ((c._added || 0) > lastRun) count++; });
+  }
+  return count;
+}
+
+/* ── Авто-проверка источников ─────────────────────────────────── */
+function runSourcesCheck() {
+  var now = Date.now();
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  localStorage.setItem('afishi_monitor_last_run', String(now));
+  
+  var results = [];
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString().slice(0,10);
+
+  // Проверить концерты — новые после последней проверки
+  if (typeof CONCERTS !== 'undefined') {
+    var newConcerts = CONCERTS.filter(function(c){
+      return c.dateISO && c.dateISO >= todayISO;
+    });
+    results.push({cat:'🎸 Концерты', count: newConcerts.length,
+      items: newConcerts.slice(0,5).map(function(c){ return c.title + ' (' + c.dateISO + ')'; })});
+  }
+
+  // Проверить спектакли
+  if (typeof THEATERS_DB !== 'undefined') {
+    var thCount = 0;
+    Object.values(THEATERS_DB).forEach(function(arr){
+      arr.forEach(function(th){ thCount += (th.events||[]).length; });
+    });
+    results.push({cat:'🎭 Спектакли', count: thCount, items:[]});
+  }
+
+  // Проверить фильмы
+  if (typeof FILMS !== 'undefined') {
+    results.push({cat:'🎬 Фильмы', count: FILMS.length,
+      items: FILMS.slice(0,3).map(function(f){ return f.title; })});
+  }
+
+  var block = document.getElementById('checkResultsBlock');
+  var list = document.getElementById('checkResultsList');
+  if (!block || !list) return;
+  
+  block.style.display = '';
+  list.innerHTML = results.map(function(r){
+    return '<div style="background:#f9f7f4;border-radius:8px;padding:14px;margin-bottom:10px;">'
+      +'<div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;margin-bottom:6px;">'+r.cat+' — '+r.count+' событий</div>'
+      +(r.items.length ? r.items.map(function(i){ return '<div style="font-size:12px;color:#555;padding:2px 0;">• '+i+'</div>'; }).join('') : '')
+      +'</div>';
+  }).join('');
+
+  var statusEl = document.getElementById('lastCheckTime');
+  if (statusEl) statusEl.textContent = '✅ Проверено: ' + new Date(now).toLocaleString('ru');
+
+  showToastAdmin('✅ Проверка завершена. Источников: ' + results.reduce(function(s,r){ return s+r.count; },0));
+}
+
+// Хук: при открытии панели источников — рендерить данные
+var _origShowPanel = window.showPanel;
+window.showPanel = function(name, el) {
+  if (_origShowPanel) _origShowPanel(name, el);
+  if (name === 'sources' || name === 'auto-check') {
+    setTimeout(renderSourcesPanel, 100);
+  }
+};
+
+// Авто-запуск в субботу
+document.addEventListener('DOMContentLoaded', function() {
+  var now = new Date();
+  var lastRun = parseInt(localStorage.getItem('afishi_monitor_last_run') || '0');
+  var lastRunDate = new Date(lastRun);
+  var daysSince = (now - lastRunDate) / 86400000;
+  // Запустить если суббота (6) и не запускалось сегодня
+  if (now.getDay() === 6 && daysSince > 1) {
+    setTimeout(runSourcesCheck, 3000);
+  }
+  // Показать бейдж
+  setTimeout(function() {
+    var badge = document.getElementById('nb-autocheck');
+    if (badge && !lastRun) {
+      badge.textContent = '!';
+      badge.style.display = '';
+    }
+  }, 500);
+});
+</script>
+
+<script>
+/* ── Управление сайдбар-баннером ─────────────────────────────────── */
+
+function updateSidebarBannerPreview() {
+  var icon  = document.getElementById('sbIcon')   && document.getElementById('sbIcon').value   || '🎫';
+  var title = document.getElementById('sbTitle')  && document.getElementById('sbTitle').value  || 'Добавьте событие';
+  var desc  = document.getElementById('sbDesc')   && document.getElementById('sbDesc').value   || '';
+  var btn   = document.getElementById('sbBtnText') && document.getElementById('sbBtnText').value || 'Добавить →';
+  var color = document.getElementById('sbColor')  && document.getElementById('sbColor').value  || 'linear-gradient(160deg,#0d0d2b,#c8102e)';
+  var btnColor = document.getElementById('sbBtnColor') && document.getElementById('sbBtnColor').value || '#c8102e';
+
+  var prev = document.getElementById('sidebarBannerPreview');
+  if (prev) prev.style.background = color;
+  var ic = document.getElementById('sbPreviewIcon');   if (ic)  ic.textContent  = icon;
+  var ti = document.getElementById('sbPreviewTitle');  if (ti)  ti.textContent  = title;
+  var de = document.getElementById('sbPreviewDesc');   if (de)  de.textContent  = desc;
+  var bt = document.getElementById('sbPreviewBtn');    if (bt) { bt.textContent = btn; bt.style.color = btnColor; }
+}
+
+function saveSidebarBanner() {
+  var data = {
+    icon:     (document.getElementById('sbIcon')     || {}).value || '🎫',
+    title:    (document.getElementById('sbTitle')    || {}).value || 'Добавьте событие',
+    desc:     (document.getElementById('sbDesc')     || {}).value || '',
+    btnText:  (document.getElementById('sbBtnText')  || {}).value || 'Добавить →',
+    link:     (document.getElementById('sbLink')     || {}).value || 'event-add.html',
+    color:    (document.getElementById('sbColor')    || {}).value || 'linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%)',
+    btnColor: (document.getElementById('sbBtnColor') || {}).value || '#c8102e',
+    savedAt:  Date.now()
+  };
+  try {
+    localStorage.setItem('afishi_sidebar_banner', JSON.stringify(data));
+    var msg = document.getElementById('sbSavedMsg');
+    if (msg) { msg.style.display = ''; setTimeout(function(){ msg.style.display = 'none'; }, 4000); }
+    if (typeof showToastAdmin === 'function') showToastAdmin('✅ Баннер сохранён! Обновите главную страницу.');
+  } catch(e) {
+    alert('Ошибка сохранения: ' + e.message);
+  }
+}
+
+function resetSidebarBanner() {
+  try { localStorage.removeItem('afishi_sidebar_banner'); } catch(e){}
+  ['sbIcon','sbTitle','sbDesc','sbBtnText','sbLink','sbColor','sbBtnColor'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = el.defaultValue || '';
+  });
+  updateSidebarBannerPreview();
+  if (typeof showToastAdmin === 'function') showToastAdmin('↺ Баннер сброшен до умолчания');
+}
+
+function loadSidebarBannerForm() {
+  try {
+    var data = JSON.parse(localStorage.getItem('afishi_sidebar_banner') || 'null');
+    if (!data) return;
+    var fields = { sbIcon: data.icon, sbTitle: data.title, sbDesc: data.desc,
+                   sbBtnText: data.btnText, sbLink: data.link,
+                   sbColor: data.color, sbBtnColor: data.btnColor };
+    Object.keys(fields).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && fields[id]) el.value = fields[id];
+    });
+    updateSidebarBannerPreview();
+  } catch(e) {}
+}
+
+function saveH728Banner() {
+  var data = {
+    type:  (document.getElementById('bannerType') || {}).value || 'afishiplus',
+    title: (document.getElementById('h728Title')  || {}).value || '⭐ АфишиПлюс Золото',
+    sub:   (document.getElementById('h728Sub')    || {}).value || 'Скидка 15% на билеты',
+    btn:   (document.getElementById('h728Btn')    || {}).value || '299 ₽/мес →',
+    link:  (document.getElementById('h728Link')   || {}).value || 'loyalty.html',
+    savedAt: Date.now()
+  };
+  try {
+    localStorage.setItem('afishi_h728_banner', JSON.stringify(data));
+    var msg = document.getElementById('h728SavedMsg');
+    if (msg) { msg.style.display = ''; setTimeout(function(){ msg.style.display = 'none'; }, 3000); }
+    if (typeof showToastAdmin === 'function') showToastAdmin('✅ Баннер 728×90 сохранён!');
+  } catch(e) {}
+}
+
+/* Хук: при открытии panel-banners загрузить текущие настройки */
+(function() {
+  var _orig = window.showPanel;
+  window.showPanel = function(name, el) {
+    if (_orig) _orig(name, el);
+    if (name === 'banners') {
+      setTimeout(function() {
+        loadSidebarBannerForm();
+        updateSidebarBannerPreview();
+      }, 100);
+    }
+  };
+})();
+</script>
+</body>
+</html
+      <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+<script>
+(function(){
+  var btn=document.getElementById('burgerBtn');
+  if(!btn) return;
+  function checkW(){ btn.style.display = window.innerWidth<=768 ? 'flex' : 'none'; }
+  checkW();
+  window.addEventListener('resize', checkW);
+})();
+</script>
 </body>
 </html>
