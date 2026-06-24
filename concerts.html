@@ -1093,6 +1093,39 @@ document.addEventListener('click', function(e) {
 
 </script>
 <!-- deploy:20260624034256 -->
+<style>
+/* ═══ CONCERTS — мобильная адаптация ═══════════════════════════ */
+@media(max-width:1024px){
+  .concert-grid{grid-template-columns:repeat(2,1fr)!important;gap:14px;}
+}
+@media(max-width:680px){
+  .concert-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px;}
+  .header-inner{padding:0 10px!important;height:50px!important;}
+  .logo{font-size:20px!important;}
+  .filter-bar,.date-tabs{overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none;padding:8px 10px!important;gap:6px!important;}
+  .filter-btn,.tab-btn{font-size:11px!important;padding:5px 10px!important;white-space:nowrap;flex-shrink:0;}
+  .concert-card{border-radius:6px!important;}
+  .c-poster{aspect-ratio:3/4!important;}
+  .c-body{padding:8px 10px 10px!important;}
+  .c-genre{font-size:9px!important;}
+  .c-title{font-size:12px!important;line-height:1.3;}
+  .c-meta,.c-venue{font-size:10px!important;}
+  .c-bottom{flex-direction:column!important;gap:5px!important;align-items:stretch!important;}
+  .c-price{font-size:11px!important;}
+  .c-buy{width:100%!important;font-size:11px!important;padding:7px!important;text-align:center;}
+  .aside,.concerts-sidebar,.aside-wrap{display:none!important;}
+  .main-layout,[class*="layout"]{grid-template-columns:1fr!important;}
+}
+@media(max-width:400px){
+  .concert-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px;}
+  .c-title{font-size:11px!important;}
+  .c-poster{aspect-ratio:1/1!important;}
+}
+@media(pointer:coarse){
+  .concert-card:hover{transform:none!important;}
+  .c-buy{min-height:40px!important;}
+}
+</style>
 </head>
 <body>
 
