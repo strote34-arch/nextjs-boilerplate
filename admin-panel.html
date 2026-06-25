@@ -825,7 +825,7 @@ footer {
 .src-row-sm a{color:#c8102e;text-decoration:none;}
 .src-row-sm a:hover{text-decoration:underline;}
 </style>
-<!-- deploy:20260625041235 -->
+<!-- v:20260625043958 -->
 </head>
 <body>
 <div class="topbar">
@@ -921,6 +921,59 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="btn-red" style="display:none;font-size:12px;padding:7px 14px;" id="logoutBtn" onclick="Afishi&&Afishi.logout()">Выйти</button>
   </div>
 </header>
+
+<!-- ═══ ЭКРАН ВХОДА (виден по умолчанию, скрывается после авторизации) ═══ -->
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:60vh;padding:40px 20px;background:#f5f5f5;">
+  <div style="background:#fff;border-radius:12px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;">🔐</div>
+    <div style="font-family:Oswald,sans-serif;font-size:26px;font-weight:700;margin-bottom:6px;">Панель управления</div>
+    <div style="font-size:13px;color:#888;margin-bottom:28px;">Афиши.ру · Только для администраторов</div>
+    <label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#555;margin-bottom:4px;">EMAIL</label>
+    <input id="ls_email" type="email" value="admin@afishi.ru" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:11px 13px;font-size:14px;margin-bottom:13px;">
+    <label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#555;margin-bottom:4px;">ПАРОЛЬ</label>
+    <input id="ls_pass" type="password" placeholder="Введите пароль" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:6px;padding:11px 13px;font-size:14px;margin-bottom:8px;" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="ls_err" style="color:#c8102e;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+    <button onclick="doLogin()" style="width:100%;background:#c8102e;color:#fff;border:none;border-radius:6px;padding:14px;font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;cursor:pointer;letter-spacing:.5px;">🔓 ВОЙТИ</button>
+    <div style="margin-top:16px;font-size:11px;color:#ccc;">admin@afishi.ru / Afishi2018!</div>
+  </div>
+</div>
+<script>
+function doLogin() {
+  var e = (document.getElementById('ls_email')||{}).value||'';
+  var p = (document.getElementById('ls_pass')||{}).value||'';
+  var err = document.getElementById('ls_err');
+  var CREDS = [
+    {email:'admin@afishi.ru', pass:'Afishi2018!', name:'Администратор', role:'admin'},
+    {email:'strote34@gmail.com', pass:'admin2026', name:'Серго', role:'admin'}
+  ];
+  var found = CREDS.filter(function(c){ return c.email===e.trim().toLowerCase() && c.pass===p; })[0];
+  if (found) {
+    try { localStorage.setItem('afishi_user', JSON.stringify({email:found.email, name:found.name, role:found.role, loginAt:Date.now()})); } catch(x){}
+    document.getElementById('loginScreen').style.display = 'none';
+    var layout = document.querySelector('.admin-layout');
+    if (layout) { layout.style.display = 'grid'; layout.style.visibility = 'visible'; }
+    var btn = document.getElementById('userBtn');
+    if (btn) { btn.textContent = '👑 '+found.name; btn.style.background='#1a6c2e'; }
+    if (typeof renderDashboardFull === 'function') renderDashboardFull();
+    if (typeof showPanel === 'function') showPanel('dashboard', null);
+  } else {
+    if (err) err.textContent = '❌ Неверный email или пароль';
+    var pin = document.getElementById('ls_pass');
+    if (pin) { pin.style.borderColor='#c8102e'; setTimeout(function(){ pin.style.borderColor=''; }, 2000); }
+  }
+}
+// Авто-скрыть экран если уже залогинен
+(function(){
+  try {
+    var u = JSON.parse(localStorage.getItem('afishi_user')||'null');
+    if (u && (u.role==='admin'||u.role==='moderator')) {
+      var ls = document.getElementById('loginScreen');
+      if (ls) ls.style.display = 'none';
+    }
+  } catch(x){}
+})();
+</script>
+
 
 <!-- MOBILE MENU -->
 <div id="mobileMenu" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);" onclick="this.style.display='none'">
