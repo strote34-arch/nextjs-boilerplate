@@ -37,7 +37,7 @@ window._onGeoCity = function(city) {
     'Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде',
     'Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми',
     'Красноярск':'Красноярске','Самара':'Самаре','Омск':'Омске'};
-  var cityGen = genMap[city] | city;
+  var cityGen = genMap[city] || city;
   var hint = document.getElementById('cityHint');
   var span = document.getElementById('cityNameSpan');
   var title = document.getElementById('sectionTitle');
@@ -50,7 +50,7 @@ window._onGeoCity = function(city) {
     'Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми',
     'Красноярск':'Красноярске','Самара':'Самаре','Омск':'Омске','Челябинск':'Челябинске'};
   var span = document.getElementById('cityNameSpan');
-  if (span) span.textContent = genMap[city] | city;
+  if (span) span.textContent = genMap[city] || city;
   if (typeof applyFilters === 'function') setTimeout(applyFilters, 0);
 };
 
@@ -62,7 +62,7 @@ window._onGeoCity = function(city) {
     'Краснодар':'Краснодаре','Волгоград':'Волгограде','Нижний Новгород':'Нижнем Новгороде',
     'Ростов-на-Дону':'Ростове-на-Дону','Уфа':'Уфе','Пермь':'Перми',
     'Красноярск':'Красноярске','Самара':'Самаре','Омск':'Омске'};
-  var cityGen = genMap[city] | city;
+  var cityGen = genMap[city] || city;
   document.addEventListener('DOMContentLoaded', function() {
     var hint  = document.getElementById('cityHint');
     var span  = document.getElementById('cityNameSpan');
