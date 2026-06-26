@@ -908,7 +908,12 @@ document.addEventListener('DOMContentLoaded', function() {
   var u = null;
   try { u = JSON.parse(localStorage.getItem('afishi_user')||'null'); } catch(x){}
   if (!u || (u.role !== 'admin' && u.role !== 'moderator')) {
-    setTimeout(window.adminLogin, 300);
+    setTimeout(function() {
+      // Не показывать если пользователь уже вошёл через loginScreen
+      if (!window._adminLoggedIn) {
+        if (typeof window.adminLogin === 'function') window.adminLogin();
+      }
+    }, 400);
   }
 });
 </script>
@@ -949,6 +954,7 @@ function doLogin() {
   var found = CREDS.filter(function(c){ return c.email===e.trim().toLowerCase() && c.pass===p; })[0];
   if (found) {
     try { localStorage.setItem('afishi_user', JSON.stringify({email:found.email, name:found.name, role:found.role, loginAt:Date.now()})); } catch(x){}
+    window._adminLoggedIn = true; // блокировать _safe()
     document.getElementById('loginScreen').style.display = 'none';
     var layout = document.querySelector('.admin-layout');
     if (layout) { layout.style.display = 'grid'; layout.style.visibility = 'visible'; }
