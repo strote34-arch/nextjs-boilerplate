@@ -825,7 +825,7 @@ footer {
 .src-row-sm a{color:#c8102e;text-decoration:none;}
 .src-row-sm a:hover{text-decoration:underline;}
 </style>
-<!-- v:20260625043958 -->
+<!-- v:20260626163748 -->
 </head>
 <body>
 <div class="topbar">
@@ -954,24 +954,19 @@ function doLogin() {
     if (layout) { layout.style.display = 'grid'; layout.style.visibility = 'visible'; }
     var btn = document.getElementById('userBtn');
     if (btn) { btn.textContent = '👑 '+found.name; btn.style.background='#1a6c2e'; }
-    if (typeof renderDashboardFull === 'function') renderDashboardFull();
-    if (typeof showPanel === 'function') showPanel('dashboard', null);
+    // Инициализация панели
+    setTimeout(function() {
+      if (typeof renderDashboardFull === 'function') try { renderDashboardFull(); } catch(e) {}
+      if (typeof showPanel === 'function') try { showPanel('dashboard', null); } catch(e) {}
+      if (typeof renderCitiesMonitorList === 'function') try { renderCitiesMonitorList(); } catch(e) {}
+    }, 100);
   } else {
     if (err) err.textContent = '❌ Неверный email или пароль';
     var pin = document.getElementById('ls_pass');
     if (pin) { pin.style.borderColor='#c8102e'; setTimeout(function(){ pin.style.borderColor=''; }, 2000); }
   }
 }
-// Авто-скрыть экран если уже залогинен
-(function(){
-  try {
-    var u = JSON.parse(localStorage.getItem('afishi_user')||'null');
-    if (u && (u.role==='admin'||u.role==='moderator')) {
-      var ls = document.getElementById('loginScreen');
-      if (ls) ls.style.display = 'none';
-    }
-  } catch(x){}
-})();
+/* auto-hide removed */
 </script>
 
 
