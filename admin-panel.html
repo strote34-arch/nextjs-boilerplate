@@ -825,7 +825,7 @@ footer {
 .src-row-sm a{color:#c8102e;text-decoration:none;}
 .src-row-sm a:hover{text-decoration:underline;}
 </style>
-<!-- v:20260626163748 -->
+<!-- v:20260626170246 -->
 </head>
 <body>
 <div class="topbar">
@@ -3382,6 +3382,24 @@ function showPanel(name, navEl) {
   // Показать нужную
   var panel = document.getElementById('panel-' + name);
   if (panel) { panel.style.display = 'block'; panel.classList.add('active'); }
+  // Вызвать рендер-функцию для панели
+  var renders = {
+    'dashboard': 'renderDashboardFull',
+    'events':    'renderPendingEvents',
+    'venues':    'renderVenuesList',
+    'films':     'renderFilmsPanel',
+    'sources':   'renderCitiesMonitorList',
+    'articles':  'renderArticlesPanel',
+    'banners':   'renderBannersPanel',
+    'users':     'renderUsersPanel',
+    'mailing':   'renderMailingPanel',
+    'cities':    'renderCitiesPanel',
+    'stats':     'renderStatsPanel'
+  };
+  var fn = renders[name];
+  if (fn && typeof window[fn] === 'function') {
+    try { window[fn](); } catch(e) { console.warn('showPanel render error:', e); }
+  }
   // Обновить nav
   document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   if (navEl) {
