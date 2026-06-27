@@ -1,592 +1,433 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-cinema_trailers.py — Модуль для afishiru pipeline
-=====================================================
-Что делает:
-  1. Читает cinema.html из GitHub репозитория
-  2. Находит фильмы без trailerYT (или с чужим трейлером)
-  3. Ищет трейлер на YouTube по названию фильма
-  4. Скачивает через yt-dlp
-  5. Загружает на канал @afishiru
-  6. Обновляет cinema.html — прописывает trailerYT: 'новый_id'
-  7. Пушит изменения в GitHub → автодеплой на Vercel
+cinema_trailers.py — модуль для C:\afishiru\
+Берёт фильмы из cinema.html на GitHub, скачивает трейлеры,
+заливает на @afishiru, прописывает trailerYT обратно в HTML.
 
-Запуск отдельно:
-  python cinema_trailers.py
-
-Или из run_pipeline.py:
-  from cinema_trailers import run_cinema_module
-  run_cinema_module()
-
-Настройка:
-  Заполни CONFIG ниже под свои ключи
-  (или вынеси в config.py / .env файл)
+Запуск:
+  python cinema_trailers.py --dry-run   # тест без загрузки
+  python cinema_trailers.py             # боевой режим
 """
 
-import os
-import re
-import json
-import time
-import base64
-import logging
-import subprocess
-import tempfile
+import os, re, json, time, base64, logging, subprocess
 from datetime import datetime
 
-# ──────────────────────────────────────────────────────────────
-# КОНФИГУРАЦИЯ — заполни свои значения
-# ──────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# КОНФИГ — заполни свои значения
+# ══════════════════════════════════════════════════════════════
 CONFIG = {
-    # YouTube Data API v3 (для поиска и загрузки)
-    # Получить: https://console.cloud.google.com → APIs → YouTube Data API v3
+    # ── YouTube API ────────────────────────────────────────────
+    # Те же ключи что в C:\afishiru\run_pipeline.py
     "YT_API_KEYS": [
-        "AIza...",   # ключ 1 (основной)
-        "AIza...",   # ключ 2 (резервный при превышении квоты)
+        "AIzaSy...",   # ключ 1 (основной)
+        "AIzaSy...",   # ключ 2 (резервный)
     ],
 
-    # OAuth2 токен для загрузки видео на @afishiru
-    # Получить через yt_auth.py (OAuth flow, см. ниже)
+    # ── OAuth токен для @afishiru ──────────────────────────────
+    # Запусти yt_auth.py один раз → файл появится автоматически
     "YT_OAUTH_TOKEN_FILE": r"C:\afishiru\yt_token_afishiru.json",
 
-    # GitHub
+    # ── ID канала @afishiru ────────────────────────────────────
+    # youtube.com/@afishiru → Правой кнопкой → Просмотр кода
+    # Ctrl+F → "channelId" → скопировать "UCxxxxxxxxxxxxxxxxxxxxxxxx"
+    "AFISHIRU_CHANNEL_ID": "UCxxxxxxxxxxxxxxxxxxxxxxxx",
+
+    # ── GitHub ─────────────────────────────────────────────────
     "GH_TOKEN":  "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",
     "GH_OWNER":  "strote34-arch",
     "GH_REPO":   "nextjs-boilerplate",
-    "GH_FILE":   "cinema.html",   # путь к файлу в репо
+    "GH_FILE":   "cinema.html",
     "GH_BRANCH": "main",
 
-    # Канал @afishiru (Channel ID)
-    # Найти: https://www.youtube.com/@afishiru → ПКМ → Просмотр кода → "channelId"
-    "AFISHIRU_CHANNEL_ID": "UCxxxxxxxxxxxxxxxxxxxxxxxx",
-
-    # Папка для временных файлов
+    # ── Временная папка ────────────────────────────────────────
     "TMP_DIR": r"C:\afishiru\cinema_tmp",
 
-    # Логи
+    # ── Логи ───────────────────────────────────────────────────
     "LOG_FILE": r"C:\afishiru\logs\cinema_trailers.log",
-
-    # Параметры поиска трейлера
-    "SEARCH_SUFFIX": "официальный трейлер",   # добавляется к названию при поиске
-    "PREFER_RUSSIAN": True,                   # предпочитать русский дублированный трейлер
-    "MAX_DURATION_SEC": 300,                  # не брать видео длиннее 5 минут
-    "MIN_DURATION_SEC": 60,                   # не брать видео короче 1 минуты
 }
 
-# ──────────────────────────────────────────────────────────────
+# ── Логгер ────────────────────────────────────────────────────
+os.makedirs(os.path.dirname(CONFIG["LOG_FILE"]), exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler(CONFIG["LOG_FILE"], encoding="utf-8"),
         logging.StreamHandler(),
-    ] if os.path.isdir(os.path.dirname(CONFIG["LOG_FILE"])) else [
-        logging.StreamHandler()
     ]
 )
-log = logging.getLogger("cinema_trailers")
-
+log = logging.getLogger("cinema")
 
 # ══════════════════════════════════════════════════════════════
-# 1. GITHUB — читаем / пишем cinema.html
+# 1. GITHUB
 # ══════════════════════════════════════════════════════════════
-
-def gh_get_file(path=None):
-    """Вернуть (content_str, sha) из GitHub."""
+def gh_get_file():
     import urllib.request
-    path = path or CONFIG["GH_FILE"]
-    url = f"https://api.github.com/repos/{CONFIG['GH_OWNER']}/{CONFIG['GH_REPO']}/contents/{path}?ref={CONFIG['GH_BRANCH']}"
+    url = (f"https://api.github.com/repos/{CONFIG['GH_OWNER']}/"
+           f"{CONFIG['GH_REPO']}/contents/{CONFIG['GH_FILE']}"
+           f"?ref={CONFIG['GH_BRANCH']}")
     req = urllib.request.Request(url, headers={
         "Authorization": f"token {CONFIG['GH_TOKEN']}",
         "Accept": "application/vnd.github.v3+json",
     })
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read())
+    with urllib.request.urlopen(req) as r:
+        data = json.loads(r.read())
     content = base64.b64decode(data["content"]).decode("utf-8")
     return content, data["sha"]
 
-
-def gh_push_file(content, sha, commit_msg, path=None):
-    """Обновить файл в GitHub."""
+def gh_push_file(content, sha, msg):
     import urllib.request
-    path = path or CONFIG["GH_FILE"]
-    url = f"https://api.github.com/repos/{CONFIG['GH_OWNER']}/{CONFIG['GH_REPO']}/contents/{path}"
+    url = (f"https://api.github.com/repos/{CONFIG['GH_OWNER']}/"
+           f"{CONFIG['GH_REPO']}/contents/{CONFIG['GH_FILE']}")
     body = json.dumps({
-        "message": commit_msg,
+        "message": msg,
         "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
         "sha": sha,
         "branch": CONFIG["GH_BRANCH"],
-    }).encode("utf-8")
+    }).encode()
     req = urllib.request.Request(url, data=body, method="PUT", headers={
         "Authorization": f"token {CONFIG['GH_TOKEN']}",
         "Accept": "application/vnd.github.v3+json",
         "Content-Type": "application/json",
     })
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
-
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
 
 # ══════════════════════════════════════════════════════════════
-# 2. РАЗБОР cinema.html — извлечь фильмы
+# 2. РАЗБОР ФИЛЬМОВ
 # ══════════════════════════════════════════════════════════════
-
-def parse_films(html: str) -> list:
-    """Вернуть список словарей с данными фильмов."""
-    films = []
-    # Найти const FILMS = [...]
+def parse_films(html):
     pos = html.find("const FILMS = [")
     if pos < 0:
-        log.error("const FILMS не найден в cinema.html!")
+        log.error("const FILMS не найден!")
         return []
-
-    # Извлечь каждый объект {...}
-    depth = 0
-    start = None
-    for i, ch in enumerate(html[pos:], pos):
-        if ch == "[" and i == pos + len("const FILMS = "):
-            depth = 1
-        elif ch == "{" and depth >= 1:
-            if depth == 1:
-                start = i
-            depth += 1
-        elif ch == "}" and depth > 1:
-            depth -= 1
-            if depth == 1 and start is not None:
-                obj_str = html[start:i + 1]
-                film = _parse_film_obj(obj_str)
-                if film:
-                    films.append(film)
-                start = None
-        elif ch == "]" and depth == 1:
+    films = []
+    depth=0; start=None
+    for i,ch in enumerate(html[pos:], pos):
+        if ch=='{':
+            if depth==0: start=i
+            depth+=1
+        elif ch=='}':
+            depth-=1
+            if depth==0 and start is not None:
+                obj=html[start:i+1]
+                f=_parse_obj(obj)
+                if f: films.append(f)
+                start=None
+        elif ch==']' and depth==0:
             break
-
     return films
 
-
-def _parse_film_obj(obj: str) -> dict:
-    """Разобрать один объект фильма."""
-    def get(key):
-        m = re.search(rf"{key}:\s*'([^']*)'", obj)
-        return m.group(1) if m else ""
-
-    def get_num(key):
-        m = re.search(rf"{key}:\s*([\d.]+)", obj)
-        return m.group(1) if m else ""
-
-    title = get("title")
-    if not title:
-        return None
+def _parse_obj(obj):
+    def g(k):
+        m=re.search(rf"{k}:\s*'([^']*)'",obj)
+        return m.group(1) if m else ''
+    t=g('title')
+    if not t: return None
     return {
-        "title":      title,
-        "id":         get("id"),
-        "year":       get_num("year"),
-        "trailerYT":  get("trailerYT"),   # '' если нет
-        "endDateISO": get("endDateISO"),
-        "_obj_str":   obj,                # для замены
+        'title':    t,
+        'id':       g('id'),
+        'year':     g('year'),
+        'trailerYT':g('trailerYT'),  # '' если нет
+        '_obj':     obj,
     }
 
-
-def needs_trailer(film: dict) -> bool:
-    """Нужен ли трейлер с @afishiru?"""
-    # Нет трейлера вообще
-    if not film["trailerYT"]:
-        return True
-    # Трейлер есть, но не с нашего канала (проверим ниже после загрузки)
-    # Пока возвращаем True только если поле пустое
-    return False
-
-
 # ══════════════════════════════════════════════════════════════
-# 3. YOUTUBE API — поиск трейлера
+# 3. YOUTUBE API
 # ══════════════════════════════════════════════════════════════
-
-_yt_key_index = 0
-
-def yt_api(endpoint: str, params: dict) -> dict:
-    """GET запрос к YouTube Data API с ротацией ключей."""
-    import urllib.request
-    import urllib.parse
-    global _yt_key_index
-
-    for attempt in range(len(CONFIG["YT_API_KEYS"])):
-        key = CONFIG["YT_API_KEYS"][_yt_key_index % len(CONFIG["YT_API_KEYS"])]
-        params["key"] = key
-        url = f"https://www.googleapis.com/youtube/v3/{endpoint}?" + urllib.parse.urlencode(params)
+_ki = 0
+def yt_api(ep, params):
+    import urllib.request, urllib.parse
+    global _ki
+    for _ in range(len(CONFIG["YT_API_KEYS"])):
+        key=CONFIG["YT_API_KEYS"][_ki % len(CONFIG["YT_API_KEYS"])]
+        params["key"]=key
+        url=f"https://www.googleapis.com/youtube/v3/{ep}?"+urllib.parse.urlencode(params)
         try:
-            with urllib.request.urlopen(url) as resp:
-                return json.loads(resp.read())
+            with urllib.request.urlopen(url) as r:
+                return json.loads(r.read())
         except Exception as e:
-            err_str = str(e)
-            if "quotaExceeded" in err_str or "403" in err_str:
-                log.warning(f"Квота API ключа #{_yt_key_index} исчерпана, переключаю")
-                _yt_key_index += 1
+            if "quotaExceeded" in str(e) or "403" in str(e):
+                log.warning(f"Квота ключа #{_ki} исчерпана")
+                _ki+=1
             else:
-                log.error(f"YouTube API ошибка: {e}")
+                log.error(f"YT API: {e}")
                 return {}
     return {}
 
-
-def find_trailer_on_youtube(film: dict) -> str:
-    """Найти YouTube video_id трейлера для фильма. Вернуть '' если не найдено."""
-    title = film["title"]
-    year  = film.get("year", "")
-
-    # Варианты поисковых запросов (от специфичного к общему)
-    queries = []
-    if CONFIG["PREFER_RUSSIAN"]:
-        queries.append(f"{title} {year} трейлер на русском")
-        queries.append(f"{title} трейлер дублированный")
-    queries.append(f"{title} {year} official trailer")
-    queries.append(f"{title} {year} {CONFIG['SEARCH_SUFFIX']}")
-    queries.append(f"{title} трейлер")
-
-    for query in queries:
-        log.info(f"  🔍 Поиск: {query!r}")
-        data = yt_api("search", {
-            "part": "id,snippet",
-            "q": query,
-            "type": "video",
-            "videoDuration": "short",     # до 4 минут
-            "maxResults": 10,
-            "order": "relevance",
-        })
-
-        items = data.get("items", [])
-        if not items:
-            continue
-
-        # Фильтруем по длительности
-        video_ids = [it["id"]["videoId"] for it in items]
-        vid_data = yt_api("videos", {
-            "part": "contentDetails,statistics",
-            "id": ",".join(video_ids),
-        })
-
-        for vid in vid_data.get("items", []):
-            vid_id  = vid["id"]
-            duration = _iso8601_to_sec(vid["contentDetails"]["duration"])
-            if duration < CONFIG["MIN_DURATION_SEC"]:
-                continue
-            if duration > CONFIG["MAX_DURATION_SEC"]:
-                continue
-            log.info(f"  ✅ Найден трейлер: https://youtu.be/{vid_id} ({duration}s)")
-            return vid_id
-
-    log.warning(f"  ❌ Трейлер не найден для {title!r}")
+def video_channel(vid_id):
+    """Вернуть channelId видео."""
+    d=yt_api("videos",{"part":"snippet","id":vid_id})
+    items=d.get("items",[])
+    if items:
+        return items[0]["snippet"]["channelId"]
     return ""
 
+def is_our_video(vid_id):
+    """Принадлежит ли видео каналу @afishiru?"""
+    if not vid_id: return False
+    return video_channel(vid_id) == CONFIG["AFISHIRU_CHANNEL_ID"]
 
-def _iso8601_to_sec(iso: str) -> int:
-    """PT2M30S → 150"""
-    m = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", iso)
-    if not m:
-        return 0
-    h, mn, s = (int(x or 0) for x in m.groups())
-    return h * 3600 + mn * 60 + s
-
-
-# ══════════════════════════════════════════════════════════════
-# 4. yt-dlp — скачиваем трейлер
-# ══════════════════════════════════════════════════════════════
-
-def download_trailer(video_id: str, out_dir: str) -> str:
-    """Скачать видео через yt-dlp. Вернуть путь к файлу."""
-    os.makedirs(out_dir, exist_ok=True)
-    out_tmpl = os.path.join(out_dir, f"{video_id}.%(ext)s")
-    cmd = [
-        "yt-dlp",
-        f"https://www.youtube.com/watch?v={video_id}",
-        "-o", out_tmpl,
-        "-f", "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-        "--merge-output-format", "mp4",
-        "--no-playlist",
-        "--quiet",
+def find_trailer(film):
+    """Найти YouTube video_id трейлера (с любого канала)."""
+    t=film['title']; y=film.get('year','')
+    queries=[
+        f"{t} {y} трейлер на русском",
+        f"{t} {y} official trailer",
+        f"{t} трейлер",
     ]
-    log.info(f"  ⬇️  Скачиваю {video_id}...")
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        log.error(f"  yt-dlp ошибка: {result.stderr[:200]}")
-        return ""
-
-    # Найти скачанный файл
-    for f in os.listdir(out_dir):
-        if f.startswith(video_id) and f.endswith(".mp4"):
-            path = os.path.join(out_dir, f)
-            size_mb = os.path.getsize(path) / 1024 / 1024
-            log.info(f"  ✅ Скачано: {f} ({size_mb:.1f} MB)")
-            return path
+    for q in queries:
+        log.info(f"  🔍 {q!r}")
+        d=yt_api("search",{
+            "part":"id,snippet","q":q,
+            "type":"video","videoDuration":"short",
+            "maxResults":5,"order":"relevance"
+        })
+        ids=[it["id"]["videoId"] for it in d.get("items",[])]
+        if not ids: continue
+        vd=yt_api("videos",{"part":"contentDetails","id":",".join(ids)})
+        for v in vd.get("items",[]):
+            s=_iso(v["contentDetails"]["duration"])
+            if 60<=s<=300:
+                log.info(f"  ✅ {v['id']} ({s}s)")
+                return v["id"]
     return ""
 
+def _iso(s):
+    m=re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",s)
+    if not m: return 0
+    h,mn,sc=(int(x or 0) for x in m.groups())
+    return h*3600+mn*60+sc
 
 # ══════════════════════════════════════════════════════════════
-# 5. YouTube Upload — загружаем на @afishiru
+# 4. СКАЧАТЬ
 # ══════════════════════════════════════════════════════════════
+def download(vid_id, out_dir):
+    os.makedirs(out_dir, exist_ok=True)
+    tmpl=os.path.join(out_dir,f"{vid_id}.%(ext)s")
+    r=subprocess.run([
+        "yt-dlp", f"https://youtube.com/watch?v={vid_id}",
+        "-o",tmpl,
+        "-f","bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "--merge-output-format","mp4","--no-playlist","--quiet",
+    ], capture_output=True, text=True)
+    if r.returncode!=0:
+        log.error(f"yt-dlp: {r.stderr[:150]}")
+        return ""
+    for f in os.listdir(out_dir):
+        if f.startswith(vid_id) and f.endswith(".mp4"):
+            p=os.path.join(out_dir,f)
+            log.info(f"  ⬇️  {f} ({os.path.getsize(p)//1024//1024}MB)")
+            return p
+    return ""
 
-def upload_to_afishiru(film: dict, file_path: str) -> str:
-    """
-    Загрузить видео на канал @afishiru.
-    Вернуть video_id нового видео.
-
-    Использует google-auth-oauthlib + googleapiclient.
-    Установить: pip install google-auth-oauthlib google-api-python-client
-    """
+# ══════════════════════════════════════════════════════════════
+# 5. ЗАГРУЗИТЬ НА @afishiru
+# ══════════════════════════════════════════════════════════════
+def upload(film, path):
     try:
         from google.oauth2.credentials import Credentials
         from google.auth.transport.requests import Request
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
     except ImportError:
-        log.error("Установите: pip install google-auth-oauthlib google-api-python-client")
+        log.error("pip install google-auth-oauthlib google-api-python-client")
         return ""
 
-    # Загружаем сохранённый OAuth токен
-    token_file = CONFIG["YT_OAUTH_TOKEN_FILE"]
-    if not os.path.exists(token_file):
-        log.error(f"OAuth токен не найден: {token_file}")
-        log.error("Запусти yt_auth.py для авторизации")
+    tf=CONFIG["YT_OAUTH_TOKEN_FILE"]
+    if not os.path.exists(tf):
+        log.error(f"Нет токена: {tf}  →  запусти yt_auth.py")
         return ""
 
-    with open(token_file) as f:
-        token_data = json.load(f)
-
-    creds = Credentials(
-        token=token_data.get("access_token"),
-        refresh_token=token_data.get("refresh_token"),
+    with open(tf) as f: td=json.load(f)
+    creds=Credentials(
+        token=td.get("access_token"),
+        refresh_token=td.get("refresh_token"),
         token_uri="https://oauth2.googleapis.com/token",
-        client_id=token_data.get("client_id"),
-        client_secret=token_data.get("client_secret"),
+        client_id=td.get("client_id"),
+        client_secret=td.get("client_secret"),
         scopes=["https://www.googleapis.com/auth/youtube.upload"],
     )
-
-    # Обновить токен если истёк
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        token_data.update({
-            "access_token": creds.token,
-            "expiry": creds.expiry.isoformat() if creds.expiry else None,
-        })
-        with open(token_file, "w") as f:
-            json.dump(token_data, f, indent=2)
+        td["access_token"]=creds.token
+        with open(tf,"w") as f: json.dump(td,f,indent=2)
 
-    youtube = build("youtube", "v3", credentials=creds)
-
-    title_yt = f"🎬 {film['title']} — Официальный трейлер ({film.get('year', '2026')})"
-    desc_yt = (
-        f"{film.get('desc', '')}\n\n"
-        f"🎭 Жанр: {film.get('genre', '')}\n"
-        f"🎬 Режиссёр: {film.get('director', '')}\n"
-        f"👥 В ролях: {film.get('cast', '')}\n\n"
-        f"📅 В прокате: {film.get('date', '')}\n\n"
-        f"🍿 Афиша Волгограда — всё о кино:\n"
-        f"https://афи.рф/cinema\n\n"
-        f"#трейлер #{film['title'].replace(' ', '')} #кино #афиши #Волгоград"
-    )
-
-    log.info(f"  ⬆️  Загружаю на @afishiru: {title_yt!r}")
-
-    media = MediaFileUpload(file_path, mimetype="video/mp4", resumable=True, chunksize=5*1024*1024)
-    request = youtube.videos().insert(
+    yt=build("youtube","v3",credentials=creds)
+    title=f"🎬 {film['title']} — Официальный трейлер ({film.get('year','2026')})"
+    desc=(f"{film.get('desc','')}\n\n"
+          f"📅 В прокате: {film.get('date','')}\n\n"
+          f"🍿 Афиша Волгограда → https://афи.рф/cinema\n\n"
+          f"#трейлер #кино #{film['title'].replace(' ','')} #Волгоград")
+    log.info(f"  ⬆️  Загружаю: {title!r}")
+    media=MediaFileUpload(path,mimetype="video/mp4",resumable=True,chunksize=5*1024*1024)
+    req=yt.videos().insert(
         part="snippet,status",
         body={
-            "snippet": {
-                "title":       title_yt[:100],
-                "description": desc_yt[:5000],
-                "tags":        ["трейлер", film["title"], "кино", "Волгоград", "афиши", str(film.get("year",""))],
-                "categoryId":  "1",  # Film & Animation
-                "defaultLanguage": "ru",
-            },
-            "status": {
-                "privacyStatus": "public",
-                "selfDeclaredMadeForKids": False,
-            },
+            "snippet":{"title":title[:100],"description":desc[:5000],
+                       "tags":["трейлер",film['title'],"кино","Волгоград"],
+                       "categoryId":"1","defaultLanguage":"ru"},
+            "status":{"privacyStatus":"public","selfDeclaredMadeForKids":False},
         },
         media_body=media,
     )
-
-    response = None
-    while response is None:
-        status, response = request.next_chunk()
-        if status:
-            pct = int(status.progress() * 100)
-            log.info(f"    Загрузка: {pct}%")
-
-    new_id = response["id"]
-    log.info(f"  ✅ Загружено! https://youtu.be/{new_id}")
-    return new_id
-
+    resp=None
+    while resp is None:
+        st,resp=req.next_chunk()
+        if st: log.info(f"    {int(st.progress()*100)}%")
+    vid=resp["id"]
+    log.info(f"  ✅ https://youtu.be/{vid}")
+    return vid
 
 # ══════════════════════════════════════════════════════════════
-# 6. Обновляем cinema.html — прописываем trailerYT
+# 6. ОБНОВИТЬ HTML
 # ══════════════════════════════════════════════════════════════
-
-def update_trailer_in_html(html: str, film: dict, new_yt_id: str) -> str:
-    """Обновить/добавить trailerYT для конкретного фильма в HTML."""
-    obj = film["_obj_str"]
-
+def patch_html(html, film, new_id):
+    obj=film["_obj"]
     if "trailerYT:" in obj:
-        # Заменить существующий
-        new_obj = re.sub(r"trailerYT:'[^']*'", f"trailerYT:'{new_yt_id}'", obj)
+        new_obj=re.sub(r"trailerYT:'[^']*'",f"trailerYT:'{new_id}'",obj)
     else:
-        # Добавить перед закрывающей скобкой }
-        new_obj = obj.rstrip().rstrip("}") + f"\n    trailerYT:'{new_yt_id}'\n  }}"
-
-    return html.replace(obj, new_obj, 1)
-
+        new_obj=obj.rstrip().rstrip("}")+(f"\n    trailerYT:'{new_id}'\n  }}")
+    return html.replace(obj,new_obj,1)
 
 # ══════════════════════════════════════════════════════════════
-# 7. ГЛАВНАЯ ФУНКЦИЯ
+# 7. ГЛАВНЫЙ ЦИКЛ
 # ══════════════════════════════════════════════════════════════
+def run(dry_run=False):
+    log.info("="*60)
+    log.info("🎬 Cinema Trailers запущен" + (" [DRY RUN]" if dry_run else ""))
+    log.info("="*60)
 
-def run_cinema_module(dry_run: bool = False):
-    """
-    Основная точка входа.
-    dry_run=True — всё делает, кроме загрузки на YouTube и пуша в GitHub.
-    """
-    log.info("=" * 60)
-    log.info("🎬 Cinema Trailers Module запущен")
-    log.info("=" * 60)
+    # Получить HTML
+    log.info("📥 GitHub → cinema.html...")
+    html, sha = gh_get_file()
+    log.info(f"   {len(html)//1024} KB, SHA {sha[:8]}")
 
-    # 1. Получить cinema.html из GitHub
-    log.info("📥 Читаю cinema.html из GitHub...")
-    try:
-        html, sha = gh_get_file()
-        log.info(f"   Получено {len(html)//1024} KB, SHA: {sha[:8]}")
-    except Exception as e:
-        log.error(f"Ошибка GitHub: {e}")
+    # Разобрать фильмы
+    films=parse_films(html)
+    log.info(f"🎥 Фильмов: {len(films)}")
+
+    # Определить что делать с каждым
+    to_upload=[]
+    for f in films:
+        vid=f["trailerYT"]
+        if not vid:
+            log.info(f"  ➕ {f['title']}: нет трейлера")
+            to_upload.append(f)
+        elif not dry_run and CONFIG["AFISHIRU_CHANNEL_ID"]!="UCxxxxxxxxxxxxxxxxxxxxxxxx" and not is_our_video(vid):
+            log.info(f"  🔄 {f['title']}: чужой канал → перезалить")
+            to_upload.append(f)
+        else:
+            log.info(f"  ✅ {f['title']}: {vid}")
+
+    if not to_upload:
+        log.info("✅ Все трейлеры уже на @afishiru. Готово.")
+        if dry_run:
+            log.info("\n[DRY RUN] Чтобы принудительно перезалить с чужих каналов:")
+            log.info("  1. Заполни AFISHIRU_CHANNEL_ID в CONFIG")
+            log.info("  2. Запусти: python cinema_trailers.py (без --dry-run)")
         return
 
-    # 2. Разобрать фильмы
-    films = parse_films(html)
-    log.info(f"🎥 Найдено фильмов: {len(films)}")
+    log.info(f"🎯 К обработке: {len(to_upload)} фильмов")
+    updated=False
 
-    # 3. Фильтровать — только те, которым нужен трейлер
-    to_process = [f for f in films if needs_trailer(f)]
-    log.info(f"🎯 Нужен трейлер: {len(to_process)} фильмов")
-
-    if not to_process:
-        log.info("✅ Все фильмы уже имеют трейлеры. Выход.")
-        return
-
-    updated = False
-    tmp_dir = CONFIG["TMP_DIR"]
-
-    for film in to_process:
+    for film in to_upload:
         log.info(f"\n{'─'*50}")
-        log.info(f"🎬 Обрабатываю: {film['title']} ({film.get('year', '')})")
+        log.info(f"🎬 {film['title']} ({film.get('year','')})")
 
-        # 4. Найти трейлер на YouTube
-        source_id = find_trailer_on_youtube(film)
-        if not source_id:
-            log.warning(f"   ⚠️  Пропускаю — трейлер не найден")
+        # Найти трейлер
+        src=film["trailerYT"] or find_trailer(film)
+        if not src:
+            log.warning("  ⚠️ Трейлер не найден, пропускаю")
             continue
 
         if dry_run:
-            log.info(f"   [DRY RUN] Нашёл source: {source_id}, пропускаю загрузку")
-            # Обновляем как будто загрузили
-            html = update_trailer_in_html(html, film, source_id)
-            updated = True
+            log.info(f"  [DRY RUN] Источник: https://youtu.be/{src}")
+            log.info(f"  [DRY RUN] Скачал бы и залил на @afishiru")
+            html=patch_html(html,film,src)
+            updated=True
             continue
 
-        # 5. Скачать
-        file_path = download_trailer(source_id, tmp_dir)
-        if not file_path:
-            log.warning(f"   ⚠️  Не удалось скачать")
+        # Скачать
+        path=download(src, CONFIG["TMP_DIR"])
+        if not path:
+            log.warning("  ⚠️ Не удалось скачать")
             continue
 
-        # 6. Загрузить на @afishiru
-        new_yt_id = upload_to_afishiru(film, file_path)
+        # Залить на @afishiru
+        new_id=upload(film, path)
+        try: os.remove(path)
+        except: pass
 
-        # Удалить временный файл
-        try:
-            os.remove(file_path)
-        except Exception:
-            pass
-
-        if not new_yt_id:
-            log.warning(f"   ⚠️  Не удалось загрузить на @afishiru")
+        if not new_id:
+            log.warning("  ⚠️ Не удалось загрузить")
             continue
 
-        # 7. Обновить HTML
-        html = update_trailer_in_html(html, film, new_yt_id)
-        updated = True
-        log.info(f"   📝 cinema.html обновлён: trailerYT='{new_yt_id}'")
+        # Обновить HTML
+        html=patch_html(html,film,new_id)
+        updated=True
+        log.info(f"  📝 trailerYT → '{new_id}'")
+        time.sleep(3)
 
-        # Пауза между фильмами
-        time.sleep(5)
-
-    # 8. Пушим обновлённый cinema.html в GitHub
+    # Запушить
     if updated and not dry_run:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
-        commit_msg = f"auto: обновлены трейлеры в cinema.html [{now}]"
-        log.info(f"\n📤 Пушу cinema.html в GitHub: {commit_msg!r}")
+        msg=f"auto: cinema trailers → @afishiru [{datetime.now().strftime('%Y-%m-%d %H:%M')}]"
+        log.info(f"\n📤 GitHub push: {msg!r}")
         try:
-            gh_push_file(html, sha, commit_msg)
-            log.info("   ✅ Запушено! Vercel задеплоит автоматически.")
+            gh_push_file(html, sha, msg)
+            log.info("  ✅ Задеплоено на Vercel автоматически")
         except Exception as e:
-            log.error(f"   ❌ Ошибка пуша: {e}")
-            # Сохранить локально как fallback
-            backup = os.path.join(tmp_dir, "cinema_backup.html")
-            with open(backup, "w", encoding="utf-8") as f:
-                f.write(html)
-            log.info(f"   💾 Сохранил локально: {backup}")
-    elif updated and dry_run:
-        log.info("\n[DRY RUN] В реальном режиме запушил бы в GitHub")
+            log.error(f"  ❌ Push: {e}")
+            bak=os.path.join(CONFIG["TMP_DIR"],"cinema_backup.html")
+            open(bak,"w",encoding="utf-8").write(html)
+            log.info(f"  💾 Сохранено локально: {bak}")
 
-    log.info("\n✅ Cinema Trailers Module завершён")
-
+    log.info("\n✅ Cinema Trailers завершён")
 
 # ══════════════════════════════════════════════════════════════
-# ВСПОМОГАТЕЛЬНЫЙ СКРИПТ: yt_auth.py
-# Запусти один раз для получения OAuth токена
+# yt_auth.py — OAuth, запустить один раз
 # ══════════════════════════════════════════════════════════════
-YT_AUTH_SCRIPT = '''#!/usr/bin/env python3
+YT_AUTH = r'''#!/usr/bin/env python3
 """
-yt_auth.py — Получить OAuth токен для загрузки на @afishiru
-Запустить один раз на компьютере с браузером.
-
-pip install google-auth-oauthlib google-api-python-client
+yt_auth.py — авторизация для загрузки на @afishiru
+Запусти один раз: python yt_auth.py
+Откроется браузер → войди как @afishiru → токен сохранится
 """
 import json
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-# Создай OAuth 2.0 Client ID в Google Cloud Console:
-# https://console.cloud.google.com/apis/credentials
-# Тип: Desktop App → скачать JSON → назвать client_secrets.json
-
-CLIENT_SECRETS_FILE = r"C:\\afishiru\\client_secrets.json"
-TOKEN_FILE = r"C:\\afishiru\\yt_token_afishiru.json"
+# 1. Зайди на https://console.cloud.google.com
+# 2. APIs & Services → Credentials → + CREATE CREDENTIALS → OAuth 2.0 Client ID
+# 3. Тип: Desktop App → скачать JSON → сохранить как client_secrets.json в C:\afishiru\
+CLIENT_SECRETS = r"C:\afishiru\client_secrets.json"
+TOKEN_FILE     = r"C:\afishiru\yt_token_afishiru.json"
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
-flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES)
+flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS, SCOPES)
 creds = flow.run_local_server(port=0)
 
-# Сохранить токен
-token_data = {
+data = {
     "access_token":  creds.token,
     "refresh_token": creds.refresh_token,
     "client_id":     creds.client_id,
     "client_secret": creds.client_secret,
-    "expiry":        creds.expiry.isoformat() if creds.expiry else None,
 }
-with open(TOKEN_FILE, "w") as f:
-    json.dump(token_data, f, indent=2)
-
+with open(TOKEN_FILE,"w") as f:
+    json.dump(data,f,indent=2)
 print(f"✅ Токен сохранён: {TOKEN_FILE}")
+print("Теперь можно запускать: python cinema_trailers.py")
 '''
 
-# ══════════════════════════════════════════════════════════════
-if __name__ == "__main__":
+if __name__=="__main__":
     import sys
 
-    dry = "--dry-run" in sys.argv or "-d" in sys.argv
-    if dry:
-        print("🔵 DRY RUN режим — без реальных загрузок")
+    # Создать yt_auth.py
+    p=os.path.join(os.path.dirname(os.path.abspath(__file__)),"yt_auth.py")
+    if not os.path.exists(p):
+        open(p,"w",encoding="utf-8").write(YT_AUTH)
+        print(f"📝 Создан yt_auth.py")
 
-    # Создать yt_auth.py если не существует
-    auth_file = os.path.join(os.path.dirname(__file__), "yt_auth.py")
-    if not os.path.exists(auth_file):
-        with open(auth_file, "w", encoding="utf-8") as f:
-            f.write(YT_AUTH_SCRIPT)
-        print(f"📝 Создан yt_auth.py — запусти его для OAuth авторизации")
-
-    run_cinema_module(dry_run=dry)
+    dry="--dry-run" in sys.argv or "-d" in sys.argv
+    if dry: print("🔵 DRY RUN — без реальных загрузок")
+    run(dry_run=dry)
