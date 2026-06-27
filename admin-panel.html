@@ -74,6 +74,13 @@ header{background:#1a1a1a;border-bottom:2px solid var(--gold);position:sticky;to
 .hi-nav a:hover{background:rgba(255,255,255,.1);color:#fff;}
 /* ── Admin layout grid ── */
 .admin-layout{display:none;grid-template-columns:220px 1fr;min-height:calc(100vh - 100px);}
+@media(max-width:768px){
+  .admin-layout{grid-template-columns:1fr!important;}
+  .admin-nav{position:relative;top:0;height:auto;display:flex;flex-wrap:wrap;gap:4px;padding:8px;overflow-y:visible;border-right:none;border-bottom:1px solid var(--border);}
+  .nav-section-head{display:none;}
+  .nav-item{padding:6px 10px!important;font-size:12px!important;border-radius:6px;background:#f5f5f5;}
+  .panel-card{border-radius:6px;padding:12px;}
+}
 .admin-nav{background:#fff;border-right:1px solid var(--border);padding:16px 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
 .admin-content{background:#f4f2ee;padding:24px;min-height:100%;overflow-y:auto;}
 .nav-group-label{font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;padding:12px 16px 4px;}
@@ -3392,7 +3399,14 @@ function showPanel(name, navEl) {
   });
   // Показать нужную
   var panel = document.getElementById('panel-' + name);
-  if (panel) { panel.style.display = 'block'; panel.classList.add('active'); }
+  if (panel) {
+    panel.style.display = 'block';
+    panel.classList.add('active');
+    // Скроллить к контенту (важно на мобиле)
+    setTimeout(function(){
+      panel.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 50);
+  }
   // Вызвать рендер-функцию для панели
   var renders = {
     'dashboard': 'renderDashboardFull',
