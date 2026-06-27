@@ -975,7 +975,36 @@ var _CREDS = [
   {e:'strote34@gmail.com', p:'admin2026', n:'Серго', r:'admin'}
 ];
 
-/* doLogin moved to loginScreen script */</script>
+function doLogin() {
+  var email = (document.getElementById('ls_email')||{}).value||'';
+  var pass  = (document.getElementById('ls_pass')||{}).value||'';
+  var err   = document.getElementById('ls_err');
+  var btn   = document.getElementById('ls_btn');
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+  var found = null;
+  for (var i=0; i<_CREDS.length; i++) {
+    if (_CREDS[i].e === email.trim().toLowerCase() && _CREDS[i].p === pass) { found = _CREDS[i]; break; }
+  }
+  if (found) {
+    try { localStorage.setItem('afishi_user', JSON.stringify({email:found.e,name:found.n,role:found.r,loginAt:Date.now()})); } catch(x){}
+    window._adminLoggedIn = true;
+    var ls = document.getElementById('loginScreen');
+    if (ls) ls.style.display = 'none';
+    var layout = document.querySelector('.admin-layout');
+    if (layout) layout.style.cssText = 'display:grid!important;visibility:visible;';
+    var ub = document.getElementById('userBtn');
+    if (ub) { ub.textContent = '\u{1F451} '+found.n; ub.style.background='#1a6c2e'; ub.style.color='#fff'; }
+    setTimeout(function() {
+      try { if (typeof showPanel==='function') showPanel('dashboard',null); } catch(x){}
+      try { if (typeof renderDashboardFull==='function') renderDashboardFull(); } catch(x){}
+    }, 200);
+  } else {
+    if (err) err.textContent = '\u274C Неверный email или пароль';
+    if (btn) { btn.textContent = 'ВОЙТИ'; btn.disabled = false; }
+    var pp = document.getElementById('ls_pass');
+    if (pp) { pp.style.borderColor='#c8102e'; pp.focus(); setTimeout(function(){ pp.style.borderColor='';},2000); }
+  }
+}</script>
 
 
 <!-- MOBILE MENU -->
