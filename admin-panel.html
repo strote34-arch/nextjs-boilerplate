@@ -172,6 +172,9 @@ tr:hover td{background:#fafafa;}
     </div>
     <div class="nav-section">
       <div class="nav-section-head">Настройки</div>
+      <a class="nav-item" onclick="show('ip-geo',this)" href="javascript:void(0)">
+        <span class="nav-icon">🌐</span> IP / Геолокация
+      </a>
       <a class="nav-item" onclick="show('cities',this)" href="javascript:void(0)">
         <span class="nav-icon">🌆</span> Города
       </a>
@@ -457,21 +460,175 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
 
+    <!-- IP ГЕОЛОКАЦИЯ -->
+    <div id="panel-ip-geo" class="panel">
+      <div class="panel-title">🌐 IP / Геолокация</div>
+      <div class="panel-sub">Настройка автоматического определения города посетителя по IP-адресу</div>
+
+      <div class="form-section">
+        <div class="form-section-title">Текущий статус</div>
+        <div class="stats-grid" style="margin:0 0 12px;">
+          <div class="stat-card"><div class="stat-num">ipapi.co</div><div class="stat-label">Активный сервис</div></div>
+          <div class="stat-card"><div class="stat-num">1 000</div><div class="stat-label">Запросов в день (бесплатно)</div></div>
+          <div class="stat-card"><div class="stat-num" id="ip-today">—</div><div class="stat-label">Запросов сегодня</div></div>
+          <div class="stat-card"><div class="stat-num" id="ip-city">—</div><div class="stat-label">Ваш город (по IP)</div></div>
+        </div>
+        <button class="btn btn-outline" onclick="testIpGeo()">🔍 Проверить определение города</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Как работает определение города</div>
+        <div style="font-size:13px;line-height:1.7;color:#444;">
+          <p>1. Посетитель открывает сайт → браузер делает запрос к <code>ipapi.co/json/?callback=...</code></p>
+          <p>2. Сервис возвращает <code>{ city: "Volgograd", country: "RU" }</code></p>
+          <p>3. Название города ищется в <strong>CITY_MAP</strong> → переводится в русское название</p>
+          <p>4. Город сохраняется в <code>localStorage['afishi_city']</code></p>
+          <p>5. Пользователь может сменить город вручную через кнопку «Ваш город» в шапке</p>
+          <p style="color:#c8102e;margin-top:8px;">⚠️ Если пользователь уже выбрал город вручную — IP-определение не срабатывает</p>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">CITY_MAP — Таблица соответствий (EN → RU)</div>
+        <div class="alert alert-info" style="margin-bottom:12px;">ℹ️ Эта таблица находится в файле <code>index.html</code>. Для изменения — редактируй файл в GitHub.</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;border:1px solid #eee;">IP возвращает (EN)</th><th style="padding:8px;text-align:left;border:1px solid #eee;">Город на сайте (RU)</th></tr></thead>
+          <tbody id="city-map-table">
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Volgograd, Volzhskiy</td><td style="padding:6px 8px;border:1px solid #eee;font-weight:700;">Волгоград ⭐</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Moscow, Moskva</td><td style="padding:6px 8px;border:1px solid #eee;">Москва</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Saint Petersburg, St. Petersburg</td><td style="padding:6px 8px;border:1px solid #eee;">Санкт-Петербург</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Yekaterinburg, Ekaterinburg</td><td style="padding:6px 8px;border:1px solid #eee;">Екатеринбург</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Kazan</td><td style="padding:6px 8px;border:1px solid #eee;">Казань</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Krasnodar</td><td style="padding:6px 8px;border:1px solid #eee;">Краснодар</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Rostov-on-Don</td><td style="padding:6px 8px;border:1px solid #eee;">Ростов-на-Дону</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Novosibirsk</td><td style="padding:6px 8px;border:1px solid #eee;">Новосибирск</td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">Omsk, Samara, Ufa, Chelyabinsk, Perm, Voronezh, Krasnoyarsk, Irkutsk</td><td style="padding:6px 8px;border:1px solid #eee;">Омск, Самара, Уфа, Челябинск, Пермь, Воронеж, Красноярск, Иркутск</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="https://github.com/strote34-arch/nextjs-boilerplate/blob/main/index.html" target="_blank" class="btn btn-outline">✏️ Редактировать CITY_MAP в GitHub</a>
+          <button class="btn btn-outline" onclick="toast('IP: ' + (localStorage.getItem('afishi_city') || 'не определён'))">🗂️ Мой город в localStorage</button>
+          <button class="btn btn-red" onclick="if(confirm('Сбросить выбор города?')){localStorage.removeItem('afishi_city');localStorage.removeItem('afishi_city_manual');toast('✅ Город сброшен — при следующем визите определится по IP');}">🔄 Сбросить выбор города</button>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Альтернативные IP-сервисы</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;border:1px solid #eee;">Сервис</th><th style="padding:8px;border:1px solid #eee;">Лимит</th><th style="padding:8px;border:1px solid #eee;">Цена</th><th style="padding:8px;border:1px solid #eee;">Статус</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;"><strong>ipapi.co</strong> <span class="badge badge-green">Используется</span></td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">1 000/день</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">Бесплатно</td><td style="padding:6px 8px;border:1px solid #eee;"><span class="badge badge-green">Активен</span></td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">ipinfo.io</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">50 000/мес</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">Бесплатно</td><td style="padding:6px 8px;border:1px solid #eee;"><span class="badge badge-gray">Резерв</span></td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">ip-api.com</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">45/мин</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">Бесплатно</td><td style="padding:6px 8px;border:1px solid #eee;"><span class="badge badge-gray">Резерв</span></td></tr>
+            <tr><td style="padding:6px 8px;border:1px solid #eee;">MaxMind GeoIP2</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">∞ локально</td><td style="padding:6px 8px;text-align:center;border:1px solid #eee;">от $20/мес</td><td style="padding:6px 8px;border:1px solid #eee;"><span class="badge badge-gray">Нет</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ГОРОДА -->
     <div id="panel-cities" class="panel">
       <div class="panel-title">🌆 Города</div>
-      <div class="panel-sub">Управление городами на сайте</div>
-      <div class="table-wrap">
-        <div class="table-head"><h3>Активные города</h3></div>
-        <table>
-          <thead><tr><th>Город</th><th>Событий</th><th>Статус</th><th></th></tr></thead>
+      <div class="panel-sub">Управление городами — афиша, события, настройки</div>
+
+      <div class="form-section">
+        <div class="form-section-title">Активные города</div>
+        <table style="width:100%">
+          <thead><tr style="background:#f5f5f5;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;"><th style="padding:10px 16px;text-align:left;">Город</th><th style="padding:10px;text-align:center;">Событий</th><th style="padding:10px;text-align:center;">Флаг</th><th style="padding:10px;text-align:center;">Статус</th><th style="padding:10px;text-align:center;">Страница</th></tr></thead>
           <tbody>
-            <tr><td>🏙️ Волгоград</td><td>120</td><td><span class="badge badge-green">Главный</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Волгоград — основной город')">Настройки</button></td></tr>
-            <tr><td>🏛️ Москва</td><td>450</td><td><span class="badge badge-blue">Активен</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Город Москва')">Настройки</button></td></tr>
-            <tr><td>🌊 Санкт-Петербург</td><td>280</td><td><span class="badge badge-blue">Активен</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Город СПб')">Настройки</button></td></tr>
-            <tr><td>☀️ Краснодар</td><td>95</td><td><span class="badge badge-blue">Активен</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Город Краснодар')">Настройки</button></td></tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">🏙️ Волгоград</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-green">120</span></td>
+              <td style="padding:12px;text-align:center;">🏙️</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-red">Главный</span></td>
+              <td style="padding:12px;text-align:center;"><a href="index.html" target="_blank" class="btn btn-outline btn-sm">Сайт</a></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">🏛️ Москва</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">450</span></td>
+              <td style="padding:12px;text-align:center;">🏛️</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('Страница Москвы в разработке')">—</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">🌊 Санкт-Петербург</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">280</span></td>
+              <td style="padding:12px;text-align:center;">🌊</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('Страница СПб в разработке')">—</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">💎 Екатеринбург</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">88</span></td>
+              <td style="padding:12px;text-align:center;">💎</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('Страница Екб в разработке')">—</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">🕌 Казань</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">110</span></td>
+              <td style="padding:12px;text-align:center;">🕌</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('Страница Казани в разработке')">—</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">☀️ Краснодар</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">95</span></td>
+              <td style="padding:12px;text-align:center;">☀️</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('Страница Краснодара в разработке')">—</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;font-weight:700;">🌊 Ростов-на-Дону</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">72</span></td>
+              <td style="padding:12px;text-align:center;">🌊</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('В разработке')">—</button></td>
+            </tr>
+            <tr>
+              <td style="padding:12px 16px;font-weight:700;">🏔️ Новосибирск</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">65</span></td>
+              <td style="padding:12px;text-align:center;">🏔️</td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">Активен</span></td>
+              <td style="padding:12px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="toast('В разработке')">—</button></td>
+            </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">➕ Добавить город</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Название города (RU)</label>
+            <input class="form-input" id="new-city-name" placeholder="Самара" type="text">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Флаг / Эмодзи</label>
+            <input class="form-input" id="new-city-flag" placeholder="🌞" type="text" style="font-size:20px;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">EN название (для IP-определения)</label>
+            <input class="form-input" id="new-city-en" placeholder="Samara" type="text">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Событий (примерно)</label>
+            <input class="form-input" id="new-city-events" placeholder="50" type="number">
+          </div>
+        </div>
+        <button class="btn btn-red" onclick="addCity()">+ Добавить город</button>
+        <div class="alert alert-info" style="margin-top:12px;">ℹ️ После добавления нужно вручную добавить <code>'Samara':'Самара'</code> в CITY_MAP в файле <code>index.html</code> на GitHub.</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">🔎 Тест определения города</div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px;">Проверяет как ваш браузер видит текущий город и что хранится в localStorage.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="showCurrentCity()">Мой город сейчас</button>
+          <button class="btn btn-outline" onclick="testIpGeo()">Определить по IP</button>
+          <button class="btn btn-red" onclick="if(confirm('Сбросить?')){localStorage.removeItem('afishi_city');localStorage.removeItem('afishi_city_manual');toast('Сброшен');}">🔄 Сбросить</button>
+        </div>
+        <div id="city-test-result" style="margin-top:12px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:13px;display:none;"></div>
       </div>
     </div>
 
