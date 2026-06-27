@@ -4131,47 +4131,6 @@ function previewMailing() {
   var win = window.open('', '_blank');
   if (win) { win.document.write('<title>' + subject + '</title><body style="font-family:sans-serif;max-width:600px;margin:40px auto;"><h2>' + subject + '</h2><p>' + body.replace(/\n/g,'<br>') + '</p><script>
 
-<div id="sLogin" style="display:none;position:fixed;inset:0;z-index:99999;background:#f0f0f0;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:12px;padding:32px;width:min(380px,92vw);box-shadow:0 4px 30px rgba(0,0,0,.15);">
-    <div style="text-align:center;margin-bottom:20px;font-family:Oswald,sans-serif;font-size:22px;font-weight:700;">🔐 Афиши.ру Admin</div>
-    <input id="sle" type="email" value="admin@afishi.ru" autocomplete="email" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:7px;padding:11px;font-size:15px;margin-bottom:10px;display:block;">
-    <input id="slp" type="password" placeholder="Пароль" autocomplete="current-password" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:7px;padding:11px;font-size:15px;margin-bottom:8px;display:block;" onkeydown="if(event.key==='Enter')sLogin()">
-    <div id="slerr" style="color:#c8102e;font-size:13px;min-height:18px;margin-bottom:10px;text-align:center;"></div>
-    <button onclick="sLogin()" style="width:100%;background:#c8102e;color:#fff;border:none;border-radius:7px;padding:13px;font-family:Oswald,sans-serif;font-size:16px;font-weight:700;cursor:pointer;">ВОЙТИ</button>
-    <div style="text-align:center;margin-top:10px;font-size:11px;color:#bbb;">admin@afishi.ru / Afishi2018!</div>
-  </div>
-</div>
-<script>
-(function(){
-  var sl=document.getElementById('sLogin');
-  if(!sl)return;
-  try{
-    var u=JSON.parse(localStorage.getItem('afishi_user')||'null');
-    if(u&&(u.role==='admin'||u.role==='moderator')){
-      // Уже залогинен — показать панель
-      if(typeof checkAuth==='function')checkAuth();
-    } else {
-      sl.style.display='flex';
-    }
-  }catch(x){ sl.style.display='flex'; }
-})();
-function sLogin(){
-  var e=(document.getElementById('sle')||{}).value||'';
-  var p=(document.getElementById('slp')||{}).value||'';
-  var C=[{e:'admin@afishi.ru',p:'Afishi2018!',n:'Администратор',r:'admin'},{e:'strote34@gmail.com',p:'admin2026',n:'Серго',r:'admin'}];
-  var f=C.filter(function(c){return c.e===e.trim().toLowerCase()&&c.p===p;})[0];
-  if(f){
-    try{localStorage.setItem('afishi_user',JSON.stringify({email:f.e,name:f.n,role:f.r,loginAt:Date.now()}));}catch(x){}
-    document.getElementById('sLogin').style.display='none';
-    if(typeof checkAuth==='function')checkAuth();
-    var lay=document.querySelector('.admin-layout');
-    if(lay)lay.style.display='grid';
-    setTimeout(function(){if(typeof showPanel==='function')try{showPanel('dashboard',null);}catch(x){};},200);
-  }else{
-    var er=document.getElementById('slerr');
-    if(er)er.textContent='❌ Неверный email или пароль';
-  }
-}
 </script>
 
 </body>'); }
@@ -6156,5 +6115,47 @@ function saveH728Banner() {
   document.addEventListener('DOMContentLoaded',function(){setTimeout(b,200);});
 })();
 </script>
+
+<div id="sLogin" style="display:none;position:fixed;inset:0;z-index:99999;background:#f0f0f0;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px;width:min(380px,92vw);box-shadow:0 4px 30px rgba(0,0,0,.15);">
+    <div style="text-align:center;margin-bottom:20px;font-family:Oswald,sans-serif;font-size:22px;font-weight:700;">🔐 Афиши.ру Admin</div>
+    <input id="sle" type="email" value="admin@afishi.ru" autocomplete="email" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:7px;padding:11px;font-size:15px;margin-bottom:10px;display:block;">
+    <input id="slp" type="password" placeholder="Пароль" autocomplete="current-password" style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:7px;padding:11px;font-size:15px;margin-bottom:8px;display:block;" onkeydown="if(event.key==='Enter')sLogin()">
+    <div id="slerr" style="color:#c8102e;font-size:13px;min-height:18px;margin-bottom:10px;text-align:center;"></div>
+    <button onclick="sLogin()" style="width:100%;background:#c8102e;color:#fff;border:none;border-radius:7px;padding:13px;font-family:Oswald,sans-serif;font-size:16px;font-weight:700;cursor:pointer;">ВОЙТИ</button>
+    <div style="text-align:center;margin-top:10px;font-size:11px;color:#bbb;">admin@afishi.ru / Afishi2018!</div>
+  </div>
+</div>
+<script>
+(function(){
+  var sl=document.getElementById('sLogin');
+  if(!sl)return;
+  try{
+    var u=JSON.parse(localStorage.getItem('afishi_user')||'null');
+    if(u&&(u.role==='admin'||u.role==='moderator')){
+      // Уже залогинен — показать панель
+      if(typeof checkAuth==='function')checkAuth();
+    } else {
+      sl.style.display='flex';
+    }
+  }catch(x){ sl.style.display='flex'; }
+})();
+function sLogin(){
+  var e=(document.getElementById('sle')||{}).value||'';
+  var p=(document.getElementById('slp')||{}).value||'';
+  var C=[{e:'admin@afishi.ru',p:'Afishi2018!',n:'Администратор',r:'admin'},{e:'strote34@gmail.com',p:'admin2026',n:'Серго',r:'admin'}];
+  var f=C.filter(function(c){return c.e===e.trim().toLowerCase()&&c.p===p;})[0];
+  if(f){
+    try{localStorage.setItem('afishi_user',JSON.stringify({email:f.e,name:f.n,role:f.r,loginAt:Date.now()}));}catch(x){}
+    document.getElementById('sLogin').style.display='none';
+    if(typeof checkAuth==='function')checkAuth();
+    var lay=document.querySelector('.admin-layout');
+    if(lay)lay.style.display='grid';
+    setTimeout(function(){if(typeof showPanel==='function')try{showPanel('dashboard',null);}catch(x){};},200);
+  }else{
+    var er=document.getElementById('slerr');
+    if(er)er.textContent='❌ Неверный email или пароль';
+  }
+}
 </body>
 </html>
