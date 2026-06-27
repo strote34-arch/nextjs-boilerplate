@@ -862,7 +862,16 @@ window._doSafeLogin = function() {
     try { localStorage.setItem('afishi_user', JSON.stringify({
       email:found.email, name:found.name, role:found.role, loginAt:Date.now()
     })); } catch(x){}
-    location.reload();
+    // Вместо reload — показать панель напрямую
+    window._adminLoggedIn = true;
+    var ls2 = document.getElementById('loginScreen');
+    if (ls2) ls2.style.display = 'none';
+    var lay2 = document.querySelector('.admin-layout');
+    if (lay2) { lay2.style.display = 'grid'; }
+    setTimeout(function() {
+      if (typeof renderDashboardFull==='function') try{renderDashboardFull();}catch(e){}
+      if (typeof showPanel==='function') try{showPanel('dashboard',null);}catch(e){}
+    }, 100);
   } else {
     if (err) err.textContent = '❌ Неверный email или пароль';
     var pin = document.getElementById('_sli_p');
@@ -907,14 +916,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Показать форму если не авторизован
   var u = null;
   try { u = JSON.parse(localStorage.getItem('afishi_user')||'null'); } catch(x){}
-  if (!u || (u.role !== 'admin' && u.role !== 'moderator')) {
-    setTimeout(function() {
-      // Не показывать если пользователь уже вошёл через loginScreen
-      if (!window._adminLoggedIn) {
-        if (typeof window.adminLogin === 'function') window.adminLogin();
-      }
-    }, 400);
-  }
+  // loginScreen в HTML сам обрабатывает авторизацию — _safe() не нужен
+  // if (!u ...) { setTimeout(window.adminLogin, 400); } // ОТКЛЮЧЕНО
 });
 </script>
 
