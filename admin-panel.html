@@ -6129,16 +6129,7 @@ function saveH728Banner() {
 <script>
 (function(){
   var sl=document.getElementById('sLogin');
-  if(!sl)return;
-  try{
-    var u=JSON.parse(localStorage.getItem('afishi_user')||'null');
-    if(u&&(u.role==='admin'||u.role==='moderator')){
-      // Уже залогинен — показать панель
-      if(typeof checkAuth==='function')checkAuth();
-    } else {
-      sl.style.display='flex';
-    }
-  }catch(x){ sl.style.display='flex'; }
+  if(sl) sl.style.display='flex'; // Всегда показываем форму входа
 })();
 function sLogin(){
   var e=(document.getElementById('sle')||{}).value||'';
@@ -6148,10 +6139,16 @@ function sLogin(){
   if(f){
     try{localStorage.setItem('afishi_user',JSON.stringify({email:f.e,name:f.n,role:f.r,loginAt:Date.now()}));}catch(x){}
     document.getElementById('sLogin').style.display='none';
-    if(typeof checkAuth==='function')checkAuth();
+    // Показать панель
     var lay=document.querySelector('.admin-layout');
-    if(lay)lay.style.display='grid';
-    setTimeout(function(){if(typeof showPanel==='function')try{showPanel('dashboard',null);}catch(x){};},200);
+    if(lay){ lay.style.display='grid'; lay.style.visibility='visible'; }
+    if(typeof checkAuth==='function')try{checkAuth();}catch(ex){}
+    var ub=document.getElementById('userBtn');
+    if(ub){ub.innerHTML='&#128081; '+f.n;ub.style.background='#1a6c2e';ub.style.color='#fff';}
+    setTimeout(function(){
+      if(typeof showPanel==='function')try{showPanel('dashboard',null);}catch(x){}
+      if(typeof renderDashboardFull==='function')try{renderDashboardFull();}catch(x){}
+    },150);
   }else{
     var er=document.getElementById('slerr');
     if(er)er.textContent='❌ Неверный email или пароль';
