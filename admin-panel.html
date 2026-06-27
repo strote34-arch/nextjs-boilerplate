@@ -406,20 +406,164 @@ tr:hover td{background:#fafafa;}
     <!-- БАННЕРЫ -->
     <div id="panel-banners" class="panel">
       <div class="panel-title">📢 Баннеры / Реклама</div>
-      <div class="panel-sub">Управление рекламными блоками на сайте</div>
-      <div class="table-wrap">
-        <div class="table-head">
-          <h3>Активные баннеры</h3>
-          <div style="margin-left:auto;"><button class="btn btn-red" onclick="toast('Форма добавления баннера в разработке')">+ Добавить</button></div>
-        </div>
-        <table>
-          <thead><tr><th>Позиция</th><th>Рекламодатель</th><th>До</th><th>Статус</th></tr></thead>
+      <div class="panel-sub">Управление вертикальными и горизонтальными баннерами на всех страницах</div>
+
+      <!-- Обзор позиций -->
+      <div class="form-section">
+        <div class="form-section-title">📍 Позиции баннеров на сайте</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="background:#f5f5f5;"><th style="padding:10px 16px;text-align:left;border-bottom:1px solid #eee;">Позиция</th><th style="padding:10px;border-bottom:1px solid #eee;">Размер</th><th style="padding:10px;border-bottom:1px solid #eee;">Страницы</th><th style="padding:10px;border-bottom:1px solid #eee;">Статус</th><th style="padding:10px;border-bottom:1px solid #eee;"></th></tr></thead>
           <tbody>
-            <tr><td>Главная — топ</td><td>—</td><td>—</td><td><span class="badge badge-gray">Свободно</span></td></tr>
-            <tr><td>Афиша — сайдбар</td><td>—</td><td>—</td><td><span class="badge badge-gray">Свободно</span></td></tr>
-            <tr><td>Кино — между рядами</td><td>—</td><td>—</td><td><span class="badge badge-gray">Свободно</span></td></tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;"><strong>🟦 Вертикальный сайдбар</strong><br><span style="font-size:11px;color:#888;">id="sidebarAdBanner"</span></td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">~300×250px</span></td>
+              <td style="padding:12px;font-size:12px;">Главная, Театр, Кино, Заведения</td>
+              <td style="padding:12px;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;"><button class="btn btn-red btn-sm" onclick="showBannerEdit('sidebar')">✏️ Редактировать</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;"><strong>🟥 Горизонтальный топ</strong><br><span style="font-size:11px;color:#888;">id="ad-top"</span></td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-blue">728×90px</span></td>
+              <td style="padding:12px;font-size:12px;">Главная</td>
+              <td style="padding:12px;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;"><button class="btn btn-outline btn-sm" onclick="showBannerEdit('leaderboard')">✏️ Редактировать</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:12px 16px;"><strong>📧 Блок подписки</strong><br><span style="font-size:11px;color:#888;">Сайдбар</span></td>
+              <td style="padding:12px;text-align:center;"><span class="badge badge-gray">300px</span></td>
+              <td style="padding:12px;font-size:12px;">Главная, Театр</td>
+              <td style="padding:12px;"><span class="badge badge-green">Активен</span></td>
+              <td style="padding:12px;"><button class="btn btn-outline btn-sm" onclick="toast('Блок подписки встроен в HTML')">Инфо</button></td>
+            </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Редактор вертикального баннера -->
+      <div class="form-section" id="banner-editor-sidebar" style="display:none;">
+        <div class="form-section-title">✏️ Вертикальный сайдбар баннер</div>
+        <div class="alert alert-info" style="margin-bottom:16px;">Этот баннер отображается в правой колонке на главной, страницах театров, кино и заведений.</div>
+
+        <div class="form-grid">
+          <div>
+            <div class="form-group">
+              <label class="form-label">Иконка / Эмодзи</label>
+              <input class="form-input" id="bn-icon" value="🎫" style="font-size:24px;" placeholder="🎫">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Заголовок (жирный)</label>
+              <input class="form-input" id="bn-title" value="Добавьте событие" placeholder="Добавьте событие">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Подзаголовок</label>
+              <textarea class="form-textarea" id="bn-desc" rows="3" placeholder="Разместите анонс концерта, выставки или спектакля">Разместите анонс концерта, выставки или спектакля</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Текст кнопки</label>
+              <input class="form-input" id="bn-btn-text" value="Добавить →" placeholder="Добавить →">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ссылка кнопки</label>
+              <input class="form-input" id="bn-btn-url" value="event-add.html" placeholder="https://... или event-add.html">
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <label class="form-label">Фон (CSS градиент или цвет)</label>
+              <input class="form-input" id="bn-bg" value="linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%)" placeholder="linear-gradient(...)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Быстрые темы</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#0d0d2b,#c8102e);color:#fff;" onclick="setBannerTheme('linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%)')">🔴 Красный</button>
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#003366,#0066cc);color:#fff;" onclick="setBannerTheme('linear-gradient(160deg,#003366 0%,#0066cc 100%)')">🔵 Синий</button>
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#1a4a00,#2d8000);color:#fff;" onclick="setBannerTheme('linear-gradient(160deg,#1a4a00 0%,#2d8000 100%)')">🟢 Зелёный</button>
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#4a0060,#9b00d4);color:#fff;" onclick="setBannerTheme('linear-gradient(160deg,#4a0060 0%,#9b00d4 100%)')">🟣 Фиолетовый</button>
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#1a0533,#6a0572);color:#fff;" onclick="setBannerTheme('linear-gradient(135deg,#1a0533,#6a0572)')">💜 Тёмный</button>
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#b8860b,#ffd700);color:#000;" onclick="setBannerTheme('linear-gradient(135deg,#b8860b,#ffd700)')">🟡 Золотой</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Предпросмотр</label>
+              <div id="bn-preview" style="border-radius:8px;padding:20px 16px;color:#fff;text-align:center;min-height:160px;display:flex;align-items:center;justify-content:center;margin-top:4px;background:linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%);">
+                <div>
+                  <div id="pv-icon" style="font-size:32px;margin-bottom:8px;">🎫</div>
+                  <div id="pv-title" style="font-family:Oswald,sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">Добавьте событие</div>
+                  <div id="pv-desc" style="font-size:11px;opacity:.8;margin-bottom:12px;">Разместите анонс концерта...</div>
+                  <div id="pv-btn" style="background:#fff;color:#c8102e;font-size:12px;font-weight:700;padding:8px 16px;border-radius:5px;display:inline-block;">Добавить →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Страницы -->
+        <div class="form-group">
+          <label class="form-label">На каких страницах показывать</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pg-index" checked> Главная</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pg-theater" checked> Театр</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pg-cinema" checked> Кино</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pg-concerts" checked> Концерты</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pg-venues" checked> Заведения</label>
+          </div>
+        </div>
+
+        <!-- Города -->
+        <div class="form-group">
+          <label class="form-label">Показывать для городов</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="city-all" checked> Все города</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="city-vlg" checked> Только Волгоград</label>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+          <button class="btn btn-red" onclick="saveBanner()">💾 Сохранить баннер</button>
+          <button class="btn btn-outline" onclick="resetBanner()">↩️ Сбросить по умолчанию</button>
+          <button class="btn btn-outline" onclick="previewBanner()">👁 Предпросмотр на сайте</button>
+        </div>
+        <div class="alert alert-info" style="margin-top:12px;">ℹ️ Настройки сохраняются в localStorage. Для постоянного изменения обнови <code>index.html</code> на <a href="https://github.com/strote34-arch/nextjs-boilerplate" target="_blank">GitHub</a>.</div>
+      </div>
+
+      <!-- Редактор горизонтального баннера -->
+      <div class="form-section" id="banner-editor-leaderboard" style="display:none;">
+        <div class="form-section-title">✏️ Горизонтальный баннер (728×90)</div>
+        <div class="alert alert-info" style="margin-bottom:16px;">Полоса под шапкой на главной странице. Сейчас показывает «АфишиПлюс Золото».</div>
+        <div class="form-group">
+          <label class="form-label">Ссылка баннера</label>
+          <input class="form-input" id="lb-url" value="loyalty.html" placeholder="https://... или loyalty.html">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Заголовок</label>
+          <input class="form-input" id="lb-title" value="⭐ АфишиПлюс Золото" placeholder="⭐ Акция">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Подпись</label>
+          <input class="form-input" id="lb-desc" value="Скидка 15% на билеты · Без рекламы · Ранний доступ" placeholder="Описание акции">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Текст кнопки</label>
+          <input class="form-input" id="lb-btn" value="Подключить →" placeholder="Подробнее →">
+        </div>
+        <button class="btn btn-red" onclick="toast('Горизонтальный баннер сохранён (требует редактирования index.html)')">💾 Сохранить</button>
+      </div>
+
+      <!-- Рекламные места -->
+      <div class="form-section">
+        <div class="form-section-title">💰 Рекламные места — прайс</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="background:#f5f5f5;"><th style="padding:10px 16px;text-align:left;border:1px solid #eee;">Позиция</th><th style="padding:10px;border:1px solid #eee;">Охват/день</th><th style="padding:10px;border:1px solid #eee;">Цена/мес</th><th style="padding:10px;border:1px solid #eee;">Статус</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:10px 16px;border:1px solid #eee;"><strong>Вертикальный сайдбар</strong><br><small>300×250, главная + все разделы</small></td><td style="padding:10px;text-align:center;border:1px solid #eee;">2 000–5 000</td><td style="padding:10px;text-align:center;border:1px solid #eee;">от 5 000 ₽</td><td style="padding:10px;border:1px solid #eee;"><span class="badge badge-gray">Свободно</span></td></tr>
+            <tr><td style="padding:10px 16px;border:1px solid #eee;"><strong>Горизонтальный топ</strong><br><small>728×90, главная страница</small></td><td style="padding:10px;text-align:center;border:1px solid #eee;">3 000–8 000</td><td style="padding:10px;text-align:center;border:1px solid #eee;">от 8 000 ₽</td><td style="padding:10px;border:1px solid #eee;"><span class="badge badge-green">Занято (own)</span></td></tr>
+            <tr><td style="padding:10px 16px;border:1px solid #eee;"><strong>Страница театра/заведения</strong><br><small>Эксклюзивно для площадки</small></td><td style="padding:10px;text-align:center;border:1px solid #eee;">500–2 000</td><td style="padding:10px;text-align:center;border:1px solid #eee;">от 2 000 ₽</td><td style="padding:10px;border:1px solid #eee;"><span class="badge badge-gray">Свободно</span></td></tr>
+            <tr><td style="padding:10px 16px;border:1px solid #eee;"><strong>Email рассылка</strong><br><small>Логотип + ссылка в письме</small></td><td style="padding:10px;text-align:center;border:1px solid #eee;">—</td><td style="padding:10px;text-align:center;border:1px solid #eee;">от 3 000 ₽</td><td style="padding:10px;border:1px solid #eee;"><span class="badge badge-gray">Свободно</span></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;">
+          <a href="mailto:admin@afishi.ru?subject=Реклама на afishiru.ru" class="btn btn-red">📧 Написать рекламодателю</a>
+        </div>
       </div>
     </div>
 
