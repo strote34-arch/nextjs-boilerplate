@@ -927,6 +927,161 @@ function loadEvents() {
   }).join('');
 }
 
+
+// ══ БАННЕРЫ ══════════════════════════════════════════════════
+function showBannerEdit(type) {
+  ['sidebar','leaderboard'].forEach(function(t){
+    var el = document.getElementById('banner-editor-'+t);
+    if (el) el.style.display = 'none';
+  });
+  var ed = document.getElementById('banner-editor-'+type);
+  if (ed) {
+    ed.style.display = 'block';
+    setTimeout(function(){ ed.scrollIntoView({behavior:'smooth',block:'start'}); }, 50);
+  }
+  if (type === 'sidebar') loadBannerSettings();
+}
+
+function loadBannerSettings() {
+  try {
+    var s = JSON.parse(localStorage.getItem('afishi_sidebar_banner') || 'null');
+    if (!s) return;
+    var set = function(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; };
+    set('bn-icon',     s.icon);
+    set('bn-title',    s.title);
+    set('bn-desc',     s.desc);
+    set('bn-btn-text', s.btnText);
+    set('bn-btn-url',  s.btnUrl);
+    set('bn-bg',       s.bg);
+    updatePreview();
+  } catch(e){}
+}
+
+function updatePreview() {
+  var g = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var pv = {
+    icon:    g('bn-icon'),
+    title:   g('bn-title'),
+    desc:    g('bn-desc'),
+    btnText: g('bn-btn-text'),
+    bg:      g('bn-bg')
+  };
+  var el = function(id){ return document.getElementById(id); };
+  if (el('pv-icon'))  el('pv-icon').textContent  = pv.icon   || '🎫';
+  if (el('pv-title')) el('pv-title').textContent = pv.title  || 'Заголовок';
+  if (el('pv-desc'))  el('pv-desc').textContent  = pv.desc   || 'Описание';
+  if (el('pv-btn'))   el('pv-btn').textContent   = pv.btnText|| 'Кнопка';
+  if (el('bn-preview') && pv.bg) el('bn-preview').style.background = pv.bg;
+}
+
+function setBannerTheme(grad) {
+  var bg = document.getElementById('bn-bg');
+  var pv = document.getElementById('bn-preview');
+  if (bg) bg.value = grad;
+  if (pv) pv.style.background = grad;
+}
+
+function saveBanner() {
+  var g = function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var data = {
+    icon:    g('bn-icon'),
+    title:   g('bn-title'),
+    desc:    g('bn-desc'),
+    btnText: g('bn-btn-text'),
+    btnUrl:  g('bn-btn-url'),
+    bg:      g('bn-bg'),
+    savedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('afishi_sidebar_banner', JSON.stringify(data));
+    toast('✅ Баннер сохранён! Откроется на сайте с новыми настройками.');
+  } catch(e) {
+    toast('❌ Ошибка: ' + e.message);
+  }
+}
+
+function resetBanner() {
+  if (!confirm('Сбросить баннер к заводским настройкам?')) return;
+  localStorage.removeItem('afishi_sidebar_banner');
+  var defaults = {
+    'bn-icon':     '🎫',
+    'bn-title':    'Добавьте событие',
+    'bn-desc':     'Разместите анонс концерта, выставки или спектакля',
+    'bn-btn-text': 'Добавить →',
+    'bn-btn-url':  'event-add.html',
+    'bn-bg':       'linear-gradient(160deg,#0d0d2b 0%,#1a0a2e 50%,#c8102e 100%)'
+  };
+  Object.keys(defaults).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = defaults[id];
+  });
+  updatePreview();
+  toast('↩️ Сброшено к настройкам по умолчанию');
+}
+
+function previewBanner() {
+  saveBanner();
+  window.open('index.html', '_blank');
+}
+
+// Автообновление предпросмотра при вводе
+(function() {
+  var ids = ['bn-icon','bn-title','bn-desc','bn-btn-text','bn-bg'];
+  function bindInputs() {
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', updatePreview);
+    });
+  }
+  // Попробовать сразу и через 500мс (если DOM ещё грузится)
+  bindInputs();
+  setTimeout(bindInputs, 500);
+})();
+
+// IP Геолокация
+function testIpGeo() {
+  var cb = 'geo_test_' + Date.now();
+  window[cb] = function(data) {
+    var r = document.getElementById('city-test-result');
+    if (r) {
+      r.style.display = 'block';
+      r.innerHTML = '<strong>ipapi.co ответил:</strong><br>' +
+        '🌐 IP: <code>' + (data.ip||'?') + '</code><br>' +
+        '🏙️ Город (EN): <strong>' + (data.city||'?') + '</strong><br>' +
+        '📍 Регион: ' + (data.region||'?') + '<br>' +
+        '🇷🇺 Страна: ' + (data.country_name||'?') + '<br>' +
+        '💾 localStorage[afishi_city]: <strong>' + (localStorage.getItem('afishi_city')||'—') + '</strong>';
+    }
+    var ic = document.getElementById('ip-city');
+    if (ic) ic.textContent = data.city || '?';
+    try { document.head.removeChild(document.getElementById('ip-test-s')); } catch(e){}
+  };
+  var s = document.createElement('script');
+  s.id = 'ip-test-s';
+  s.src = 'https://ipapi.co/json/?callback=' + cb;
+  document.head.appendChild(s);
+  toast('⏳ Запрос к ipapi.co...');
+}
+
+function showCurrentCity() {
+  var city   = localStorage.getItem('afishi_city');
+  var manual = localStorage.getItem('afishi_city_manual');
+  var r = document.getElementById('city-test-result');
+  if (r) {
+    r.style.display = 'block';
+    r.innerHTML =
+      'localStorage[afishi_city] = <strong>' + (city||'не задан') + '</strong><br>' +
+      'Выбран вручную: <strong>' + (manual==='1'?'да':'нет (IP)') + '</strong>';
+  }
+}
+
+function addCity() {
+  var name = (document.getElementById('new-city-name')||{}).value||'';
+  var en   = (document.getElementById('new-city-en')||{}).value||'';
+  if (!name.trim()) { toast('Введите название города'); return; }
+  toast('Город "'+name+'" добавлен. Добавь "'+en+'":"'+name+'" в CITY_MAP в index.html на GitHub!');
+}
+
 // Инициализация
 loadDashboard();
 loadEvents();
