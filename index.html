@@ -176,8 +176,8 @@ function trackTicketClick(url, title) {
     try {
       // Попробовать без ключа (возвращает страну но не город для бесплатного плана)
       // Для получения города нужен ключ: https://www.ip2location.io/sign-up
-      var apiKey = localStorage.getItem('afishi_ip2loc_key') || '';
-      var url = 'https://api.ip2location.io/?format=json' + (apiKey ? '&key=' + apiKey : '');
+      var apiKey = '4rz5kxKy8Hq7qWzk1Ij37b9ciXNBwm75EAyNef34WEgaQz8iISYSF14uENS2XtPT'; // ip2location.io токен
+      var url = 'https://api.ip2location.io/?format=json&key=' + apiKey;
       fetch(url)
         .then(function(r){ return r.json(); })
         .then(function(d){
