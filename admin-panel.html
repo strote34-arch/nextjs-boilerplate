@@ -103,6 +103,8 @@ tr:hover td{background:#fafafa;}
 .toggle.on{background:#c8102e;}
 .toggle::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;}
 .toggle.on::after{left:21px;}
+.ev-city.active,.vn-city.active{background:#c8102e!important;color:#fff!important;border-color:#c8102e!important;}
+.ev-type.active2{background:#c8102e!important;color:#fff!important;border-color:#c8102e!important;}
 </style>
 </head>
 <body>
@@ -245,47 +247,69 @@ tr:hover td{background:#fafafa;}
     <!-- МЕРОПРИЯТИЯ -->
     <div id="panel-events" class="panel">
       <div class="panel-title">🎪 Мероприятия</div>
-      <div class="panel-sub">Все события — концерты, спектакли, выставки, детские мероприятия</div>
+      <div class="panel-sub">Все события сайта — концерты, спектакли, стендап, шоу</div>
+
+      <!-- Фильтры -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center;">
+        <label style="font-size:12px;font-weight:700;color:#666;">ГОРОД:</label>
+        <button class="btn btn-red btn-sm ev-city active" data-city="all" onclick="filterEvents('all',this)">Все</button>
+        <button class="btn btn-outline btn-sm ev-city" data-city="Волгоград" onclick="filterEvents('Волгоград',this)">🏙️ Волгоград</button>
+        <button class="btn btn-outline btn-sm ev-city" data-city="Москва" onclick="filterEvents('Москва',this)">🏛️ Москва</button>
+        <button class="btn btn-outline btn-sm ev-city" data-city="Санкт-Петербург" onclick="filterEvents('Санкт-Петербург',this)">🌊 СПб</button>
+        <button class="btn btn-outline btn-sm ev-city" data-city="Екатеринбург" onclick="filterEvents('Екатеринбург',this)">💎 Екб</button>
+        <button class="btn btn-outline btn-sm ev-city" data-city="other" onclick="filterEvents('other',this)">🗺️ Другие</button>
+        <label style="font-size:12px;font-weight:700;color:#666;margin-left:8px;">ТИП:</label>
+        <button class="btn btn-outline btn-sm ev-type active2" data-type="all" onclick="filterEvType('all',this)">Все</button>
+        <button class="btn btn-outline btn-sm ev-type" data-type="concert" onclick="filterEvType('concert',this)">🎵 Концерт</button>
+        <button class="btn btn-outline btn-sm ev-type" data-type="theater" onclick="filterEvType('theater',this)">🎭 Театр</button>
+        <button class="btn btn-outline btn-sm ev-type" data-type="standup" onclick="filterEvType('standup',this)">🎤 Стендап</button>
+        <span id="ev-count" style="margin-left:auto;font-size:12px;color:#888;"></span>
+      </div>
+
       <div class="table-wrap">
         <div class="table-head">
-          <h3>Активные события</h3>
+          <h3 id="ev-table-title">Все мероприятия</h3>
           <div style="margin-left:auto;display:flex;gap:8px;">
             <a href="event-add.html" class="btn btn-red">+ Добавить</a>
-            <button class="btn btn-outline" onclick="toast('Фильтр пока не активен')">Фильтр</button>
+            <a href="concerts.html" target="_blank" class="btn btn-outline">Открыть афишу</a>
           </div>
         </div>
         <table>
-          <thead><tr><th>Название</th><th>Тип</th><th>Дата</th><th>Площадка</th><th>Статус</th><th></th></tr></thead>
-          <tbody id="events-tbody">
+          <thead><tr>
+            <th>Дата</th><th>Название</th><th>Тип</th><th>Город</th><th>Площадка</th><th>Статус</th>
+          </tr></thead>
+          <tbody id="ev-tbody">
             <tr><td colspan="6" style="text-align:center;color:#aaa;padding:30px;">Загрузка...</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="alert alert-info">ℹ️ События хранятся в файлах concerts.html, theater.html и других. Для добавления используй <a href="event-add.html">форму добавления</a>.</div>
     </div>
 
     <!-- ЗАВЕДЕНИЯ -->
     <div id="panel-venues" class="panel">
       <div class="panel-title">🏛️ Заведения</div>
-      <div class="panel-sub">Площадки — кинотеатры, концертные залы, театры</div>
+      <div class="panel-sub">Площадки по городам — кинотеатры, концертные залы, театры, стадионы</div>
+
+      <!-- Фильтр городов -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-red btn-sm vn-city active" data-city="all" onclick="filterVenues('all',this)">Все города</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="Волгоград" onclick="filterVenues('Волгоград',this)">🏙️ Волгоград</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="Москва" onclick="filterVenues('Москва',this)">🏛️ Москва</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="Санкт-Петербург" onclick="filterVenues('Санкт-Петербург',this)">🌊 СПб</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="Екатеринбург" onclick="filterVenues('Екатеринбург',this)">💎 Екб</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="Казань" onclick="filterVenues('Казань',this)">🕌 Казань</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="Краснодар" onclick="filterVenues('Краснодар',this)">☀️ Краснодар</button>
+        <button class="btn btn-outline btn-sm vn-city" data-city="other" onclick="filterVenues('other',this)">🗺️ Остальные</button>
+      </div>
+
       <div class="table-wrap">
         <div class="table-head">
-          <h3>Площадки Волгограда</h3>
-          <div style="margin-left:auto;">
-            <button class="btn btn-red" onclick="toast('Форма добавления площадки в разработке')">+ Добавить</button>
-          </div>
+          <h3>Площадки</h3>
+          <button class="btn btn-red" onclick="toast('Форма добавления площадки в разработке')">+ Добавить</button>
         </div>
         <table>
-          <thead><tr><th>Название</th><th>Тип</th><th>Адрес</th><th>Страница</th></tr></thead>
-          <tbody>
-            <tr><td><strong>ЦКЗ Волгоградской Филармонии</strong></td><td><span class="badge badge-blue">Концертный зал</span></td><td>наб. 62-й Армии, 4</td><td><a href="theater-filarmonia-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td><strong>Стадион Волгоград Арена</strong></td><td><span class="badge badge-green">Стадион</span></td><td>ул. Ворошиловская, 1</td><td><a href="venue-volgograd-arena.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td><strong>Муз. театр</strong></td><td><span class="badge badge-blue">Театр</span></td><td>пр. им. Ленина, 4</td><td><a href="theater-volgogradskiy-muzykalnyy-teatr.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td><strong>НЭТ</strong></td><td><span class="badge badge-blue">Театр</span></td><td>пр. им. Ленина, 50</td><td><a href="#" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td><strong>ТЮЗ</strong></td><td><span class="badge badge-blue">Театр</span></td><td>ул. Чуйкова, 8</td><td><a href="theater-tyuz-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td><strong>Кино «Победа»</strong></td><td><span class="badge badge-red">Кинотеатр</span></td><td>ул. Мира, 11</td><td><a href="cinema.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td><strong>Музей ИЗО</strong></td><td><span class="badge badge-gray">Музей</span></td><td>ул. Чуйкова, 37</td><td><a href="#" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-          </tbody>
+          <thead><tr><th>Название</th><th>Город</th><th>Адрес</th><th>Вместимость</th><th>Тип</th><th>Страница</th></tr></thead>
+          <tbody id="vn-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -1082,9 +1106,204 @@ function addCity() {
   toast('Город "'+name+'" добавлен. Добавь "'+en+'":"'+name+'" в CITY_MAP в index.html на GitHub!');
 }
 
+
+// ══ ВСЕ СОБЫТИЯ ══════════════════════════════════════════════
+var ALL_EVENTS = [];
+var EV_CITY_FILTER = 'all';
+var EV_TYPE_FILTER = 'all';
+var MAIN_CITIES = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Новосибирск'];
+
+function loadEvents() {
+  fetch('concerts.html').then(function(r){return r.text();}).then(function(html){
+    var evArr = [];
+    // Парсим концерты
+    var m = html.match(/const CONCERTS\s*=\s*\[([\s\S]*?)\];/);
+    if (m) {
+      var re2 = /\{([^{}]*)\}/g, obj;
+      while ((obj = re2.exec(m[1])) !== null) {
+        var o = obj[1];
+        var get = function(k){ var mm=o.match(new RegExp(k+":\\s*'([^']*)'"));return mm?mm[1]:''; };
+        var t = get('title');
+        if (!t) continue;
+        var genre = get('genre').toLowerCase();
+        var typ = 'concert';
+        if (/стендап|stand.up/i.test(genre)||/стендап|stand.up/i.test(t)) typ='standup';
+        else if (/театр|спектакль|опера|балет/i.test(genre)) typ='theater';
+        var dateISO = get('dateISO');
+        var city = get('city') || 'Волгоград';
+        evArr.push({
+          title: t, date: get('date') || dateISO, dateISO: dateISO,
+          city: city, venue: get('venue') || '—', genre: get('genre'), type: typ,
+          source: 'concerts'
+        });
+      }
+    }
+    // Парсим театр
+    fetch('theater.html').then(function(r2){return r2.text();}).then(function(th){
+      var mth = th.match(/const SHOWS\s*=\s*\[([\s\S]*?)\];/);
+      if (!mth) mth = th.match(/const THEATER\s*=\s*\[([\s\S]*?)\];/);
+      if (mth) {
+        var re3 = /\{([^{}]*)\}/g, obj3;
+        while ((obj3 = re3.exec(mth[1])) !== null) {
+          var o3 = obj3[1];
+          var get3 = function(k){ var mm=o3.match(new RegExp(k+":\\s*'([^']*)'"));return mm?mm[1]:''; };
+          var t3 = get3('title');
+          if (!t3) continue;
+          evArr.push({
+            title: t3, date: get3('date'), dateISO: get3('dateISO'),
+            city: get3('city') || 'Волгоград', venue: get3('venue') || '—',
+            genre: get3('genre') || 'Театр', type: 'theater', source: 'theater'
+          });
+        }
+      }
+      ALL_EVENTS = evArr.sort(function(a,b){ return (a.dateISO||'9')<(b.dateISO||'9')?-1:1; });
+      renderEvents();
+    }).catch(function(){ ALL_EVENTS = evArr; renderEvents(); });
+  });
+}
+
+function filterEvents(city, btn) {
+  EV_CITY_FILTER = city;
+  document.querySelectorAll('.ev-city').forEach(function(b){ b.classList.remove('active'); b.classList.add('btn-outline'); b.classList.remove('btn-red'); });
+  if (btn) { btn.classList.add('active','btn-red'); btn.classList.remove('btn-outline'); }
+  renderEvents();
+}
+
+function filterEvType(type, btn) {
+  EV_TYPE_FILTER = type;
+  document.querySelectorAll('.ev-type').forEach(function(b){ b.classList.remove('active2'); });
+  if (btn) btn.classList.add('active2');
+  renderEvents();
+}
+
+function renderEvents() {
+  var today = new Date().toISOString().slice(0,10);
+  var evs = ALL_EVENTS.filter(function(e){
+    // Фильтр города
+    var cityOk = EV_CITY_FILTER === 'all' ||
+      (EV_CITY_FILTER === 'other' && MAIN_CITIES.indexOf(e.city) < 0) ||
+      e.city === EV_CITY_FILTER;
+    // Фильтр типа
+    var typeOk = EV_TYPE_FILTER === 'all' || e.type === EV_TYPE_FILTER;
+    return cityOk && typeOk;
+  });
+
+  var cnt = document.getElementById('ev-count');
+  if (cnt) cnt.textContent = 'Найдено: ' + evs.length + ' из ' + ALL_EVENTS.length;
+
+  var tbody = document.getElementById('ev-tbody');
+  if (!tbody) return;
+  if (!evs.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:24px;">Нет событий</td></tr>';
+    return;
+  }
+  var typeLabels = {concert:'🎵 Концерт', theater:'🎭 Театр', standup:'🎤 Стендап'};
+  var typeBadge  = {concert:'badge-blue', theater:'badge-green', standup:'badge-gray'};
+  tbody.innerHTML = evs.map(function(e){
+    var isPast = e.dateISO && e.dateISO < today;
+    var status = isPast ? '<span class="badge badge-gray">Прошло</span>' : '<span class="badge badge-green">Активно</span>';
+    if (!e.dateISO) status = '<span class="badge badge-gray">Дата ?</span>';
+    return '<tr style="opacity:'+(isPast?'.55':'1')+'">' +
+      '<td style="white-space:nowrap;font-size:12px;color:#888;">' + (e.date||'—').slice(0,20) + '</td>' +
+      '<td><strong>' + e.title + '</strong></td>' +
+      '<td><span class="badge ' + (typeBadge[e.type]||'badge-gray') + '">' + (typeLabels[e.type]||e.type) + '</span></td>' +
+      '<td>' + e.city + '</td>' +
+      '<td style="font-size:12px;color:#666;">' + (e.venue||'—') + '</td>' +
+      '<td>' + status + '</td></tr>';
+  }).join('');
+}
+
+// ══ ВСЕ ЗАВЕДЕНИЯ ════════════════════════════════════════════
+var VN_CITY_FILTER = 'all';
+
+var ALL_VENUES_DATA = {
+  'Волгоград': [
+    {name:'ЦКЗ Волгоградская Филармония', addr:'наб. 62-й Армии, 4', cap:'1 040', type:'Концертный зал', url:'theater-filarmonia-volgograd.html'},
+    {name:'Дом Офицеров', addr:'просп. Ленина, 31', cap:'800', type:'Концертный зал', url:'#'},
+    {name:'Кроп Арена', addr:'Университетский просп., 107', cap:'2 000', type:'Клуб', url:'#'},
+    {name:'Стадион Волгоград Арена', addr:'просп. Ленина, 76', cap:'45 000', type:'Стадион', url:'venue-volgograd-arena.html'},
+    {name:'Набережная 62-й Армии', addr:'Набережная 62-й Армии', cap:'Открытая', type:'Площадка', url:'#'},
+    {name:'Муз. театр', addr:'просп. им. Ленина, 4', cap:'700', type:'Театр', url:'theater-volgogradskiy-muzykalnyy-teatr.html'},
+    {name:'НЭТ', addr:'просп. им. Ленина, 50', cap:'500', type:'Театр', url:'#'},
+    {name:'ТЮЗ', addr:'ул. Чуйкова, 8', cap:'300', type:'Театр', url:'theater-tyuz-volgograd.html'},
+    {name:'Театр кукол', addr:'ул. Ленина, 15', cap:'200', type:'Театр', url:'theater-kukol-volgograd.html'},
+    {name:'Кино «Победа»', addr:'ул. Мира, 11', cap:'200', type:'Кинотеатр', url:'cinema.html'},
+    {name:'Музей ИЗО', addr:'ул. Чуйкова, 37', cap:'—', type:'Музей', url:'#'},
+  ],
+  'Москва': [
+    {name:'Стадион «Лужники»', addr:'Лужнецкая наб., 24', cap:'81 000', type:'Стадион', url:'#'},
+    {name:'ВТБ Арена', addr:'Ленинградское ш., 36', cap:'26 000', type:'Стадион', url:'#'},
+    {name:'Крокус Сити Холл', addr:'65-66 км МКАД', cap:'6 200', type:'Зал', url:'#'},
+    {name:'Большой зал Консерватории', addr:'ул. Б. Никитская, 13', cap:'1 737', type:'Консерватория', url:'#'},
+    {name:'Клуб 16 Tons', addr:'ул. Пресненский вал, 6', cap:'450', type:'Клуб', url:'#'},
+    {name:'Парк Горького — Зелёный театр', addr:'Крымский вал, 9', cap:'4 000', type:'Площадка', url:'#'},
+  ],
+  'Санкт-Петербург': [
+    {name:'СКК «Петербургский»', addr:'пр. Юрия Гагарина, 8', cap:'25 000', type:'Стадион', url:'#'},
+    {name:'БКЗ «Октябрьский»', addr:'Лиговский пр-т, 6', cap:'3 800', type:'Зал', url:'#'},
+    {name:'Клуб «Зал Ожидания»', addr:'наб. Обводного кан., 154', cap:'1 200', type:'Клуб', url:'#'},
+  ],
+  'Екатеринбург': [
+    {name:'Ледовый дворец «Уктус»', addr:'ул. Щербакова, 4', cap:'12 000', type:'Дворец спорта', url:'#'},
+    {name:'Клуб «Подземка»', addr:'пр-т Ленина, 50', cap:'600', type:'Клуб', url:'#'},
+  ],
+  'Казань': [
+    {name:'КЗ им. С. Сайдашева', addr:'пл. Свободы, 3', cap:'1 200', type:'Концертный зал', url:'#'},
+  ],
+  'Краснодар': [
+    {name:'Олимп Холл', addr:'ул. Стадионная, 1', cap:'5 000', type:'Зал', url:'#'},
+  ],
+  'Нижний Новгород': [
+    {name:'Нижегородская Филармония', addr:'ул. Пискунова, 9', cap:'800', type:'Концертный зал', url:'#'},
+    {name:'ДК «Октябрь»', addr:'пр. Ленина, 23', cap:'900', type:'ДК', url:'#'},
+  ],
+  'Ростов-на-Дону': [
+    {name:'Ледовый Дворец Спорта', addr:'ул. Зорге, 105', cap:'5 000', type:'Дворец спорта', url:'#'},
+    {name:'Набережная Дона', addr:'Набережная Дона', cap:'4 000', type:'Площадка', url:'#'},
+  ],
+};
+
+function filterVenues(city, btn) {
+  VN_CITY_FILTER = city;
+  document.querySelectorAll('.vn-city').forEach(function(b){ b.classList.remove('active'); b.classList.add('btn-outline'); b.classList.remove('btn-red'); });
+  if (btn) { btn.classList.add('active','btn-red'); btn.classList.remove('btn-outline'); }
+  renderVenues();
+}
+
+function renderVenues() {
+  var tbody = document.getElementById('vn-tbody');
+  if (!tbody) return;
+  var rows = [];
+  Object.keys(ALL_VENUES_DATA).forEach(function(city) {
+    var show = VN_CITY_FILTER === 'all' ||
+      (VN_CITY_FILTER === 'other' && MAIN_CITIES.indexOf(city) < 0) ||
+      city === VN_CITY_FILTER;
+    if (!show) return;
+    ALL_VENUES_DATA[city].forEach(function(v) {
+      var typeColor = v.type.indexOf('Театр')>=0||v.type.indexOf('Зал')>=0||v.type.indexOf('Консерват')>=0?'badge-blue':
+                     v.type.indexOf('Стадион')>=0||v.type.indexOf('Дворец')>=0?'badge-red':
+                     v.type.indexOf('Кино')>=0?'badge-green':'badge-gray';
+      rows.push('<tr>' +
+        '<td><strong>' + v.name + '</strong></td>' +
+        '<td>' + city + '</td>' +
+        '<td style="font-size:12px;color:#666;">' + v.addr + '</td>' +
+        '<td style="text-align:center;">' + v.cap + '</td>' +
+        '<td><span class="badge ' + typeColor + '">' + v.type + '</span></td>' +
+        '<td>' + (v.url && v.url!='#' ? '<a href="'+v.url+'" target="_blank" class="btn btn-outline btn-sm">Открыть</a>' : '—') + '</td>' +
+        '</tr>');
+    });
+  });
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:24px;">Нет площадок</td></tr>';
+  } else {
+    tbody.innerHTML = rows.join('');
+  }
+}
+
 // Инициализация
 loadDashboard();
 loadEvents();
+setTimeout(renderVenues, 100);
 </script>
 </body>
 </html>
