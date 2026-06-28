@@ -1133,8 +1133,9 @@ function loadEvents() {
         var city = get('city') || 'Волгоград';
         evArr.push({
           title: t, date: get('date') || dateISO, dateISO: dateISO,
-          city: city, venue: get('venue') || '—', genre: get('genre'), type: typ,
-          source: 'concerts'
+          city: city, venue: venue, venueAddr: get('venueAddr') || '',
+          genre: get('genre'), type: typ, source: 'concerts',
+          ticketUrl: get('ticketUrl') || ''
         });
       }
     }
