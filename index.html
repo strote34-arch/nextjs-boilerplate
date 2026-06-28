@@ -91,44 +91,102 @@ function trackTicketClick(url, title) {
     if (stored && !manual) return; // Уже есть — не меняем
   } catch(e) {}
 
-  // Определить по IP через ipapi.co (бесплатно, без ключа, 1000 req/день)
-  try {
-    var s = document.createElement('script');
-    var cb = 'afishi_geo_cb_' + Date.now();
-    window[cb] = function(data) {
-      try { document.head.removeChild(s); } catch(e) {}
-      if (!data || !data.city) return;
-      var city = CITY_MAP[data.city] || null;
-      if (!city) {
-        // Попробовать прямое название
-        var keys = Object.keys(CITY_MAP);
-        for (var i = 0; i < keys.length; i++) {
-          if (data.city.indexOf(keys[i]) >= 0 || keys[i].indexOf(data.city) >= 0) {
-            city = CITY_MAP[keys[i]]; break;
-          }
+  // ── Цепочка IP-сервисов (fallback) ───────────────────────────
+  // 1. ipapi.co       — 1 000 req/день, бесплатно, без ключа
+  // 2. ip-api.com     — 45 req/min, бесплатно, без ключа
+  // 3. freeipapi.com  — 60 req/min, бесплатно, без ключа
+  // 4. ip2location.io — 30 000 req/мес бесплатно (нужен API ключ)
+
+  function applyCity(cityEn) {
+    if (!cityEn) return false;
+    var city = CITY_MAP[cityEn] || null;
+    if (!city) {
+      var keys = Object.keys(CITY_MAP);
+      for (var i = 0; i < keys.length; i++) {
+        if (cityEn.indexOf(keys[i]) >= 0 || keys[i].indexOf(cityEn) >= 0) {
+          city = CITY_MAP[keys[i]]; break;
         }
       }
-      if (city) {
-        try {
-          var existing = localStorage.getItem('afishi_city');
-          if (!existing) {
-            localStorage.setItem('afishi_city', city);
-            // Обновить заголовок
-            var lbl = document.getElementById('cityTopLabel');
-            if (lbl) lbl.textContent = city;
-            var lbl2 = document.getElementById('cityLabel');
-            if (lbl2) lbl2.textContent = city;
-            // Перерендерить страницу
-            if (typeof renderPage === 'function') setTimeout(function(){ renderPage(city); }, 100);
-          }
-        } catch(e) {}
+    }
+    if (!city) return false;
+    try {
+      if (localStorage.getItem('afishi_city')) return true; // уже есть
+      localStorage.setItem('afishi_city', city);
+      localStorage.setItem('afishi_geo_source', 'ip');
+      var lbl = document.getElementById('cityTopLabel'); if (lbl) lbl.textContent = city;
+      var lbl2 = document.getElementById('cityLabel'); if (lbl2) lbl2.textContent = city;
+      if (typeof renderPage === 'function') setTimeout(function(){ renderPage(city); }, 100);
+    } catch(e) {}
+    return true;
+  }
+
+  // 1. ipapi.co — JSONP (поддерживает callback)
+  try {
+    var cb1 = 'afishi_geo_1_' + Date.now();
+    var s1 = document.createElement('script');
+    window[cb1] = function(data) {
+      try { document.head.removeChild(s1); } catch(e) {}
+      if (data && data.city) {
+        if (applyCity(data.city)) { delete window[cb1]; return; }
       }
-      delete window[cb];
+      // Fallback → ip-api.com
+      tryIpApiCom();
+      delete window[cb1];
     };
-    s.src = 'https://ipapi.co/json/?callback=' + cb;
-    s.onerror = function() { try{document.head.removeChild(s);}catch(e){} delete window[cb]; };
-    document.head.appendChild(s);
-  } catch(e) {}
+    s1.src = 'https://ipapi.co/json/?callback=' + cb1;
+    s1.onerror = function() {
+      try{document.head.removeChild(s1);}catch(e){}
+      delete window[cb1];
+      tryIpApiCom();
+    };
+    document.head.appendChild(s1);
+  } catch(e) { tryIpApiCom(); }
+
+  // 2. ip-api.com — fetch JSON (fields=city,status)
+  function tryIpApiCom() {
+    if (localStorage.getItem('afishi_city')) return;
+    try {
+      fetch('https://ip-api.com/json/?fields=status,city&lang=en')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d && d.status === 'success' && d.city) {
+            if (!applyCity(d.city)) tryFreeIpApi();
+          } else { tryFreeIpApi(); }
+        }).catch(function(){ tryFreeIpApi(); });
+    } catch(e) { tryFreeIpApi(); }
+  }
+
+  // 3. freeipapi.com — fetch JSON
+  function tryFreeIpApi() {
+    if (localStorage.getItem('afishi_city')) return;
+    try {
+      fetch('https://freeipapi.com/api/json/')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d && d.cityName) {
+            if (!applyCity(d.cityName)) tryIp2Location();
+          } else { tryIp2Location(); }
+        }).catch(function(){ tryIp2Location(); });
+    } catch(e) { tryIp2Location(); }
+  }
+
+  // 4. ip2location.io — fetch JSON (нужен API ключ, иначе только страна)
+  function tryIp2Location() {
+    if (localStorage.getItem('afishi_city')) return;
+    try {
+      // Попробовать без ключа (возвращает страну но не город для бесплатного плана)
+      // Для получения города нужен ключ: https://www.ip2location.io/sign-up
+      var apiKey = localStorage.getItem('afishi_ip2loc_key') || '';
+      var url = 'https://api.ip2location.io/?format=json' + (apiKey ? '&key=' + apiKey : '');
+      fetch(url)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          // ip2location.io возвращает city_name
+          var city = (d && (d.city_name || d.city)) || null;
+          if (city) applyCity(city);
+        }).catch(function(){});
+    } catch(e) {}
+  }
 })();
 </script>
 <meta name="description" content="Афиша мероприятий Волгограда: концерты, театр, кино, выставки, детские события. Билеты онлайн на kassir.ru и kassy.ru.">
