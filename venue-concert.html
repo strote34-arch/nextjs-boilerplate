@@ -3955,5 +3955,9 @@ function closeMobileMenu() {
   document.addEventListener('DOMContentLoaded',function(){setTimeout(b,200);});
 })();
 </script>
+<script>
+/* admin-panel: load sidebar banner from localStorage */
+(function(){try{var s=JSON.parse(localStorage.getItem('afishi_sidebar_banner')||'null');if(!s)return;var g=function(id){return document.getElementById(id);};if(s.icon&&g('sidebarBannerIcon'))g('sidebarBannerIcon').textContent=s.icon;if(s.title&&g('sidebarBannerTitle'))g('sidebarBannerTitle').textContent=s.title;if(s.desc&&g('sidebarBannerDesc'))g('sidebarBannerDesc').textContent=s.desc;if(s.btnText&&g('sidebarBannerBtn'))g('sidebarBannerBtn').textContent=s.btnText;if(s.btnUrl&&g('sidebarBannerBtn'))g('sidebarBannerBtn').href=s.btnUrl;if(s.bg&&g('sidebarAdBanner'))g('sidebarAdBanner').style.background=s.bg;}catch(e){}})();
+</script>
 </body>
 </html>
