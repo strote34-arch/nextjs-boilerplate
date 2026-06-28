@@ -304,6 +304,10 @@ tr:hover td{background:#fafafa;}
             <tr><td>Музыкальный театр</td><td><code>theater-volgogradskiy-muzykalnyy-teatr.html</code></td><td><a href="theater-volgogradskiy-muzykalnyy-teatr.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
             <tr><td>ТЮЗ</td><td><code>theater-tyuz-volgograd.html</code></td><td><a href="theater-tyuz-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
             <tr><td>Театр кукол</td><td><code>theater-kukol-volgograd.html</code></td><td><a href="theater-kukol-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
+            <tr><td>Кино — Киномакс</td><td><code>cinema-sinemapark-volgograd.html</code></td><td><a href="cinema-sinemapark-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
+            <tr><td>Кино — Победа</td><td><code>cinema-pobeda-volgograd.html</code></td><td><a href="cinema-pobeda-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
+            <tr><td>Выставка — Музей ИЗО</td><td><code>exhibit-muzey-izo-volgograd.html</code></td><td><a href="exhibit-muzey-izo-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
+            <tr><td>Выставка — Краеведческий</td><td><code>exhibit-kraevedcheskiy-volgograd.html</code></td><td><a href="exhibit-kraevedcheskiy-volgograd.html" target="_blank" class="btn btn-outline btn-sm">Просмотр</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -899,11 +903,12 @@ function loadConcerts() {
 
 // Подсчёт событий для дашборда
 function loadDashboard() {
-  document.getElementById('cnt-events').textContent = '90+';
   document.getElementById('cnt-venues').textContent = '12';
-  document.getElementById('cnt-city').textContent = 'Влг';
+  document.getElementById('cnt-events').textContent = '90+';
+  document.getElementById('cnt-city').textContent = localStorage.getItem('afishi_city') || 'Влг';
   loadFilms();
   loadConcerts();
+  loadEvents();
 }
 
 // Заполнить таблицу мероприятий
