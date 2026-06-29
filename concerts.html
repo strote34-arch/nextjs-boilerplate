@@ -3405,6 +3405,25 @@ const CONCERTS = [
    date:'30 ноября 2026',dateISO:'2026-11-30',time:'19:00',city:'Тюмень',age:'18+',
    venue:'ДК Железнодорожник',cast:'Участницы шоу «Женский Стендап» ТНТ',
    ticketUrl:'https://xn--80ahcadnhg0aeyqdo.xn--p1ai/'}
+,
+  // ═══ Ресторан «Волгоград» / Сизокрылый — Афиша restvlg.ru ═══════════════
+  {id:'rvlg-tribute-fadeev-jul04', title:'Трибьют Фадеев и Serebro — Black&White',
+   genre:'Живая музыка', icon:'🎵',
+   date:'4 июля 2026', dateISO:'2026-07-04', time:'21:00',
+   city:'Волгоград', age:'18+', color:'#1a0030',
+   venues:[{name:'Ресторан «Волгоград» / Сизокрылый', addr:'ул. Мира, 12'}],
+   cast:'Группа Black&White (Трибьют Фадеев × Serebro)',
+   ticketUrl:'https://qtickets.ru/event/243124',
+   rating:8},
+
+  {id:'rvlg-pasternak', title:'Поэтический вечер «Пастернак. Я тоже любил»',
+   genre:'Поэзия · Арт', icon:'📖',
+   date:'Скоро', dateISO:'2026-07-10', time:'',
+   city:'Волгоград', age:'0+', color:'#0d1a2d',
+   venues:[{name:'Ресторан «Волгоград» / Сизокрылый', addr:'ул. Мира, 12'}],
+   cast:'Поэтический вечер о любви',
+   ticketUrl:'https://qtickets.ru/event/243043',
+   rating:9}
 ];
 
 const VENUES = {
@@ -4140,7 +4159,8 @@ function isTomorrow(dateStr) {
 function makeGridCard(c) {
   const el = document.createElement('div');
   el.className='concert-card';
-  const stars='★'.repeat(Math.round(c.rating/2))+'☆'.repeat(5-Math.round(c.rating/2));
+  const _r = c.rating || 0;
+  const stars = _r > 0 ? '★'.repeat(Math.round(_r/2))+'☆'.repeat(5-Math.round(_r/2)) : '⭐⭐⭐⭐⭐';
   el.innerHTML=`
     <div class="c-poster" style="background:linear-gradient(160deg,${c.color} 0%,#111 100%);">
       ${c.photo
@@ -4155,7 +4175,7 @@ function makeGridCard(c) {
       <div class="c-title">${c.title}</div>
       <div class="c-meta"><span style="color:${isToday(c.date)?'var(--red)':isTomorrow(c.date)?'#e65100':'inherit'};font-weight:${isToday(c.date) || isTomorrow(c.date)?'700':'normal'};">📅 ${fmtEventDate(c.date)}${isToday(c.date)?' — Сегодня':isTomorrow(c.date)?' — Завтра':''}</span>${(c.venues&&c.venues[0]&&c.venues[0].times&&c.venues[0].times[0])?' · ⏰ '+(c.venues[0].times[0]):c.time?' · ⏰ '+c.time:''}</div>
       <div class="c-venue">${(function(){
-        var vn = (c.venues && c.venues[0] && c.venues[0].name) || '';
+        var vn = (c.venues && c.venues[0] && c.venues[0].name) || c.venue || '';
         if(!vn) return '';
         var url = VENUE_URL_MAP[vn];
         return url
@@ -4164,7 +4184,7 @@ function makeGridCard(c) {
       })()}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
         <span class="c-stars">${stars}</span>
-        <span class="c-score">${c.rating}</span>
+        <span class="c-score">${c.rating || ''}</span>
         <span style="font-size:11px;color:var(--light);">(${((c.votes|| 0)/1000).toFixed(1)}K)</span>
       </div>
       <div class="c-bottom">
