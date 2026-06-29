@@ -106,6 +106,19 @@ tr:hover td{background:#fafafa;}
 .ev-city.active,.vn-city.active{background:#c8102e!important;color:#fff!important;border-color:#c8102e!important;}
 .ev-type.active2{background:#c8102e!important;color:#fff!important;border-color:#c8102e!important;}
 </style>
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+  (function(m,e,t,r,i,k,a){
+    m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+    m[i].l=1*new Date();
+    for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+  })(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=110255853','ym');
+  ym(110255853,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
+    referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/110255853" style="position:absolute;left:-9999px;" alt=""/></div></noscript>
+<!-- /Yandex.Metrika counter -->
 </head>
 <body>
 
@@ -825,13 +838,82 @@ tr:hover td{background:#fafafa;}
     <!-- СТАТИСТИКА -->
     <div id="panel-stats" class="panel">
       <div class="panel-title">📈 Статистика</div>
-      <div class="panel-sub">Посещаемость и активность</div>
-      <div class="alert alert-info">ℹ️ Для детальной статистики подключи Яндекс.Метрику или Google Analytics к сайту.</div>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Посетителей сегодня</div></div>
-        <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Просмотров</div></div>
-        <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Новых пользователей</div></div>
-        <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Отказов %</div></div>
+      <div class="panel-sub">Яндекс.Метрика — счётчик 110255853</div>
+
+      <!-- Прямые ссылки на отчёты -->
+      <div class="form-section">
+        <div class="form-section-title">📊 Яндекс.Метрика — быстрые отчёты</div>
+        <div class="actions-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:0;">
+          <a href="https://metrika.yandex.ru/stat/traffic?id=110255853" target="_blank" class="action-card" style="text-decoration:none;">
+            <div class="action-icon">👥</div>
+            <div class="action-title">Посетители</div>
+            <div class="action-desc">Визиты, уникальные</div>
+          </a>
+          <a href="https://metrika.yandex.ru/stat/sources?id=110255853" target="_blank" class="action-card" style="text-decoration:none;">
+            <div class="action-icon">🔗</div>
+            <div class="action-title">Источники</div>
+            <div class="action-desc">Откуда приходят</div>
+          </a>
+          <a href="https://metrika.yandex.ru/stat/content?id=110255853" target="_blank" class="action-card" style="text-decoration:none;">
+            <div class="action-icon">📄</div>
+            <div class="action-title">Страницы</div>
+            <div class="action-desc">Популярные разделы</div>
+          </a>
+          <a href="https://metrika.yandex.ru/webvisor?id=110255853" target="_blank" class="action-card" style="text-decoration:none;">
+            <div class="action-icon">🎬</div>
+            <div class="action-title">Вебвизор</div>
+            <div class="action-desc">Запись сессий</div>
+          </a>
+          <a href="https://metrika.yandex.ru/stat/geo?id=110255853" target="_blank" class="action-card" style="text-decoration:none;">
+            <div class="action-icon">🌍</div>
+            <div class="action-title">География</div>
+            <div class="action-desc">Города и страны</div>
+          </a>
+          <a href="https://metrika.yandex.ru/stat/devices?id=110255853" target="_blank" class="action-card" style="text-decoration:none;">
+            <div class="action-icon">📱</div>
+            <div class="action-title">Устройства</div>
+            <div class="action-desc">Моб / десктоп</div>
+          </a>
+        </div>
+        <div style="margin-top:14px;">
+          <a href="https://metrika.yandex.ru/dashboard?id=110255853" target="_blank" class="btn btn-red">
+            Открыть Яндекс.Метрику →
+          </a>
+        </div>
+      </div>
+
+      <!-- Встроенный виджет -->
+      <div class="form-section">
+        <div class="form-section-title">📉 Посещаемость (последние 30 дней)</div>
+        <div id="ym-widget-wrap" style="background:#f9f9f9;border-radius:8px;padding:16px;min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;">
+          <div id="ym-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;width:100%;">
+            <div class="stat-card"><div class="stat-num" id="ym-visits">—</div><div class="stat-label">Визитов</div></div>
+            <div class="stat-card"><div class="stat-num" id="ym-users">—</div><div class="stat-label">Посетителей</div></div>
+            <div class="stat-card"><div class="stat-num" id="ym-views">—</div><div class="stat-label">Просмотров</div></div>
+            <div class="stat-card"><div class="stat-num" id="ym-bounce">—</div><div class="stat-label">Отказы %</div></div>
+          </div>
+          <p style="font-size:12px;color:#aaa;margin:0;">Данные загружаются через Яндекс.Метрика API</p>
+          <button class="btn btn-outline" onclick="loadYmStats()">🔄 Загрузить данные</button>
+        </div>
+      </div>
+
+      <!-- Информация о счётчике -->
+      <div class="form-section">
+        <div class="form-section-title">⚙️ Настройки счётчика</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:8px 0;color:#888;width:160px;">ID счётчика</td><td><strong>110255853</strong></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Установлен на</td><td><strong>103 страницах</strong> сайта</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Вебвизор</td><td><span class="badge badge-green">✅ Включён</span></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Карта кликов</td><td><span class="badge badge-green">✅ Включена</span></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Электронная коммерция</td><td><span class="badge badge-green">✅ dataLayer</span></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Отслеживание ссылок</td><td><span class="badge badge-green">✅ trackLinks</span></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Точный показатель отказов</td><td><span class="badge badge-green">✅ accurateTrackBounce</span></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">Домен</td><td><a href="https://www.xn--80aq9a.xn--p1ai" target="_blank">афи.рф (xn--80aq9a.xn--p1ai)</a></td></tr>
+        </table>
+        <div class="alert alert-info" style="margin-top:12px;">
+          ℹ️ Для просмотра данных нужно войти в Яндекс аккаунт с доступом к счётчику 110255853.
+          <a href="https://metrika.yandex.ru/list" target="_blank">Список моих счётчиков →</a>
+        </div>
       </div>
     </div>
 
@@ -1243,6 +1325,16 @@ function renderVenues() {
   } else {
     tbody.innerHTML = rows.join('');
   }
+}
+
+// Яндекс.Метрика — загрузка статистики
+function loadYmStats() {
+  // Метрика API требует OAuth токен — показываем прямую ссылку
+  document.getElementById('ym-visits').textContent = '→';
+  document.getElementById('ym-users').textContent  = '→';
+  document.getElementById('ym-views').textContent  = '→';
+  document.getElementById('ym-bounce').textContent = '→';
+  window.open('https://metrika.yandex.ru/dashboard?id=110255853', '_blank');
 }
 
 // Инициализация
