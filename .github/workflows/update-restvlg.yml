@@ -1,0 +1,42 @@
+name: 🍽️ Авто-обновление афиши Ресторана Волгоград
+
+on:
+  schedule:
+    # Каждую субботу в 09:00 МСК (06:00 UTC)
+    - cron: '0 6 * * 6'
+  workflow_dispatch:
+    # Ручной запуск через GitHub Actions UI
+
+jobs:
+  update-afisha:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install requests beautifulsoup4
+
+      - name: Fetch & parse restvlg.ru afisha
+        run: python3 .github/scripts/update_restvlg.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.email "267908861+strote34-arch@users.noreply.github.com"
+          git config user.name "strote34-arch"
+          git add concerts.html
+          if git diff --staged --quiet; then
+            echo "Новых событий нет — пропускаем коммит"
+          else
+            DATE=$(date +'%d.%m.%Y')
+            git commit -m "auto: Ресторан Волгоград — обновление афиши ${DATE}"
+            git push
+            echo "✅ Афиша обновлена и задеплоена!"
+          fi
