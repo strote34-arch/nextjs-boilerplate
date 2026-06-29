@@ -1140,55 +1140,7 @@ var EV_CITY_FILTER = 'all';
 var EV_TYPE_FILTER = 'all';
 var MAIN_CITIES = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Новосибирск'];
 
-function loadEvents() {
-  fetch('concerts.html').then(function(r){return r.text();}).then(function(html){
-    var evArr = [];
-    // Парсим концерты
-    var m = html.match(/const CONCERTS\s*=\s*\[([\s\S]*?)\];/);
-    if (m) {
-      var re2 = /\{([^{}]*)\}/g, obj;
-      while ((obj = re2.exec(m[1])) !== null) {
-        var o = obj[1];
-        var get = function(k){ var mm=o.match(new RegExp(k+":\\s*'([^']*)'"));return mm?mm[1]:''; };
-        var t = get('title');
-        if (!t) continue;
-        var genre = get('genre').toLowerCase();
-        var typ = 'concert';
-        if (/стендап|stand.up/i.test(genre)||/стендап|stand.up/i.test(t)) typ='standup';
-        else if (/театр|спектакль|опера|балет/i.test(genre)) typ='theater';
-        var dateISO = get('dateISO');
-        var city = get('city') || 'Волгоград';
-        evArr.push({
-          title: t, date: get('date') || dateISO, dateISO: dateISO,
-          city: city, venue: venue, venueAddr: get('venueAddr') || '',
-          genre: get('genre'), type: typ, source: 'concerts',
-          ticketUrl: get('ticketUrl') || ''
-        });
-      }
-    }
-    // Парсим театр
-    fetch('theater.html').then(function(r2){return r2.text();}).then(function(th){
-      var mth = th.match(/const SHOWS\s*=\s*\[([\s\S]*?)\];/);
-      if (!mth) mth = th.match(/const THEATER\s*=\s*\[([\s\S]*?)\];/);
-      if (mth) {
-        var re3 = /\{([^{}]*)\}/g, obj3;
-        while ((obj3 = re3.exec(mth[1])) !== null) {
-          var o3 = obj3[1];
-          var get3 = function(k){ var mm=o3.match(new RegExp(k+":\\s*'([^']*)'"));return mm?mm[1]:''; };
-          var t3 = get3('title');
-          if (!t3) continue;
-          evArr.push({
-            title: t3, date: get3('date'), dateISO: get3('dateISO'),
-            city: get3('city') || 'Волгоград', venue: get3('venue') || '—',
-            genre: get3('genre') || 'Театр', type: 'theater', source: 'theater'
-          });
-        }
-      }
-      ALL_EVENTS = evArr.sort(function(a,b){ return (a.dateISO||'9')<(b.dateISO||'9')?-1:1; });
-      renderEvents();
-    }).catch(function(){ ALL_EVENTS = evArr; renderEvents(); });
-  });
-}
+
 
 function filterEvents(city, btn) {
   EV_CITY_FILTER = city;
