@@ -1654,18 +1654,7 @@ var FOOTER_VENUES = {
     {name:'Муз. театр',                    href:'theater-volgogradskiy-muzykalnyy-teatr.html'},
     {name:'НЭТ',                           href:'theater-net-novyy-eksperimentalnyy.html'},
     {name:'ТЮЗ',                           href:'theater-tyuz-volgograd.html'},
-    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'},
-  {id:'dom-oficerov',name:'Дом Офицеров',
-   addr:'просп. Ленина, 31, Волгоград',
-   maps:'https://maps.yandex.ru/?text=Дом+Офицеров+Волгоград+проспект+Ленина+31',
-   icon:'🏛️',phone:'8 (8442) 23-43-33',url:'venue-dom-ofitserov-volgograd.html',
-   desc:'Один из старейших культурных центров Волгограда. Концерты, спектакли, детские программы. Касса: 98-88-22.',
-   pushkin:false,ticketUrl:'http://vlg.kassamix.ru/',
-   events:[
-     {title:'Спектакль «Ирония любви»',dateISO:'2026-10-08',date:'8 окт',time:'19:00',price:'от 500 ₽',age:'12+',genre:'Спектакль · Комедия'},
-     {title:'Спектакль «Операция Авокадо»',dateISO:'2026-11-06',date:'6 ноя',time:'19:00',price:'от 500 ₽',age:'12+',genre:'Спектакль · Комедия'},
-     {title:'Спектакль «Счастье по приговору»',dateISO:'2026-11-27',date:'27 ноя',time:'19:00',price:'от 500 ₽',age:'12+',genre:'Спектакль · Драма'}
-   ]}
+    {name:'Музей ИЗО',                     href:'exhibit-muzey-izo-volgograd.html'}
   ],
   'Москва': [
     {name:'Олимпийский',       href:'concerts.html'},
@@ -1800,7 +1789,19 @@ var THEATERS_DB = {
       {title:'Спектакль «Авантюра»',date:'апр 2027',time:'19:00',price:'от 1500 ₽',age:'16+',genre:'Комедия'},
       {title:'Спектакль «Оскар и розовая дама»',date:'май 2027',time:'19:00',price:'от 2000 ₽',age:'12+',genre:'Драма'}
     ]}
-  ],
+  ,
+  {id:'dom-oficerov',name:'Дом Офицеров',
+   addr:'просп. Ленина, 31, Волгоград',
+   maps:'https://maps.yandex.ru/?text=Дом+Офицеров+Волгоград',
+   icon:'🏛️',phone:'8 (8442) 23-43-33',url:'venue-dom-ofitserov-volgograd.html',
+   desc:'Один из старейших культурных центров Волгограда. Концерты, спектакли, детские программы. Касса: 98-88-22.',
+   pushkin:false,ticketUrl:'http://vlg.kassamix.ru/',
+   events:[
+     {title:'Спектакль «Ирония любви»',dateISO:'2026-10-08',date:'8 окт',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль'},
+     {title:'Спектакль «Операция Авокадо»',dateISO:'2026-11-06',date:'6 ноя',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль'},
+     {title:'Спектакль «Счастье по приговору»',dateISO:'2026-11-27',date:'27 ноя',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль'}
+   ]}
+],
   'Москва': [
     {id:'bolshoy',name:'Большой театр',addr:'Театральная пл., 1',
      icon:'🎭',phone:'+7(495)455-55-55',url:'#',
