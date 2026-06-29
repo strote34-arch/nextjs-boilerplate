@@ -3974,6 +3974,10 @@ function applyFilters() {
   // Guard: remove any undefined/id-less items before rendering
   concerts = concerts.filter(function(x){ return x && x.id !== undefined; });
 
+  // Очистить грид перед рендером — иначе карточки дублируются при повторных вызовах
+  if(grid) grid.innerHTML = '';
+  if(list) list.innerHTML = '';
+
   concerts.forEach(function(con) {
     try {
       if (currentView==='grid') { if(grid) grid.appendChild(makeGridCard(con)); }
