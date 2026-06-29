@@ -105,6 +105,19 @@ tr:hover td{background:#fafafa;}
 .toggle.on::after{left:21px;}
 .ev-city.active,.vn-city.active{background:#c8102e!important;color:#fff!important;border-color:#c8102e!important;}
 .ev-type.active2{background:#c8102e!important;color:#fff!important;border-color:#c8102e!important;}
+
+/* ── Модальное окно редактирования ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal-box{background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;margin-bottom:16px;}
+.modal-header h3{font-size:18px;font-weight:700;margin:0;}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#888;padding:4px 8px;border-radius:4px;}
+.modal-close:hover{background:#f5f5f5;color:#333;}
+.modal-body{padding:0 24px 20px;}
+.modal-footer{padding:16px 24px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;background:#fafafa;border-radius:0 0 12px 12px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:540px){.form-row{grid-template-columns:1fr;}}
+.badge-edited{background:#fff3cd;color:#856404;border:1px solid #ffc107;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;}
 </style>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
@@ -1056,6 +1069,7 @@ function renderEvents() {
       +'<td style="font-size:12px;">'+e.city+'</td>'
       +'<td style="font-size:12px;color:#555;">'+(e.venue||'—')+'</td>'
       +'<td>'+status+ticket+'</td>'
+      +'<td><button class="btn btn-outline btn-sm" onclick="openEditEvent(\'' + e.id + '\')">✏️</button></td>'
       +'</tr>';
   }).join('');
 }
@@ -1337,10 +1351,353 @@ function loadYmStats() {
   window.open('https://metrika.yandex.ru/dashboard?id=110255853', '_blank');
 }
 
+
+// ══ РЕДАКТИРОВАНИЕ СОБЫТИЙ ════════════════════════════════════════════════
+
+// Ключ хранилища правок
+var EDITS_KEY = 'afishi_event_edits';
+
+function getEdits() {
+  try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveEdits(edits) {
+  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+}
+
+function openEditEvent(evId) {
+  // Найти событие в ALL_EVENTS
+  var ev = null;
+  for(var i=0;i<ALL_EVENTS.length;i++){ if(ALL_EVENTS[i].id===evId){ ev=ALL_EVENTS[i]; break; } }
+  if(!ev){ toast('Событие не найдено: '+evId); return; }
+
+  // Загрузить правки из localStorage
+  var edits = getEdits();
+  var ov = edits[evId] || {};
+
+  // Заполнить форму
+  document.getElementById('edit-id').value    = evId;
+  document.getElementById('edit-title').value = ov.title  || ev.title  || '';
+  document.getElementById('edit-dateiso').value = (ov.dateISO||ev.dateISO||'').slice(0,10);
+  document.getElementById('edit-time').value  = ov.time   || ev.time   || '';
+  document.getElementById('edit-venue').value = ov.venue  || ev.venue  || '';
+  document.getElementById('edit-cast').value  = ov.cast   || ev.cast   || '';
+  document.getElementById('edit-genre').value = ov.genre  || ev.genre  || '';
+  document.getElementById('edit-ticket').value= ov.ticketUrl||ev.ticketUrl||'';
+
+  // Выбрать город
+  var selCity = document.getElementById('edit-city');
+  var city = ov.city || ev.city || 'Волгоград';
+  var found = false;
+  for(var j=0;j<selCity.options.length;j++){
+    if(selCity.options[j].value === city || selCity.options[j].text === city){
+      selCity.selectedIndex = j; found = true; break;
+    }
+  }
+  if(!found){ selCity.value = 'Другой'; }
+
+  // Тип
+  var selType = document.getElementById('edit-type');
+  selType.value = ov.type || ev.type || 'concert';
+
+  // Возраст
+  var selAge = document.getElementById('edit-age');
+  var age = ov.age || ev.age || '6+';
+  for(var k=0;k<selAge.options.length;k++){
+    if(selAge.options[k].value===age||selAge.options[k].text===age){selAge.selectedIndex=k;break;}
+  }
+
+  // Показать/скрыть кнопку сброса
+  document.getElementById('btn-reset-edit').style.display = edits[evId] ? 'inline-flex' : 'none';
+
+  var warn = document.getElementById('edit-warn');
+  if(edits[evId]){
+    warn.style.display='block';
+    warn.textContent='ℹ️ Это событие было отредактировано. Изменения хранятся локально.';
+  } else {
+    warn.style.display='none';
+  }
+
+  document.getElementById('editEventModal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeModal() {
+  document.getElementById('editEventModal').style.display='none';
+  document.body.style.overflow='';
+}
+
+function saveEditEvent() {
+  var evId  = document.getElementById('edit-id').value;
+  var title = document.getElementById('edit-title').value.trim();
+  if(!title){ toast('Введите название'); return; }
+
+  var edits = getEdits();
+  edits[evId] = {
+    title:     title,
+    dateISO:   document.getElementById('edit-dateiso').value,
+    time:      document.getElementById('edit-time').value,
+    city:      document.getElementById('edit-city').value,
+    type:      document.getElementById('edit-type').value,
+    venue:     document.getElementById('edit-venue').value.trim(),
+    cast:      document.getElementById('edit-cast').value.trim(),
+    genre:     document.getElementById('edit-genre').value.trim(),
+    age:       document.getElementById('edit-age').value,
+    ticketUrl: document.getElementById('edit-ticket').value.trim(),
+    _editedAt: new Date().toISOString(),
+  };
+  saveEdits(edits);
+
+  // Применить к ALL_EVENTS
+  for(var i=0;i<ALL_EVENTS.length;i++){
+    if(ALL_EVENTS[i].id===evId){
+      Object.assign(ALL_EVENTS[i], edits[evId]);
+      break;
+    }
+  }
+
+  closeModal();
+  renderEvents();
+  toast('✅ Сохранено! Изменения хранятся локально.');
+}
+
+function deleteEditOverride() {
+  var evId = document.getElementById('edit-id').value;
+  var edits = getEdits();
+  delete edits[evId];
+  saveEdits(edits);
+  closeModal();
+  // Восстановить из оригинала (перезагрузить)
+  loadEvents();
+  toast('↩ Правки для этого события сброшены');
+}
+
+// Применить локальные правки к ALL_EVENTS при загрузке
+function applyLocalEdits() {
+  var edits = getEdits();
+  var ids = Object.keys(edits);
+  if(!ids.length) return;
+  for(var i=0;i<ALL_EVENTS.length;i++){
+    var ov = edits[ALL_EVENTS[i].id];
+    if(ov) Object.assign(ALL_EVENTS[i], ov);
+  }
+}
+
+// ══ РЕДАКТИРОВАНИЕ ЗАВЕДЕНИЙ ══════════════════════════════════════════════
+
+var VENUE_EDITS_KEY = 'afishi_venue_edits';
+var _editingVenueCity = null;
+var _editingVenueIdx  = null;
+
+function openEditVenue(city, idx) {
+  _editingVenueCity = city;
+  _editingVenueIdx  = idx;
+  var v = (ALL_VENUES_DATA[city] || [])[idx];
+  if(!v){ toast('Заведение не найдено'); return; }
+
+  // Проверить локальные правки
+  try {
+    var ve = JSON.parse(localStorage.getItem(VENUE_EDITS_KEY)||'{}');
+    var key = city+'_'+idx;
+    v = Object.assign({}, v, ve[key]||{});
+  } catch(e){}
+
+  document.getElementById('vedit-key').value   = city+'_'+idx;
+  document.getElementById('vedit-name').value  = v.name  || '';
+  document.getElementById('vedit-city').value  = city;
+  document.getElementById('vedit-addr').value  = v.addr  || '';
+  document.getElementById('vedit-cap').value   = v.cap   || '';
+  document.getElementById('vedit-url').value   = v.url   || '';
+  document.getElementById('vedit-phone').value = v.phone || '';
+
+  var selType = document.getElementById('vedit-type');
+  for(var i=0;i<selType.options.length;i++){
+    if(v.type && (selType.options[i].value===v.type||selType.options[i].text===v.type)){
+      selType.selectedIndex=i; break;
+    }
+  }
+
+  document.getElementById('editVenueModal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeVenueModal() {
+  document.getElementById('editVenueModal').style.display='none';
+  document.body.style.overflow='';
+}
+
+function saveEditVenue() {
+  var key  = document.getElementById('vedit-key').value;
+  var name = document.getElementById('vedit-name').value.trim();
+  if(!name){ toast('Введите название'); return; }
+
+  var city = _editingVenueCity;
+  var idx  = _editingVenueIdx;
+
+  var data = {
+    name:  name,
+    addr:  document.getElementById('vedit-addr').value.trim(),
+    cap:   document.getElementById('vedit-cap').value.trim(),
+    type:  document.getElementById('vedit-type').value,
+    url:   document.getElementById('vedit-url').value.trim(),
+    phone: document.getElementById('vedit-phone').value.trim(),
+  };
+
+  // Обновить в памяти
+  if(ALL_VENUES_DATA[city] && ALL_VENUES_DATA[city][idx]){
+    Object.assign(ALL_VENUES_DATA[city][idx], data);
+  }
+
+  // Сохранить в localStorage
+  try {
+    var ve = JSON.parse(localStorage.getItem(VENUE_EDITS_KEY)||'{}');
+    ve[key] = data;
+    localStorage.setItem(VENUE_EDITS_KEY, JSON.stringify(ve));
+  } catch(e){}
+
+  closeVenueModal();
+  renderVenues();
+  toast('✅ Заведение обновлено!');
+}
+
 // Инициализация
 loadDashboard();
 loadEvents();
+applyLocalEdits();
 setTimeout(renderVenues, 100);
 </script>
+
+<!-- ═══ МОДАЛЬНОЕ ОКНО — РЕДАКТИРОВАНИЕ СОБЫТИЯ ═══ -->
+<div id="editEventModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>✏️ Редактировать событие</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-group">
+        <label class="form-label">Название</label>
+        <input class="form-input" id="edit-title" placeholder="Название события">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Дата (ГГГГ-ММ-ДД)</label>
+          <input class="form-input" id="edit-dateiso" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Время</label>
+          <input class="form-input" id="edit-time" type="time" placeholder="19:00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Город</label>
+          <select class="form-select" id="edit-city">
+            <option>Волгоград</option><option>Москва</option><option>Санкт-Петербург</option>
+            <option>Екатеринбург</option><option>Казань</option><option>Краснодар</option>
+            <option>Ростов-на-Дону</option><option>Новосибирск</option><option>Сочи</option>
+            <option>Томск</option><option>Омск</option><option>Красноярск</option>
+            <option>Барнаул</option><option>Тюмень</option><option>Петрозаводск</option>
+            <option>Дубай</option><option>Другой</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Тип</label>
+          <select class="form-select" id="edit-type">
+            <option value="concert">🎵 Концерт</option>
+            <option value="theater">🎭 Театр</option>
+            <option value="standup">🎤 Стендап</option>
+            <option value="cinema">🎬 Кино</option>
+            <option value="art">🎨 Арт / Выставка</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Площадка</label>
+        <input class="form-input" id="edit-venue" placeholder="ЦКЗ, Дом Офицеров...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Состав / Артисты</label>
+        <input class="form-input" id="edit-cast" placeholder="Имя артиста, группа...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Возраст</label>
+          <select class="form-select" id="edit-age">
+            <option>0+</option><option>6+</option><option>12+</option><option>16+</option><option>18+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Жанр</label>
+          <input class="form-input" id="edit-genre" placeholder="Концерт · Эстрада">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ссылка на билеты</label>
+        <input class="form-input" id="edit-ticket" type="url" placeholder="https://kassir.ru/...">
+      </div>
+      <div id="edit-warn" style="display:none;" class="alert alert-info" style="margin-top:12px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-outline" onclick="deleteEditOverride()" style="color:#c8102e;border-color:#c8102e;" id="btn-reset-edit">↩ Сбросить правки</button>
+      <button class="btn btn-red" onclick="saveEditEvent()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ МОДАЛЬНОЕ ОКНО — РЕДАКТИРОВАНИЕ ЗАВЕДЕНИЯ ═══ -->
+<div id="editVenueModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeVenueModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>✏️ Редактировать заведение</h3>
+      <button class="modal-close" onclick="closeVenueModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="vedit-key">
+      <div class="form-group">
+        <label class="form-label">Название площадки</label>
+        <input class="form-input" id="vedit-name" placeholder="ЦКЗ Волгоградская Филармония">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Город</label>
+          <input class="form-input" id="vedit-city" placeholder="Волгоград">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Тип</label>
+          <select class="form-select" id="vedit-type">
+            <option>Концертный зал</option><option>Театр</option><option>Стадион</option>
+            <option>Кинотеатр</option><option>Клуб</option><option>ДК</option>
+            <option>Музей</option><option>Ресторан</option><option>Площадка</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Адрес</label>
+        <input class="form-input" id="vedit-addr" placeholder="ул. Ленина, 31">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Вместимость</label>
+          <input class="form-input" id="vedit-cap" placeholder="1 000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Телефон</label>
+          <input class="form-input" id="vedit-phone" placeholder="+7 (8442) ...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Сайт / Страница</label>
+        <input class="form-input" id="vedit-url" placeholder="https://...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeVenueModal()">Отмена</button>
+      <button class="btn btn-red" onclick="saveEditVenue()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
