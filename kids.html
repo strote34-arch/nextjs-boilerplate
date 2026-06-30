@@ -1522,10 +1522,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 // ── KIDS_DB: мероприятия для детей ────────────────────────────────
 var KIDS_DB = [
-  {id:'k001',title:'Цирк на Волге — Новая программа',icon:'🎪',color:'#c8102e',
-   cat:'Цирк',age:'3+',price:'от 400 ₽',venue:'Цирк Волгограда',city:'Волгоград',
-   dateISO:'2026-06-21',date:'21 июня 2026',time:'12:00',rating:4.8,hot:true,
-   desc:'Яркое шоу с акробатами, клоунами и дрессированными животными.'},
+  {id:'k001',title:'Тигры на земле и в воздухе',icon:'🐯',color:'#c8102e',
+   cat:'Цирк',age:'0+',price:'от 1000 ₽',venue:'Волгоградский государственный цирк',city:'Волгоград',
+   dateISO:'2026-08-01',endDateISO:'2026-08-30',date:'с 1 по 30 августа 2026',time:'',rating:4.9,hot:true,
+   ticketUrl:'https://vog.ticketland.ru/cirki/saratovskiy-cirk/tigry-na-zemle-i-v-vozdukhe/',
+   desc:'Аттракцион Ярослава Запашного — потомственного артиста старейшей цирковой династии в пятом поколении. Воздушные гимнасты, акробаты, высшая школа верховой езды, дрессированные попугаи и финальный номер «Тигры на земле и в воздухе».'},
   {id:'k002',title:'Буратино — спектакль ТЮЗ',icon:'🎭',color:'#1a0a2e',
    cat:'Театр',age:'4+',price:'от 300 ₽',venue:'ТЮЗ Волгоград',city:'Волгоград',
    dateISO:'2026-06-28',date:'28 июня 2026',time:'12:00',rating:4.7,
@@ -1583,9 +1584,9 @@ function renderKidsPage(city) {
 
   // Фильтрация
   var events = KIDS_DB.filter(function(e){
-    return e.city === city && e.dateISO && e.dateISO >= todayISO;
+    return e.city === city && e.dateISO && (e.endDateISO ? e.endDateISO >= todayISO : e.dateISO >= todayISO);
   }).sort(function(a,b){ return a.dateISO < b.dateISO ? -1 : 1; });
-  if (!events.length) events = KIDS_DB.filter(function(e){ return e.dateISO >= todayISO; });
+  if (!events.length) events = KIDS_DB.filter(function(e){ return e.endDateISO ? e.endDateISO >= todayISO : e.dateISO >= todayISO; });
 
   // Статистика
   var heroCount = document.getElementById('heroCount');
@@ -1606,7 +1607,7 @@ function renderKidsPage(city) {
 
   grid.style.display = '';
   grid.innerHTML = events.map(function(ev) {
-    return '<div class="kcard" onclick="alert(\''+ev.title+'\')">'
+    return '<div class="kcard" style="cursor:pointer;" onclick="'+(ev.ticketUrl ? "window.open('"+ev.ticketUrl+"','_blank')" : "alert('"+ev.title.replace(/'/g,"\\'")+"')")+'">'
       + '<div class="kcard-img" style="background:'+ev.color+';">'
       + '<span class="big-icon">'+ev.icon+'</span>'
       + '<div class="age-ribbon" style="background:var(--red);">'+ev.age+'</div>'
@@ -1615,7 +1616,7 @@ function renderKidsPage(city) {
       + '<div style="padding:12px;">'
       + (ev.hot ? '<span style="background:#c8102e;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;display:inline-block;">🔥 Популярное</span><br>' : '')
       + '<div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#1a1a1a;line-height:1.3;margin-bottom:5px;">'+ev.title+'</div>'
-      + '<div style="font-size:12px;color:#888;margin-bottom:8px;">📅 '+fmtD(ev.dateISO)+(ev.time?' · ⏰ '+ev.time:'')+'</div>'
+      + '<div style="font-size:12px;color:#888;margin-bottom:8px;">📅 '+(ev.date||fmtD(ev.dateISO))+(ev.time?' · ⏰ '+ev.time:'')+'</div>'
       + '<div style="font-size:12px;color:#666;margin-bottom:8px;">📍 '+ev.venue+'</div>'
       + '<div style="display:flex;justify-content:space-between;align-items:center;">'
       + '<span style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:var(--red);">'+ev.price+'</span>'
