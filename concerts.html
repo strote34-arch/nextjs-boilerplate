@@ -8040,6 +8040,14 @@ window.switchCity = function(city, btn) {
       if (typeof syncConcertsToAdmin === 'function') syncConcertsToAdmin();
       // Главный рендер
       if (typeof applyFilters === 'function') applyFilters();
+
+      // ── Открыть конкретный концерт по якорю #id (переход с главной) ──
+      if (location.hash && location.hash.length > 1) {
+        var _deepId = decodeURIComponent(location.hash.slice(1));
+        setTimeout(function() {
+          if (typeof openModal === 'function') openModal(_deepId);
+        }, 150);
+      }
     } catch(e) { console.warn('initConcertsPage error:', e); }
   }
   if (document.readyState === 'loading') {

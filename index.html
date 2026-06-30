@@ -536,6 +536,41 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
   .concerts-grid{grid-template-columns:1fr !important;}
 }
 
+/* ---- MOBILE NAV STRIP (видимая горизонтальная полоса в шапке на мобильном) ---- */
+.mobile-nav-strip { display: none; }
+@media (max-width: 768px) {
+  .mobile-nav-strip {
+    display: block;
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .mobile-nav-strip-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+  .mobile-nav-strip-inner::-webkit-scrollbar { display: none; }
+  .mobile-nav-strip-inner a {
+    flex-shrink: 0;
+    color: #ddd;
+    text-decoration: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.06);
+  }
+  .mobile-nav-strip-inner a:active { background: var(--red); color: #fff; }
+}
+
 /* ---- CITY STRIP ---- */
 .city-strip {
   background: var(--white);
@@ -3537,6 +3572,13 @@ function renderHeader(activePage) {
     </div>
   </header>
 
+<!-- MOBILE NAV STRIP (всегда видна на мобильном, без ☰) -->
+<div class="mobile-nav-strip">
+  <div class="mobile-nav-strip-inner">
+    <a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+  </div>
+</div>
+
 <!-- CITY STRIP -->
 <div class="city-strip">
   <div class="city-strip-inner" id="cityPillsContainer">
@@ -3915,7 +3957,7 @@ function renderAIRecs(city) {
   aiSection.style.display = '';
   aiGrid.innerHTML = recs.map(function(ev){
     var bg = ev.photo || ev.poster || '';
-    return '<div class="event-card ec-link" data-href="concerts.html" data-event-id="'+ev.id+'" style="cursor:pointer;">'
+    return '<div class="event-card ec-link" data-href="concerts.html#'+encodeURIComponent(ev.id||'')+'" data-event-id="'+ev.id+'" style="cursor:pointer;">'
       + '<div class="event-card-img" style="background:'+ev.color+';position:relative;height:130px;">'
       + (bg ? '<img src="'+bg+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.remove()">' : '<span style="font-size:36px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">'+ev.icon+'</span>')
       + '<div style="position:absolute;top:6px;left:6px;background:linear-gradient(135deg,#7b1fa2,#c2185b);color:#fff;font-size:9px;font-family:Oswald,sans-serif;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;">✨ Для вас</div>'
@@ -3948,7 +3990,7 @@ function renderConcertCard(ev) {
   var imgHtml = photo
     ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" loading="lazy" onerror="this.remove()">'
     : '<span style="font-size:36px;">'+ev.icon+'</span>';
-  return '<div class="event-card ec-link" data-href="concerts.html" style="cursor:pointer;">'
+  return '<div class="event-card ec-link" data-href="concerts.html#'+encodeURIComponent(ev.id||'')+'" style="cursor:pointer;">'
     +'<div class="event-card-img" style="background:'+ev.color+';position:relative;">'+imgHtml+'</div>'
     +'<div class="event-card-body">'
     +'<div class="event-card-cat">'+ev.genre+'</div>'
@@ -3961,7 +4003,7 @@ function renderFilmCard(f) {
   var imgHtml = f.img
     ? '<img src="'+f.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" loading="lazy" onerror="this.remove()">'
     : '';
-  return '<div class="event-card ec-link" data-href="cinema.html" style="cursor:pointer;">'
+  return '<div class="event-card ec-link" data-href="cinema.html#'+encodeURIComponent(f.id||'')+'" style="cursor:pointer;">'
     +'<div class="event-card-img" style="background:'+f.color+';display:flex;align-items:center;justify-content:center;font-size:42px;position:relative;overflow:hidden;">'+imgHtml+(f.img?'':f.icon)+'</div>'
     +'<div class="event-card-body">'
     +'<div class="event-card-cat">'+f.genre+' \xb7 '+f.age+'</div>'
@@ -4131,6 +4173,7 @@ function renderSidebar(city) {
       else if (cat.indexOf('кино')>=0||cat.indexOf('film')>=0||cat.indexOf('cinema')>=0) href='cinema.html';
       else if (cat.indexOf('дет')>=0||cat.indexOf('kid')>=0||cat.indexOf('child')>=0) href='kids.html';
       else if (cat.indexOf('выставк')>=0||cat.indexOf('exhibit')>=0) href='exhibits.html';
+      if (href==='concerts.html' || href==='cinema.html') href += '#'+encodeURIComponent(ev.id||'');
       // Трекинг просмотров
       try{var v=JSON.parse(localStorage.getItem('afishi_views')||'{}');v[ev.id]=(v[ev.id]||0)+1;localStorage.setItem('afishi_views',JSON.stringify(v));}catch(x){}
       return '<a href="'+href+'" data-event-id="'+ev.id+'" style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0ede8;cursor:pointer;text-decoration:none;color:inherit;">'

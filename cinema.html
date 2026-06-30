@@ -3789,5 +3789,22 @@ function closeMobileMenu() {
 /* admin-panel: load sidebar banner from localStorage */
 (function(){try{var s=JSON.parse(localStorage.getItem('afishi_sidebar_banner')||'null');if(!s)return;var g=function(id){return document.getElementById(id);};if(s.icon&&g('sidebarBannerIcon'))g('sidebarBannerIcon').textContent=s.icon;if(s.title&&g('sidebarBannerTitle'))g('sidebarBannerTitle').textContent=s.title;if(s.desc&&g('sidebarBannerDesc'))g('sidebarBannerDesc').textContent=s.desc;if(s.btnText&&g('sidebarBannerBtn'))g('sidebarBannerBtn').textContent=s.btnText;if(s.btnUrl&&g('sidebarBannerBtn'))g('sidebarBannerBtn').href=s.btnUrl;if(s.bg&&g('sidebarAdBanner'))g('sidebarAdBanner').style.background=s.bg;}catch(e){}})();
 </script>
+<script>
+/* ── Открыть конкретный фильм по якорю #id (переход с главной) ── */
+(function() {
+  if (!location.hash || location.hash.length < 2) return;
+  var _deepId = decodeURIComponent(location.hash.slice(1));
+  function tryOpen() {
+    if (typeof openModal === 'function' && typeof FILMS !== 'undefined') {
+      openModal(_deepId);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(tryOpen, 200); });
+  } else {
+    setTimeout(tryOpen, 200);
+  }
+})();
+</script>
 </body>
 </html>
