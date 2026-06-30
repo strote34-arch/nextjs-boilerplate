@@ -603,6 +603,7 @@ window.switchCity = function(city, btn) {
   <div class="card">
     <h3><span class="status-todo">TODO</span> Приоритетные задачи</h3>
     <ul style="font-size:14px;padding-left:20px;line-height:2;">
+      <li style="color:#c8102e;font-weight:700;">⚠️ Вернуть кэш HTML в <code>vercel.json</code> — сейчас <code>Cache-Control: no-store</code> для <code>/*.html</code> (отключили временно на период активной разработки/частых правок). Когда правки стабилизируются — вернуть <code>public, max-age=3600</code> (или меньше, напр. 300–600 сек, чтобы не ждать час при будущих обновлениях).</li>
       <li>Бэкенд: PHP/Node API для сохранения мероприятий на сервер вместо localStorage</li>
       <li>Email-рассылка: подключение SendGrid / SMTP</li>
       <li>Централизованная аналитика: Яндекс.Метрика или собственный счётчик</li>
