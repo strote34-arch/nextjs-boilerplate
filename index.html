@@ -2780,8 +2780,11 @@ function renderConcertCard(ev) {
 }
 
 function renderFilmCard(f) {
+  var imgHtml = f.img
+    ? '<img src="'+f.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" loading="lazy" onerror="this.remove()">'
+    : '';
   return '<div class="event-card ec-link" data-href="cinema.html" style="cursor:pointer;">'
-    +'<div class="event-card-img" style="background:'+f.color+';display:flex;align-items:center;justify-content:center;font-size:42px;">'+f.icon+'</div>'
+    +'<div class="event-card-img" style="background:'+f.color+';display:flex;align-items:center;justify-content:center;font-size:42px;position:relative;overflow:hidden;">'+imgHtml+(f.img?'':f.icon)+'</div>'
     +'<div class="event-card-body">'
     +'<div class="event-card-cat">'+f.genre+' \xb7 '+f.age+'</div>'
     +'<div class="event-card-title">'+f.title+'</div>'
@@ -3195,10 +3198,42 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
     return map;
   }
 
+  function applyFilmPhotoSync(photoMap) {
+    var changed = false;
+    (window.FILMS_DB || []).forEach(function(f) {
+      var p = photoMap[f.title];
+      if (p && p !== f.img) { f.img = p; changed = true; }
+    });
+    if (changed && typeof renderPage === 'function') {
+      var city = localStorage.getItem('afishi_city') || 'Волгоград';
+      renderPage(city);
+    }
+  }
+
+  function parseFilmsPhotos(html) {
+    var map = {};
+    var m = html.match(/const FILMS\s*=\s*\[([\s\S]*?)\];/);
+    if (!m) return map;
+    var re = /\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, obj;
+    while ((obj = re.exec(m[1])) !== null) {
+      var o = obj[1];
+      var get = function(k){ var mm=o.match(new RegExp(k+":\\s*'([^']*)'")); return mm?mm[1]:''; };
+      var title = get('title');
+      var img = get('img');
+      if (title && img) map[title] = img;
+    }
+    return map;
+  }
+
   function syncPhotosFromConcertsPage() {
     fetch('concerts.html').then(function(r){ return r.text(); }).then(function(html) {
       var photoMap = parseConcertsPhotos(html);
       applyPhotoSync(photoMap);
+    }).catch(function(){});
+
+    fetch('cinema.html').then(function(r){ return r.text(); }).then(function(html) {
+      var filmPhotoMap = parseFilmsPhotos(html);
+      applyFilmPhotoSync(filmPhotoMap);
     }).catch(function(){});
   }
 
