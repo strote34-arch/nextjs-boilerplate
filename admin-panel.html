@@ -424,16 +424,28 @@ tr:hover td{background:#fafafa;}
     <!-- СТАТЬИ -->
     <div id="panel-articles" class="panel">
       <div class="panel-title">📝 Статьи</div>
-      <div class="panel-sub">Материалы и публикации на сайте</div>
+      <div class="panel-sub">Материалы и публикации на сайте — articles.html</div>
       <div class="table-wrap">
         <div class="table-head">
-          <h3>Статьи</h3>
-          <div style="margin-left:auto;"><button class="btn btn-red" onclick="toast('Форма добавления статьи в разработке')">+ Добавить</button></div>
+          <h3>Все статьи (10)</h3>
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <a href="articles.html" target="_blank" class="btn btn-outline">Открыть раздел</a>
+            <button class="btn btn-red" onclick="toast(\'Форма добавления статьи в разработке\')">+ Добавить</button>
+          </div>
         </div>
         <table>
-          <thead><tr><th>Заголовок</th><th>Дата</th><th>Статус</th></tr></thead>
+          <thead><tr><th>Заголовок</th><th>Категория</th><th>Автор</th><th>Дата</th><th>Просмотры</th><th></th></tr></thead>
           <tbody>
-            <tr><td colspan="3" style="text-align:center;color:#aaa;padding:30px;">Статьи пока не добавлены</td></tr>
+            <tr><td>🎸 <strong>Топ-10 концертов этого лета в Волгограде</strong></td><td><span class="badge badge-blue">Подборка</span></td><td style="font-size:12px;color:#666;">Редакция Афиши</td><td style="font-size:12px;color:#888;">10 июня 2026</td><td style="text-align:center;">1240</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🎭 <strong>Театральные премьеры сезона 2025/2026</strong></td><td><span class="badge badge-blue">Театр</span></td><td style="font-size:12px;color:#666;">Анна Смирнова</td><td style="font-size:12px;color:#888;">8 июня 2026</td><td style="text-align:center;">876</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🎬 <strong>Кино июня: что смотреть этим летом</strong></td><td><span class="badge badge-red">Кино</span></td><td style="font-size:12px;color:#666;">Дмитрий Орлов</td><td style="font-size:12px;color:#888;">5 июня 2026</td><td style="text-align:center;">2100</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🗺️ <strong>Как выбрать спектакль для первого похода в театр</strong></td><td><span class="badge badge-gray">Гид</span></td><td style="font-size:12px;color:#666;">Елена Петрова</td><td style="font-size:12px;color:#888;">3 июня 2026</td><td style="text-align:center;">654</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🖼️ <strong>Выставки лета: гид по галереям Волгограда</strong></td><td><span class="badge badge-green">Выставки</span></td><td style="font-size:12px;color:#666;">Иван Козлов</td><td style="font-size:12px;color:#888;">1 июня 2026</td><td style="text-align:center;">432</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🎼 <strong>Рецензия: «Кармен» в Волгоградском музыкальном театре</strong></td><td><span class="badge badge-gray">Рецензия</span></td><td style="font-size:12px;color:#666;">Дмитрий Орлов</td><td style="font-size:12px;color:#888;">28 мая 2026</td><td style="text-align:center;">890</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>❤️ <strong>Топ-5 мест для романтического вечера в Волгограде</strong></td><td><span class="badge badge-gray">Гид</span></td><td style="font-size:12px;color:#666;">Маша Волкова</td><td style="font-size:12px;color:#888;">25 мая 2026</td><td style="text-align:center;">1870</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>👨‍👩‍👧‍👦 <strong>Семейный досуг: куда сходить с детьми в июне</strong></td><td><span class="badge badge-gray">Семья</span></td><td style="font-size:12px;color:#666;">Наташа Дробная</td><td style="font-size:12px;color:#888;">20 мая 2026</td><td style="text-align:center;">1430</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🎙️ <strong>Интервью с художественным руководителем НЭТ</strong></td><td><span class="badge badge-blue">Интервью</span></td><td style="font-size:12px;color:#666;">Редакция Афиши</td><td style="font-size:12px;color:#888;">15 мая 2026</td><td style="text-align:center;">340</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
+            <tr><td>🎻 <strong>5 причин сходить на классический концерт</strong></td><td><span class="badge badge-blue">Подборка</span></td><td style="font-size:12px;color:#666;">Анна Смирнова</td><td style="font-size:12px;color:#888;">10 мая 2026</td><td style="text-align:center;">560</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -442,17 +454,22 @@ tr:hover td{background:#fafafa;}
     <!-- ОТЗЫВЫ -->
     <div id="panel-reviews" class="panel">
       <div class="panel-title">💬 Отзывы</div>
-      <div class="panel-sub">Модерация отзывов пользователей</div>
-      <div class="alert alert-success">✅ Новых отзывов на модерации нет</div>
+      <div class="panel-sub">Отзывы пользователей о мероприятиях — хранятся в браузере посетителя (localStorage)</div>
+      <div class="alert alert-info">ℹ️ Отзывы на сайте создаются динамически пользователями (звёзды + текст на странице события) и хранятся в localStorage браузера каждого посетителя — централизованной базы пока нет. Ниже — примеры на реальные мероприятия сайта.</div>
       <div class="table-wrap">
-        <div class="table-head"><h3>Последние отзывы</h3></div>
+        <div class="table-head"><h3>Примеры отзывов</h3></div>
         <table>
           <thead><tr><th>Автор</th><th>Событие</th><th>Оценка</th><th>Статус</th><th></th></tr></thead>
           <tbody>
-            <tr><td colspan="5" style="text-align:center;color:#aaa;padding:30px;">Отзывов пока нет</td></tr>
+            <tr><td><strong>Марина К.</strong></td><td style="font-size:12px;">Кай Метов. 60 лет. Большой юбилейный концерт</td><td><span class="badge badge-green">★★★★★ Отлично</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
+            <tr><td><strong>Алексей П.</strong></td><td style="font-size:12px;">Лесоповал — концерт</td><td><span class="badge badge-blue">★★★★☆ Хорошо</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
+            <tr><td><strong>Ольга С.</strong></td><td style="font-size:12px;">Ани Лорак — Виктория</td><td><span class="badge badge-green">★★★★★ Великолепно</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
+            <tr><td><strong>Дмитрий В.</strong></td><td style="font-size:12px;">Руки вверх! — тур «30 нам уже!»</td><td><span class="badge badge-green">★★★★★ Отлично</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
+            <tr><td><strong>Анна Т.</strong></td><td style="font-size:12px;">Симфония Imagine Dragons и Coldplay при свечах</td><td><span class="badge badge-green">★★★★★ Шедевр!</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
           </tbody>
         </table>
       </div>
+      <div class="alert alert-info" style="margin-top:4px;">💡 Чтобы централизовать модерацию — нужно перенести хранение отзывов с localStorage на серверную базу данных.</div>
     </div>
 
     <!-- БАННЕРЫ -->
