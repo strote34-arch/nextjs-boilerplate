@@ -1320,7 +1320,7 @@ function renderVenues() {
       (VN_CITY_FILTER === 'other' && MAIN_CITIES.indexOf(city) < 0) ||
       city === VN_CITY_FILTER;
     if (!show) return;
-    ALL_VENUES_DATA[city].forEach(function(v) {
+    ALL_VENUES_DATA[city].forEach(function(v, vIdx) {
       var typeColor = v.type.indexOf('Театр')>=0||v.type.indexOf('Зал')>=0||v.type.indexOf('Консерват')>=0?'badge-blue':
                      v.type.indexOf('Стадион')>=0||v.type.indexOf('Дворец')>=0?'badge-red':
                      v.type.indexOf('Кино')>=0?'badge-green':'badge-gray';
@@ -1330,8 +1330,10 @@ function renderVenues() {
         '<td style="font-size:12px;color:#666;">' + v.addr + '</td>' +
         '<td style="text-align:center;">' + v.cap + '</td>' +
         '<td><span class="badge ' + typeColor + '">' + v.type + '</span></td>' +
-        '<td>' + (v.url && v.url!='#' ? '<a href="'+v.url+'" target="_blank" class="btn btn-outline btn-sm">Открыть</a>' : '—') + '</td>' +
-        '</tr>');
+        '<td style="white-space:nowrap;">' +
+        (v.url && v.url!='#' ? '<a href="'+v.url+'" target="_blank" class="btn btn-outline btn-sm">Открыть</a> ' : '') +
+        '<button class="btn btn-outline btn-sm" onclick="openEditVenue(\''+city+'\','+vIdx+')">✏️</button>' +
+        '</td></tr>');
     });
   });
   if (!rows.length) {
