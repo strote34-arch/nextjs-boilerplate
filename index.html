@@ -3162,5 +3162,52 @@ window.addEventListener('resize', showBurger);
 /* Повторно после renderPage */
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger, 300); });
 </script>
+<script>
+// ── Синхронизация афиш с /concerts.html — берём реальные картинки мероприятий ──
+(function() {
+  function applyPhotoSync(photoMap) {
+    var changed = false;
+    (window.CONCERTS_DB || []).forEach(function(c) {
+      var p = photoMap[c.id] || photoMap[c.title + '|' + c.dateISO];
+      if (p && p !== c.photo) { c.photo = p; changed = true; }
+    });
+    if (changed && typeof renderPage === 'function') {
+      var city = localStorage.getItem('afishi_city') || 'Волгоград';
+      renderPage(city);
+    }
+  }
+
+  function parseConcertsPhotos(html) {
+    var map = {};
+    var m = html.match(/const CONCERTS\s*=\s*\[([\s\S]*?)\];/);
+    if (!m) return map;
+    var re = /\{([^{}]*)\}/g, obj;
+    while ((obj = re.exec(m[1])) !== null) {
+      var o = obj[1];
+      var get = function(k){ var mm=o.match(new RegExp(k+":\\s*'([^']*)'")); return mm?mm[1]:''; };
+      var id = get('id'), title = get('title'), dateISO = get('dateISO');
+      var photo = get('photo') || get('poster');
+      if (photo) {
+        if (id) map[id] = photo;
+        if (title && dateISO) map[title + '|' + dateISO] = photo;
+      }
+    }
+    return map;
+  }
+
+  function syncPhotosFromConcertsPage() {
+    fetch('concerts.html').then(function(r){ return r.text(); }).then(function(html) {
+      var photoMap = parseConcertsPhotos(html);
+      applyPhotoSync(photoMap);
+    }).catch(function(){});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(syncPhotosFromConcertsPage, 300); });
+  } else {
+    setTimeout(syncPhotosFromConcertsPage, 300);
+  }
+})();
+</script>
 </body>
 </html>
