@@ -3180,13 +3180,41 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
     }
   }
 
+  function splitTopLevelObjects(text) {
+    // Балансированный парсинг {...} с учётом вложенных скобок (venues:[{...}])
+    var result = [];
+    var depth = 0, start = -1;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (ch === '{') {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (ch === '}') {
+        depth--;
+        if (depth === 0 && start >= 0) {
+          result.push(text.slice(start, i + 1));
+          start = -1;
+        }
+      }
+    }
+    return result;
+  }
+
   function parseConcertsPhotos(html) {
     var map = {};
-    var m = html.match(/const CONCERTS\s*=\s*\[([\s\S]*?)\];/);
-    if (!m) return map;
-    var re = /\{([^{}]*)\}/g, obj;
-    while ((obj = re.exec(m[1])) !== null) {
-      var o = obj[1];
+    var pos = html.indexOf('const CONCERTS');
+    if (pos < 0) return map;
+    var arrStart = html.indexOf('[', pos);
+    if (arrStart < 0) return map;
+    var depth = 0, arrEnd = -1;
+    for (var i = arrStart; i < html.length; i++) {
+      if (html[i] === '[') depth++;
+      else if (html[i] === ']') { depth--; if (depth === 0) { arrEnd = i; break; } }
+    }
+    if (arrEnd < 0) return map;
+    var body = html.slice(arrStart + 1, arrEnd);
+    var objs = splitTopLevelObjects(body);
+    objs.forEach(function(o) {
       var get = function(k){ var mm=o.match(new RegExp(k+":\\s*'([^']*)'")); return mm?mm[1]:''; };
       var id = get('id'), title = get('title'), dateISO = get('dateISO');
       var photo = get('photo') || get('poster');
@@ -3194,7 +3222,7 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
         if (id) map[id] = photo;
         if (title && dateISO) map[title + '|' + dateISO] = photo;
       }
-    }
+    });
     return map;
   }
 
