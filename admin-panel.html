@@ -387,22 +387,18 @@ tr:hover td{background:#fafafa;}
     <!-- ИСТОЧНИКИ -->
     <div id="panel-sources" class="panel">
       <div class="panel-title">📡 Источники событий</div>
-      <div class="panel-sub">Сайты для парсинга афиши Волгограда</div>
+      <div class="panel-sub">Сайты для парсинга афиши Волгограда — можно добавлять, редактировать и удалять</div>
       <div class="table-wrap">
-        <div class="table-head"><h3>Активные источники</h3></div>
+        <div class="table-head">
+          <h3>Активные источники</h3>
+          <button class="btn btn-red" style="margin-left:auto;" onclick="openAddSource()">+ Добавить источник</button>
+        </div>
         <table>
-          <thead><tr><th>Источник</th><th>URL</th><th>Тип</th><th>Статус</th></tr></thead>
-          <tbody>
-            <tr><td><strong>afishagoroda.ru</strong></td><td><a href="https://vlg.afishagoroda.ru" target="_blank">vlg.afishagoroda.ru</a></td><td><span class="badge badge-blue">Афиша</span></td><td><span class="badge badge-green">Активен</span></td></tr>
-            <tr><td><strong>kassir.ru</strong></td><td><a href="https://www.kassir.ru/volgograd" target="_blank">kassir.ru/volgograd</a></td><td><span class="badge badge-blue">Билеты</span></td><td><span class="badge badge-green">Активен</span></td></tr>
-            <tr><td><strong>volgogradfilarmonia.ru</strong></td><td><a href="https://volgogradfilarmonia.ru" target="_blank">volgogradfilarmonia.ru</a></td><td><span class="badge badge-blue">Театр</span></td><td><span class="badge badge-green">Активен</span></td></tr>
-            <tr><td><strong>kinopoisk.ru</strong></td><td><a href="https://www.kinopoisk.ru/cinema/volgograd" target="_blank">kinopoisk.ru/cinema</a></td><td><span class="badge badge-red">Кино</span></td><td><span class="badge badge-green">Активен</span></td></tr>
-            <tr><td><strong>YouTube @afishiru</strong></td><td><a href="https://youtube.com/@afishiru" target="_blank">youtube.com/@afishiru</a></td><td><span class="badge badge-red">Трейлеры</span></td><td><span class="badge badge-green">Активен</span></td></tr>
-            <tr><td><strong>Дом Офицеров</strong> <span style="font-size:10px;color:#888;">vgdo34.ru</span></td><td><a href="http://vgdo34.ru/afisha/" target="_blank">vgdo34.ru/afisha</a></td><td><span class="badge badge-blue">Афиша</span></td><td><span class="badge badge-green">Активен</span> <span style="font-size:11px;color:#888;">авто · пн 09:00</span></td></tr>
-            <tr><td><strong>Ресторан «Волгоград»</strong> <span style="font-size:10px;color:#888;">restvlg.ru</span></td><td><a href="https://restvlg.ru/#afisha" target="_blank">restvlg.ru/#afisha</a></td><td><span class="badge badge-blue">Афиша</span></td><td><span class="badge badge-green">Активен</span> <span style="font-size:11px;color:#888;">авто · сб 09:00</span></td></tr>
-          </tbody>
+          <thead><tr><th>Источник</th><th>URL</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
+          <tbody id="src-tbody"></tbody>
         </table>
       </div>
+      <div class="alert alert-info">ℹ️ Базовые источники встроены в код сайта. Добавленные/изменённые/удалённые источники хранятся в localStorage этого браузера.</div>
     </div>
 
     <!-- АВТО-ПРОВЕРКА -->
@@ -1563,11 +1559,145 @@ function saveEditVenue() {
   toast('✅ Заведение обновлено!');
 }
 
+
+// ══ ИСТОЧНИКИ СОБЫТИЙ ════════════════════════════════════════
+var SOURCES_KEY = 'afishi_sources_v2';
+
+// Базовые источники (встроены в код сайта)
+var BASE_SOURCES = [
+  {id:'src_afishagoroda', name:'afishagoroda.ru', url:'https://vlg.afishagoroda.ru', type:'Афиша', status:'Активен'},
+  {id:'src_kassir', name:'kassir.ru', url:'https://www.kassir.ru/volgograd', type:'Билеты', status:'Активен'},
+  {id:'src_filarmonia', name:'volgogradfilarmonia.ru', url:'https://volgogradfilarmonia.ru', type:'Театр', status:'Активен'},
+  {id:'src_kinopoisk', name:'kinopoisk.ru', url:'https://www.kinopoisk.ru/cinema/volgograd', type:'Кино', status:'Активен'},
+  {id:'src_youtube', name:'YouTube @afishiru', url:'https://youtube.com/@afishiru', type:'Трейлеры', status:'Активен'},
+  {id:'src_vgdo34', name:'Дом Офицеров (vgdo34.ru)', url:'http://vgdo34.ru/afisha/', type:'Афиша', status:'Активен', schedule:'авто · каждый понедельник 09:00'},
+  {id:'src_restvlg', name:'Ресторан «Волгоград» (restvlg.ru)', url:'https://restvlg.ru/#afisha', type:'Афиша', status:'Активен', schedule:'авто · каждую субботу 09:00'},
+];
+
+function getSourceOverrides() {
+  try { return JSON.parse(localStorage.getItem(SOURCES_KEY) || '{"edits":{},"deleted":[],"added":[]}'); }
+  catch(e){ return {edits:{},deleted:[],added:[]}; }
+}
+function saveSourceOverrides(ov) { localStorage.setItem(SOURCES_KEY, JSON.stringify(ov)); }
+
+function getAllSources() {
+  var ov = getSourceOverrides();
+  var list = BASE_SOURCES
+    .filter(function(s){ return ov.deleted.indexOf(s.id) < 0; })
+    .map(function(s){ return ov.edits[s.id] ? Object.assign({}, s, ov.edits[s.id]) : s; });
+  (ov.added || []).forEach(function(s){
+    if (ov.deleted.indexOf(s.id) < 0) {
+      list.push(ov.edits[s.id] ? Object.assign({}, s, ov.edits[s.id]) : s);
+    }
+  });
+  return list;
+}
+
+function renderSources() {
+  var tbody = document.getElementById('src-tbody');
+  if (!tbody) return;
+  var list = getAllSources();
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px;">Источников нет</td></tr>';
+    return;
+  }
+  var typeBadge = {Афиша:'badge-blue',Билеты:'badge-blue',Театр:'badge-blue',Кино:'badge-red',Трейлеры:'badge-red',Концерты:'badge-blue',Другое:'badge-gray'};
+  var statusBadge = {Активен:'badge-green',Пауза:'badge-gray',Ошибка:'badge-red'};
+  tbody.innerHTML = list.map(function(s){
+    return '<tr>'
+      + '<td><strong>'+s.name+'</strong></td>'
+      + '<td><a href="'+s.url+'" target="_blank">'+s.url.replace(/^https?:\/\//,'')+'</a></td>'
+      + '<td><span class="badge '+(typeBadge[s.type]||'badge-gray')+'">'+s.type+'</span></td>'
+      + '<td><span class="badge '+(statusBadge[s.status]||'badge-gray')+'">'+s.status+'</span>'
+        + (s.schedule ? ' <span style="font-size:11px;color:#888;">'+s.schedule+'</span>' : '') + '</td>'
+      + '<td><button class="btn btn-outline btn-sm" onclick="openEditSource(\''+s.id+'\')">✏️</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function openAddSource() {
+  document.getElementById('src-modal-title').textContent = '➕ Новый источник';
+  document.getElementById('src-id').value = '';
+  document.getElementById('src-name').value = '';
+  document.getElementById('src-url').value = '';
+  document.getElementById('src-type').value = 'Афиша';
+  document.getElementById('src-status').value = 'Активен';
+  document.getElementById('src-schedule').value = '';
+  document.getElementById('btn-delete-source').style.display = 'none';
+  document.getElementById('editSourceModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditSource(id) {
+  var list = getAllSources();
+  var s = list.find(function(x){ return x.id === id; });
+  if (!s) { toast('Источник не найден'); return; }
+  document.getElementById('src-modal-title').textContent = '✏️ Редактировать источник';
+  document.getElementById('src-id').value = s.id;
+  document.getElementById('src-name').value = s.name;
+  document.getElementById('src-url').value = s.url;
+  document.getElementById('src-type').value = s.type;
+  document.getElementById('src-status').value = s.status;
+  document.getElementById('src-schedule').value = s.schedule || '';
+  document.getElementById('btn-delete-source').style.display = 'inline-flex';
+  document.getElementById('editSourceModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSourceModal() {
+  document.getElementById('editSourceModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveSource() {
+  var id   = document.getElementById('src-id').value;
+  var name = document.getElementById('src-name').value.trim();
+  var url  = document.getElementById('src-url').value.trim();
+  if (!name || !url) { toast('Заполните название и URL'); return; }
+
+  var data = {
+    name: name, url: url,
+    type: document.getElementById('src-type').value,
+    status: document.getElementById('src-status').value,
+    schedule: document.getElementById('src-schedule').value.trim(),
+  };
+
+  var ov = getSourceOverrides();
+  if (id) {
+    // Редактирование существующего (базового или добавленного)
+    ov.edits[id] = data;
+  } else {
+    // Новый источник
+    var newId = 'src_custom_' + Date.now();
+    data.id = newId;
+    ov.added = ov.added || [];
+    ov.added.push(data);
+  }
+  saveSourceOverrides(ov);
+  closeSourceModal();
+  renderSources();
+  toast('✅ Источник сохранён!');
+}
+
+function deleteSource() {
+  var id = document.getElementById('src-id').value;
+  if (!id) return;
+  if (!confirm('Удалить этот источник?')) return;
+  var ov = getSourceOverrides();
+  ov.deleted = ov.deleted || [];
+  if (ov.deleted.indexOf(id) < 0) ov.deleted.push(id);
+  saveSourceOverrides(ov);
+  closeSourceModal();
+  renderSources();
+  toast('🗑 Источник удалён');
+}
+
 // Инициализация
 loadDashboard();
 loadEvents();
 applyLocalEdits();
 setTimeout(renderVenues, 100);
+renderSources();
 </script>
 
 <!-- ═══ МОДАЛЬНОЕ ОКНО — РЕДАКТИРОВАНИЕ СОБЫТИЯ ═══ -->
@@ -1699,6 +1829,59 @@ setTimeout(renderVenues, 100);
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeVenueModal()">Отмена</button>
       <button class="btn btn-red" onclick="saveEditVenue()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ МОДАЛЬНОЕ ОКНО — ИСТОЧНИК СОБЫТИЙ ═══ -->
+<div id="editSourceModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeSourceModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="src-modal-title">✏️ Источник событий</h3>
+      <button class="modal-close" onclick="closeSourceModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="src-id">
+      <div class="form-group">
+        <label class="form-label">Название</label>
+        <input class="form-input" id="src-name" placeholder="Например: vgdo34.ru">
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL</label>
+        <input class="form-input" id="src-url" type="url" placeholder="https://example.ru/afisha/">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Тип</label>
+          <select class="form-select" id="src-type">
+            <option value="Афиша">Афиша</option>
+            <option value="Билеты">Билеты</option>
+            <option value="Театр">Театр</option>
+            <option value="Кино">Кино</option>
+            <option value="Трейлеры">Трейлеры</option>
+            <option value="Концерты">Концерты</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Статус</label>
+          <select class="form-select" id="src-status">
+            <option value="Активен">Активен</option>
+            <option value="Пауза">Пауза</option>
+            <option value="Ошибка">Ошибка</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Расписание авто-проверки (необязательно)</label>
+        <input class="form-input" id="src-schedule" placeholder="например: каждую субботу 09:00">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeSourceModal()">Отмена</button>
+      <button class="btn btn-outline" id="btn-delete-source" style="color:#c8102e;border-color:#c8102e;display:none;" onclick="deleteSource()">🗑 Удалить</button>
+      <button class="btn btn-red" onclick="saveSource()">💾 Сохранить</button>
     </div>
   </div>
 </div>
