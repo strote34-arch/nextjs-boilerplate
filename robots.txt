@@ -18,4 +18,4 @@ Disallow: /afishi_ru_venue.html
 Disallow: /afishi_ru_venue_concert.html
 Disallow: /DOCS.html
 
-Sitemap: https://afishi.ru/sitemap.xml
+Sitemap: https://www.xn--80aq9a.xn--p1ai/sitemap.xml

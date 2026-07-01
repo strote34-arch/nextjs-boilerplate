@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Монетизация — Афиши.ру</title>
-<link rel="canonical" href="https://afishi.ru/monetization.html">
+<link rel="canonical" href="https://www.xn--80aq9a.xn--p1ai/monetization.html">
 <meta name="description" content="Возможности монетизации для организаторов мероприятий и площадок на Афиши.ру.">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
 <style>/* ── Header ──────────────────────────────── */
@@ -567,7 +567,7 @@ function buyTicketWithYooKassa(eventId, seats, price) {
     // 2. Открыть виджет ЮKassa с полученным confirmation_token
     var checkout = new window.YooMoneyCheckoutWidget({
       confirmation_token: data.confirmationToken,
-      return_url: 'https://afishi.ru/ticket-success?id=' + data.paymentId,
+      return_url: 'https://www.xn--80aq9a.xn--p1ai/ticket-success?id=' + data.paymentId,
       error_callback: function(error) {
         console.error('Ошибка оплаты:', error);
       }
