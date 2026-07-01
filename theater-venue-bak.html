@@ -750,6 +750,8 @@ window.switchCity = function(city, btn) {
 <noscript><div><img src="https://mc.yandex.ru/watch/110255853" style="position:absolute;left:-9999px;" alt=""/></div></noscript>
 <!-- /Yandex.Metrika counter -->
 <link rel="stylesheet" href="mobile.css">
+<script src="error-tracking.js" defer></script>
+<script src="include-partials.js"></script>
 </head>
 <body>
 
@@ -766,29 +768,7 @@ window.switchCity = function(city, btn) {
 </div>
 
 <!-- HEADER -->
-<header>
-    <div class="header-inner">
-      <a href="index.html" class="logo">Афиши<span>.ру</span></a>
-      <nav><a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
-<div id="restDropdown" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;z-index:500;padding:12px 0;">
-  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Рестораны Волгограда</div>
-  <a href="venue-restoran-volgograd.html" style="display:flex;align-items:center;gap:10px;padding:9px 16px;color:#333;font-size:13px;text-decoration:none;transition:background .1s;" onmouseover="this.style.background='#f9f7f4'" onmouseout="this.style.background=''">
-    <span style="font-size:16px;">🍷</span> <span>Ресторан «Волгоград»</span>
-  </a>
-  <div style="border-top:1px solid #f0ede8;margin:6px 0;"></div>
-  <div style="padding:4px 16px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#999;letter-spacing:.5px;">Ближайшие мероприятия</div>
-  <div id="restDropdownEvents" style="padding:0 8px;">
-    <div style="text-align:center;padding:12px;color:#aaa;font-size:12px;">Загрузка...</div>
-  </div>
-  <a href="venue-concert-city.html" style="display:block;text-align:center;margin:8px 12px;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;padding:8px;border-radius:4px;text-decoration:none;">Все площадки →</a>
-</div></nav>
-      <a href="search.html" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;color:#fff;font-size:12px;font-weight:700;font-family:Oswald,sans-serif;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);" title="Поиск [/]">🔍 Поиск</a>
-      <div class="search-box">
-        🔍 <input type="text" placeholder="Поиск событий..." id="globalSearch">
-      </div>
-      <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
-    </div>
-</header>
+<div id="header-mount"></div>
 
 <!-- MOBILE NAV STRIP (всегда видна на мобильном, без ☰) -->
 <div class="mobile-nav-strip">
@@ -1887,193 +1867,7 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
-<footer>
-  <!-- CTA полоса -->
-  <div class="footer-top">
-    <div class="footer-top-inner">
-      <div>
-        <div class="footer-cta-text">Анонсируйте ваше мероприятие</div>
-        <div class="footer-cta-sub">Бесплатная публикация · Быстрое согласование · Широкая аудитория</div>
-      </div>
-      <a href="event-add.html" class="footer-cta-btn">+ Добавить событие</a>
-    </div>
-  </div>
-
-  <div class="footer-inner">
-    <div class="footer-grid">
-
-      <!-- Колонка 1: Логотип + описание + соцсети -->
-      <div>
-        <div class="footer-logo">Афиши<span>.ру</span></div>
-        <div class="footer-desc">
-          Крупнейший агрегатор событий и мероприятий в России.
-          Концерты, театр, кино, выставки, детские мероприятия — всё в одном месте.
-          Основан в 2002 году.
-        </div>
-        <div class="footer-socials">
-          <a href="https://vk.com/afishiru" target="_blank" class="footer-social" title="ВКонтакте" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#4a76a8;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.36h-1.5c-.57 0-.74-.45-1.75-1.47-.88-.84-1.26-.95-1.48-.95-.3 0-.39.09-.39.5v1.34c0 .36-.11.57-1.06.57-1.57 0-3.3-.95-4.53-2.72C6.09 10.5 5.5 8.5 5.5 7.95c0-.22.09-.43.5-.43h1.5c.37 0 .52.17.66.57.73 2.1 1.95 3.93 2.46 3.93.19 0 .27-.09.27-.57V9.7c-.06-1-.58-1.08-.58-1.44 0-.17.14-.35.37-.35h2.36c.32 0 .43.17.43.54v2.9c0 .32.14.43.23.43.19 0 .36-.11.71-.46 1.11-1.23 1.9-3.13 1.9-3.13.1-.22.28-.43.65-.43h1.5c.45 0 .55.23.45.54-.19.87-2.04 3.49-2.04 3.49-.16.26-.22.37 0 .66.16.22.68.67 1.03 1.08.64.73 1.13 1.35 1.26 1.77.11.41-.11.62-.54.62z"/></svg>
-            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ВКонтакте</span>
-          </a>
-          <a href="https://t.me/afishiru" target="_blank" class="footer-social" title="Telegram" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#2ca5e0;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.92c-.12.56-.46.7-.93.44l-2.55-1.88-1.23 1.19c-.14.13-.25.24-.52.24l.19-2.63 4.8-4.33c.21-.19-.05-.29-.32-.1L7.9 14.87l-2.48-.78c-.54-.17-.55-.54.11-.8l9.76-3.76c.44-.17.84.11.35.27z"/></svg>
-            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">Telegram</span>
-          </a>
-          <a href="https://www.youtube.com/@afishiru" target="_blank" class="footer-social" title="YouTube" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ff0000;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M23.5 6.2a3.01 3.01 0 00-2.12-2.13C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.57A3.01 3.01 0 00.5 6.2C0 8.04 0 12 0 12s0 3.96.5 5.8a3.01 3.01 0 002.12 2.13c1.84.57 9.38.57 9.38.57s7.54 0 9.38-.57a3.01 3.01 0 002.12-2.13C24 15.96 24 12 24 12s0-3.96-.5-5.8zM9.75 15.5v-7l6.25 3.5-6.25 3.5z"/></svg>
-            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">YouTube</span>
-          </a>
-          <a href="https://ok.ru/group/51187064373320" target="_blank" class="footer-social" title="Одноклассники" style="width:auto;padding:0 14px;gap:8px;border-radius:8px;background:#ee8208;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4.5a3 3 0 110 6 3 3 0 010-6zm4.65 8.15a6.02 6.02 0 01-3.15 1.2l2.4 2.4a1 1 0 01-1.41 1.41L12 16.24l-2.49 2.42a1 1 0 01-1.41-1.41l2.4-2.4a6.02 6.02 0 01-3.15-1.2 1 1 0 011.3-1.52A4.02 4.02 0 0012 13a4.02 4.02 0 003.35-1.87 1 1 0 011.3 1.52z"/></svg>
-            <span style="color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">ОК</span>
-          </a>
-
-        </div>
-      </div>
-
-      <!-- Колонка 2: Разделы -->
-      <div>
-        <div class="footer-col-title">Разделы</div>
-        <div class="footer-links">
-          <a href="concerts.html">🎸 Концерты</a>
-          <a href="theater.html">🎭 Театр и балет</a>
-          <a href="cinema.html">🎬 Кино</a>
-          <a href="exhibits.html">🖼️ Выставки</a>
-          <a href="kids.html">🧸 Детям</a>
-          <a href="articles.html">📝 Статьи</a>
-          <a href="film-database.html">📽️ База фильмов</a>
-          <a href="pushkin-card.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;text-decoration:none;letter-spacing:.3px;">
-            🏛 Пушкинская карта
-          </a>
-        </div>
-      </div>
-
-      <!-- Колонка 3: Площадки Волгограда -->
-      <div>
-        <div class="footer-col-title">Площадки</div>
-        <div class="footer-links" id="footerVenuesList">
-          <a href="venue-ckz-oktyabr-volgograd.html">ЦКЗ Волгоградская Филармония</a>
-          <a href="venue-arena.html">Стадион Волгоград Арена</a>
-          <a href="venue-dom-ofitserov-volgograd.html">Дом Офицеров</a>
-          <a href="theater-volgogradskiy-muzykalnyy-teatr.html">Муз. театр</a>
-          <a href="theater-net-novyy-eksperimentalnyy.html">НЭТ</a>
-          <a href="theater-tyuz-volgograd.html">ТЮЗ</a>
-          <a href="exhibit-muzey-izo-volgograd.html">Музей ИЗО</a>
-        </div>
-      </div>
-
-      <!-- Города перенесены в шапку сайта -->
-
-      <!-- Колонка 5: Компания -->
-      <div>
-        <div class="footer-col-title">Компания</div>
-        <div class="footer-links">
-          <a href="about.html">О проекте</a>
-          <a href="advertise.html">Реклама на сайте</a>
-          <a href="event-add.html">Добавить событие</a>
-          <a href="venue-add.html">Добавить площадку</a>
-          <a href="loyalty.html">АфишиПлюс ⭐</a>
-          <a href="partners.html">Партнёрам</a>
-          <a href="jobs.html">Вакансии</a>
-          <a href="admin-info.html">Администраторам</a>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <hr class="footer-divider">
-
-  <div class="footer-bottom">
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-      <span>© 2002–2026 afishi.ru</span>
-      <span class="footer-badge">🌆 Волгоград</span>
-      <span class="footer-badge">🔒 18+</span>
-    </div>
-    <div class="footer-bottom-links">
-      <a href="privacy.html">Политика конфиденциальности</a>
-      <a href="terms.html">Пользовательское соглашение</a>
-      <a href="sitemap.html">Карта сайта</a>
-      <a href="admin-info.html">Администраторам</a>
-    </div>
-  </div>
-
-
-<!-- ── Кнопка «Поделиться» ─────────────────────────────────────── -->
-<div style="max-width:1200px;margin:0 auto 28px;padding:0 20px;">
-  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;">
-    <div style="margin-bottom:14px;">
-      <div style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;">📢 Поделитесь афишей с друзьями</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.5);">Расскажите о событиях своего города</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button onclick="shareToVK()" style="display:flex;align-items:center;gap:6px;background:#4a76a8;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504C19.224 13.376 19 12.763 20.014 11.276c1.109-1.613 3.244-4.145 1.256-4.145h-3.983c-.61 0-.859.407-.859.407s-1.19 2.516-2.86 4.152c-.699.699-1.012.922-1.394.922-.194 0-.437-.223-.437-.931V7.547c0-.593-.166-.933-.644-.933H7.999c-.374 0-.594.271-.594.531 0 .533.821.677.906 2.183v3.089c0 .75-.136.886-.432.886-.79 0-2.712-2.448-3.855-5.25-.22-.601-.443-.836-1.054-.836H.987C.421 7.117 0 7.366 0 7.986c0 .624 1.812 5.109 5.686 8.984 2.979 2.979 6.951 4.024 9.476 4.024z"/></svg>
-        ВКонтакте
-      </button>
-      <button onclick="shareToOK()" style="display:flex;align-items:center;gap:6px;background:#ee8208;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 6a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm5.8 11.2c-.4.5-1.2.7-1.8.3l-2.1-1.3c-.6.2-1.2.3-1.9.3s-1.3-.1-1.9-.3l-2.1 1.3c-.6.4-1.4.2-1.8-.3-.4-.5-.2-1.3.4-1.6l1.8-1.1c-.7-.6-1.2-1.4-1.5-2.3-.2-.6.2-1.3.9-1.4.6-.1 1.2.2 1.4.8.3.9 1.3 1.6 2.8 1.6s2.5-.7 2.8-1.6c.2-.6.8-.9 1.4-.8.6.1 1.1.7.9 1.4-.3.9-.8 1.7-1.5 2.3l1.8 1.1c.6.3.8 1.1.4 1.6z"/></svg>
-        ОК
-      </button>
-      <button onclick="shareToTelegram()" style="display:flex;align-items:center;gap:6px;background:#0088cc;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
-        Telegram
-      </button>
-      <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:6px;background:#25d366;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        WhatsApp
-      </button>
-      <button onclick="shareToDzen()" style="display:flex;align-items:center;gap:6px;background:#ff6600;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor"><path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm23.3 53.3c-10.1 0-18.3 3.4-23.3 9.7-5-6.3-13.2-9.7-23.3-9.7-1.7 0-3.3.1-3.3-3.3 0-3.4 1.6-3.3 3.3-3.3 10.1 0 18.3-3.4 23.3-9.7 5 6.3 13.2 9.7 23.3 9.7 1.7 0 3.3-.1 3.3 3.3 0 3.4-1.6 3.3-3.3 3.3z"/></svg>
-        Дзен
-      </button>
-      <button onclick="shareToRutube()" style="display:flex;align-items:center;gap:6px;background:#060a11;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4.8 13.2l-6 3.6c-.2.1-.4.2-.6.2-.2 0-.4-.1-.6-.2-.4-.2-.6-.6-.6-1V8.4c0-.4.2-.8.6-1 .2-.1.4-.1.6-.2.2 0 .4.1.6.2l6 3.6c.4.2.6.6.6 1s-.2.8-.6 1.2z"/></svg>
-        Rutube
-      </button>
-      <button onclick="shareToYandex()" style="display:flex;align-items:center;gap:6px;background:#fc3f1d;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm-1.65 18.923h-2.113V9.596H9.587C9.1 11.42 8.625 13.007 8.225 14.08c-.722 1.927-1.517 2.594-2.816 2.594-.45 0-.857-.077-1.036-.174l.18-1.71c.167.064.386.115.578.115.5 0 .87-.424 1.25-1.58.6-1.778 1.35-4.665 2.08-7.93h6.573v13.528z"/></svg>
-        Яндекс
-      </button>
-      <button onclick="shareToMAX()" style="display:flex;align-items:center;gap:6px;background:#6c17c9;border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
-        MAX
-      </button>
-      <button onclick="copyPageLink(this)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        <span>Скопировать</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-  <!-- ── Партнёры: билетные операторы ─────────────────────── -->
-  <div style="border-top:1px solid rgba(255,255,255,.08);padding:20px 24px 0;margin-top:4px;">
-    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
-      <span style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;">Билеты</span>
-      <a href="https://vlg.kassir.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner" 
-         target="_blank" rel="noopener noreferrer"
-         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
-         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
-        kassir.ru
-      </a>
-      <a href="https://kassy.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
-         target="_blank" rel="noopener noreferrer"
-         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
-         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
-        kassy.ru
-      </a>
-      <a href="https://qtickets.ru/?utm_source=afishiru&utm_medium=footer&utm_campaign=partner"
-         target="_blank" rel="noopener noreferrer"
-         style="font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:4px;transition:color .2s;"
-         onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">
-        qtickets.ru
-      </a>
-    </div>
-  </div>
-<!-- share functions see below -->
-
-</footer>
+<div id="footer-mount"></div>
 <script>
 // ── Footer: площадки по городу ───────────────────────────────
 var FOOTER_VENUES = {
