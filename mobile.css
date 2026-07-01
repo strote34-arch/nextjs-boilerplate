@@ -19,6 +19,41 @@ body {
   max-width: 100%;
 }
 
+/* ---- MOBILE NAV STRIP (горизонтальная полоса ссылок под шапкой на мобильном, сайт-вайд) ---- */
+.mobile-nav-strip { display: none; }
+@media (max-width: 768px) {
+  .mobile-nav-strip {
+    display: block;
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .mobile-nav-strip-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+  .mobile-nav-strip-inner::-webkit-scrollbar { display: none; }
+  .mobile-nav-strip-inner a {
+    flex-shrink: 0;
+    color: #ddd;
+    text-decoration: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.06);
+  }
+  .mobile-nav-strip-inner a:active { background: var(--red, #c8102e); color: #fff; }
+}
+
 /* ── Base ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 

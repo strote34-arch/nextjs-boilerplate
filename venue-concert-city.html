@@ -706,6 +706,7 @@ footer{background:#111;color:#aaa;margin-top:48px;font-family:'PT Sans',sans-ser
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/110255853" style="position:absolute;left:-9999px;" alt=""/></div></noscript>
 <!-- /Yandex.Metrika counter -->
+<link rel="stylesheet" href="mobile.css">
 </head>
 
 <body>
@@ -765,6 +766,14 @@ footer{background:#111;color:#aaa;margin-top:48px;font-family:'PT Sans',sans-ser
       <button class="burger" id="burgerBtn" aria-label="Меню" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
     </div>
 </header>
+
+<!-- MOBILE NAV STRIP (всегда видна на мобильном, без ☰) -->
+<div class="mobile-nav-strip">
+  <div class="mobile-nav-strip-inner">
+    <a href="index.html">Главная</a><a href="concerts.html">Концерты</a><a href="theater.html">Театр</a><a href="cinema.html">Кино</a><a href="exhibits.html">Выставки</a><a href="kids.html">Детям</a><a href="articles.html">Статьи</a><a href="map.html">Карта</a><a href="#">Спорт</a><a href="#">Клубы</a><a href="venue-restoran-city.html">Рестораны</a>
+  </div>
+</div>
+
 <div id="venue-type-tabs" style="background:#fff;border-bottom:2px solid var(--border);padding:8px 0;position:sticky;top:60px;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.04);">
   <div style="max-width:1200px;margin:0 auto;padding:0 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <span style="font-size:11px;color:#888;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;flex-shrink:0;">Тип:</span>
