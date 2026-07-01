@@ -427,26 +427,15 @@ tr:hover td{background:#fafafa;}
       <div class="panel-sub">Материалы и публикации на сайте — articles.html</div>
       <div class="table-wrap">
         <div class="table-head">
-          <h3>Все статьи (10)</h3>
+          <h3 id="art-count">Все статьи</h3>
           <div style="margin-left:auto;display:flex;gap:8px;">
             <a href="articles.html" target="_blank" class="btn btn-outline">Открыть раздел</a>
-            <button class="btn btn-red" onclick="toast(\'Форма добавления статьи в разработке\')">+ Добавить</button>
+            <button class="btn btn-red" onclick="openAddArticle()">+ Добавить</button>
           </div>
         </div>
         <table>
           <thead><tr><th>Заголовок</th><th>Категория</th><th>Автор</th><th>Дата</th><th>Просмотры</th><th></th></tr></thead>
-          <tbody>
-            <tr><td>🎸 <strong>Топ-10 концертов этого лета в Волгограде</strong></td><td><span class="badge badge-blue">Подборка</span></td><td style="font-size:12px;color:#666;">Редакция Афиши</td><td style="font-size:12px;color:#888;">10 июня 2026</td><td style="text-align:center;">1240</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🎭 <strong>Театральные премьеры сезона 2025/2026</strong></td><td><span class="badge badge-blue">Театр</span></td><td style="font-size:12px;color:#666;">Анна Смирнова</td><td style="font-size:12px;color:#888;">8 июня 2026</td><td style="text-align:center;">876</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🎬 <strong>Кино июня: что смотреть этим летом</strong></td><td><span class="badge badge-red">Кино</span></td><td style="font-size:12px;color:#666;">Дмитрий Орлов</td><td style="font-size:12px;color:#888;">5 июня 2026</td><td style="text-align:center;">2100</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🗺️ <strong>Как выбрать спектакль для первого похода в театр</strong></td><td><span class="badge badge-gray">Гид</span></td><td style="font-size:12px;color:#666;">Елена Петрова</td><td style="font-size:12px;color:#888;">3 июня 2026</td><td style="text-align:center;">654</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🖼️ <strong>Выставки лета: гид по галереям Волгограда</strong></td><td><span class="badge badge-green">Выставки</span></td><td style="font-size:12px;color:#666;">Иван Козлов</td><td style="font-size:12px;color:#888;">1 июня 2026</td><td style="text-align:center;">432</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🎼 <strong>Рецензия: «Кармен» в Волгоградском музыкальном театре</strong></td><td><span class="badge badge-gray">Рецензия</span></td><td style="font-size:12px;color:#666;">Дмитрий Орлов</td><td style="font-size:12px;color:#888;">28 мая 2026</td><td style="text-align:center;">890</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>❤️ <strong>Топ-5 мест для романтического вечера в Волгограде</strong></td><td><span class="badge badge-gray">Гид</span></td><td style="font-size:12px;color:#666;">Маша Волкова</td><td style="font-size:12px;color:#888;">25 мая 2026</td><td style="text-align:center;">1870</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>👨‍👩‍👧‍👦 <strong>Семейный досуг: куда сходить с детьми в июне</strong></td><td><span class="badge badge-gray">Семья</span></td><td style="font-size:12px;color:#666;">Наташа Дробная</td><td style="font-size:12px;color:#888;">20 мая 2026</td><td style="text-align:center;">1430</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🎙️ <strong>Интервью с художественным руководителем НЭТ</strong></td><td><span class="badge badge-blue">Интервью</span></td><td style="font-size:12px;color:#666;">Редакция Афиши</td><td style="font-size:12px;color:#888;">15 мая 2026</td><td style="text-align:center;">340</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-            <tr><td>🎻 <strong>5 причин сходить на классический концерт</strong></td><td><span class="badge badge-blue">Подборка</span></td><td style="font-size:12px;color:#666;">Анна Смирнова</td><td style="font-size:12px;color:#888;">10 мая 2026</td><td style="text-align:center;">560</td><td><a href="articles.html" target="_blank" class="btn btn-outline btn-sm">Открыть</a></td></tr>
-          </tbody>
+          <tbody id="art-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -455,18 +444,17 @@ tr:hover td{background:#fafafa;}
     <div id="panel-reviews" class="panel">
       <div class="panel-title">💬 Отзывы</div>
       <div class="panel-sub">Отзывы пользователей о мероприятиях — хранятся в браузере посетителя (localStorage)</div>
-      <div class="alert alert-info">ℹ️ Отзывы на сайте создаются динамически пользователями (звёзды + текст на странице события) и хранятся в localStorage браузера каждого посетителя — централизованной базы пока нет. Ниже — примеры на реальные мероприятия сайта.</div>
+      <div class="alert alert-info">ℹ️ Отзывы на сайте создаются динамически пользователями (звёзды + текст на странице события) и хранятся в localStorage браузера каждого посетителя — централизованной базы пока нет. Ниже — примеры/модерация на реальные мероприятия сайта.</div>
       <div class="table-wrap">
-        <div class="table-head"><h3>Примеры отзывов</h3></div>
+        <div class="table-head">
+          <h3 id="rev-count">Отзывы</h3>
+          <div style="margin-left:auto;">
+            <button class="btn btn-red" onclick="openAddReview()">+ Добавить</button>
+          </div>
+        </div>
         <table>
           <thead><tr><th>Автор</th><th>Событие</th><th>Оценка</th><th>Статус</th><th></th></tr></thead>
-          <tbody>
-            <tr><td><strong>Марина К.</strong></td><td style="font-size:12px;">Кай Метов. 60 лет. Большой юбилейный концерт</td><td><span class="badge badge-green">★★★★★ Отлично</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
-            <tr><td><strong>Алексей П.</strong></td><td style="font-size:12px;">Лесоповал — концерт</td><td><span class="badge badge-blue">★★★★☆ Хорошо</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
-            <tr><td><strong>Ольга С.</strong></td><td style="font-size:12px;">Ани Лорак — Виктория</td><td><span class="badge badge-green">★★★★★ Великолепно</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
-            <tr><td><strong>Дмитрий В.</strong></td><td style="font-size:12px;">Руки вверх! — тур «30 нам уже!»</td><td><span class="badge badge-green">★★★★★ Отлично</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
-            <tr><td><strong>Анна Т.</strong></td><td style="font-size:12px;">Симфония Imagine Dragons и Coldplay при свечах</td><td><span class="badge badge-green">★★★★★ Шедевр!</span></td><td><span class="badge badge-green">Опубликован</span></td><td><button class="btn btn-outline btn-sm" onclick="toast('Модерация отзывов в разработке')">⋯</button></td></tr>
-          </tbody>
+          <tbody id="rev-tbody"></tbody>
         </table>
       </div>
       <div class="alert alert-info" style="margin-top:4px;">💡 Чтобы централизовать модерацию — нужно перенести хранение отзывов с localStorage на серверную базу данных.</div>
@@ -1709,12 +1697,270 @@ function deleteSource() {
   toast('🗑 Источник удалён');
 }
 
+// ═══ СТАТЬИ (localStorage CRUD) ═══
+var ARTICLES_KEY = 'afishi_articles_v1';
+
+var BASE_ARTICLES = [
+  {id:'art_01', icon:'🎸', title:'Топ-10 концертов этого лета в Волгограде', category:'Подборка', author:'Редакция Афиши', date:'10 июня 2026', views:1240},
+  {id:'art_02', icon:'🎭', title:'Театральные премьеры сезона 2025/2026', category:'Театр', author:'Анна Смирнова', date:'8 июня 2026', views:876},
+  {id:'art_03', icon:'🎬', title:'Кино июня: что смотреть этим летом', category:'Кино', author:'Дмитрий Орлов', date:'5 июня 2026', views:2100},
+  {id:'art_04', icon:'🗺️', title:'Как выбрать спектакль для первого похода в театр', category:'Гид', author:'Елена Петрова', date:'3 июня 2026', views:654},
+  {id:'art_05', icon:'🖼️', title:'Выставки лета: гид по галереям Волгограда', category:'Выставки', author:'Иван Козлов', date:'1 июня 2026', views:432},
+  {id:'art_06', icon:'🎼', title:'Рецензия: «Кармен» в Волгоградском музыкальном театре', category:'Рецензия', author:'Дмитрий Орлов', date:'28 мая 2026', views:890},
+  {id:'art_07', icon:'❤️', title:'Топ-5 мест для романтического вечера в Волгограде', category:'Гид', author:'Маша Волкова', date:'25 мая 2026', views:1870},
+  {id:'art_08', icon:'👨‍👩‍👧‍👦', title:'Семейный досуг: куда сходить с детьми в июне', category:'Семья', author:'Наташа Дробная', date:'20 мая 2026', views:1430},
+  {id:'art_09', icon:'🎙️', title:'Интервью с художественным руководителем НЭТ', category:'Интервью', author:'Редакция Афиши', date:'15 мая 2026', views:340},
+  {id:'art_10', icon:'🎻', title:'5 причин сходить на классический концерт', category:'Подборка', author:'Анна Смирнова', date:'10 мая 2026', views:560},
+];
+
+function getArticleOverrides() {
+  try { return JSON.parse(localStorage.getItem(ARTICLES_KEY) || '{"edits":{},"deleted":[],"added":[]}'); }
+  catch(e){ return {edits:{},deleted:[],added:[]}; }
+}
+function saveArticleOverrides(ov) { localStorage.setItem(ARTICLES_KEY, JSON.stringify(ov)); }
+
+function getAllArticles() {
+  var ov = getArticleOverrides();
+  var list = BASE_ARTICLES
+    .filter(function(a){ return ov.deleted.indexOf(a.id) < 0; })
+    .map(function(a){ return ov.edits[a.id] ? Object.assign({}, a, ov.edits[a.id]) : a; });
+  (ov.added || []).forEach(function(a){
+    if (ov.deleted.indexOf(a.id) < 0) {
+      list.push(ov.edits[a.id] ? Object.assign({}, a, ov.edits[a.id]) : a);
+    }
+  });
+  return list;
+}
+
+var artCatBadge = {Подборка:'badge-blue',Театр:'badge-blue',Кино:'badge-red',Гид:'badge-gray',Выставки:'badge-green',Рецензия:'badge-gray',Семья:'badge-gray',Интервью:'badge-blue'};
+
+function renderArticles() {
+  var tbody = document.getElementById('art-tbody');
+  if (!tbody) return;
+  var list = getAllArticles();
+  document.getElementById('art-count').textContent = 'Все статьи (' + list.length + ')';
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:24px;">Статей нет</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(a){
+    return '<tr>'
+      + '<td>' + a.icon + ' <strong>' + a.title + '</strong></td>'
+      + '<td><span class="badge ' + (artCatBadge[a.category] || 'badge-gray') + '">' + a.category + '</span></td>'
+      + '<td style="font-size:12px;color:#666;">' + a.author + '</td>'
+      + '<td style="font-size:12px;color:#888;">' + a.date + '</td>'
+      + '<td style="text-align:center;">' + a.views + '</td>'
+      + '<td><button class="btn btn-outline btn-sm" onclick="openEditArticle(\'' + a.id + '\')">✏️</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function openAddArticle() {
+  document.getElementById('art-modal-title').textContent = '➕ Новая статья';
+  document.getElementById('art-id').value = '';
+  document.getElementById('art-icon').value = '📝';
+  document.getElementById('art-title').value = '';
+  document.getElementById('art-category').value = 'Подборка';
+  document.getElementById('art-author').value = '';
+  document.getElementById('art-date').value = '';
+  document.getElementById('art-views').value = '0';
+  document.getElementById('btn-delete-article').style.display = 'none';
+  document.getElementById('editArticleModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditArticle(id) {
+  var a = getAllArticles().find(function(x){ return x.id === id; });
+  if (!a) { toast('Статья не найдена'); return; }
+  document.getElementById('art-modal-title').textContent = '✏️ Редактировать статью';
+  document.getElementById('art-id').value = a.id;
+  document.getElementById('art-icon').value = a.icon;
+  document.getElementById('art-title').value = a.title;
+  document.getElementById('art-category').value = a.category;
+  document.getElementById('art-author').value = a.author;
+  document.getElementById('art-date').value = a.date;
+  document.getElementById('art-views').value = a.views;
+  document.getElementById('btn-delete-article').style.display = 'inline-flex';
+  document.getElementById('editArticleModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeArticleModal() {
+  document.getElementById('editArticleModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveArticle() {
+  var id = document.getElementById('art-id').value;
+  var title = document.getElementById('art-title').value.trim();
+  if (!title) { toast('Заполните заголовок'); return; }
+  var data = {
+    icon: document.getElementById('art-icon').value.trim() || '📝',
+    title: title,
+    category: document.getElementById('art-category').value,
+    author: document.getElementById('art-author').value.trim() || 'Редакция Афиши',
+    date: document.getElementById('art-date').value.trim(),
+    views: parseInt(document.getElementById('art-views').value) || 0,
+  };
+  var ov = getArticleOverrides();
+  if (id) {
+    ov.edits[id] = data;
+  } else {
+    var newId = 'art_custom_' + Date.now();
+    data.id = newId;
+    ov.added = ov.added || [];
+    ov.added.push(data);
+  }
+  saveArticleOverrides(ov);
+  closeArticleModal();
+  renderArticles();
+  toast('✅ Статья сохранена!');
+}
+
+function deleteArticle() {
+  var id = document.getElementById('art-id').value;
+  if (!id) return;
+  if (!confirm('Удалить эту статью?')) return;
+  var ov = getArticleOverrides();
+  ov.deleted = ov.deleted || [];
+  if (ov.deleted.indexOf(id) < 0) ov.deleted.push(id);
+  saveArticleOverrides(ov);
+  closeArticleModal();
+  renderArticles();
+  toast('🗑 Статья удалена');
+}
+
+// ═══ ОТЗЫВЫ (localStorage CRUD) ═══
+var REVIEWS_KEY = 'afishi_reviews_admin_v1';
+
+var BASE_REVIEWS = [
+  {id:'rev_01', author:'Марина К.', event:'Кай Метов. 60 лет. Большой юбилейный концерт', rating:'★★★★★ Отлично', status:'Опубликован'},
+  {id:'rev_02', author:'Алексей П.', event:'Лесоповал — концерт', rating:'★★★★☆ Хорошо', status:'Опубликован'},
+  {id:'rev_03', author:'Ольга С.', event:'Ани Лорак — Виктория', rating:'★★★★★ Великолепно', status:'Опубликован'},
+  {id:'rev_04', author:'Дмитрий В.', event:'Руки вверх! — тур «30 нам уже!»', rating:'★★★★★ Отлично', status:'Опубликован'},
+  {id:'rev_05', author:'Анна Т.', event:'Симфония Imagine Dragons и Coldplay при свечах', rating:'★★★★★ Шедевр!', status:'Опубликован'},
+];
+
+function getReviewOverrides() {
+  try { return JSON.parse(localStorage.getItem(REVIEWS_KEY) || '{"edits":{},"deleted":[],"added":[]}'); }
+  catch(e){ return {edits:{},deleted:[],added:[]}; }
+}
+function saveReviewOverrides(ov) { localStorage.setItem(REVIEWS_KEY, JSON.stringify(ov)); }
+
+function getAllReviews() {
+  var ov = getReviewOverrides();
+  var list = BASE_REVIEWS
+    .filter(function(r){ return ov.deleted.indexOf(r.id) < 0; })
+    .map(function(r){ return ov.edits[r.id] ? Object.assign({}, r, ov.edits[r.id]) : r; });
+  (ov.added || []).forEach(function(r){
+    if (ov.deleted.indexOf(r.id) < 0) {
+      list.push(ov.edits[r.id] ? Object.assign({}, r, ov.edits[r.id]) : r);
+    }
+  });
+  return list;
+}
+
+var revStatusBadge = {'Опубликован':'badge-green','На модерации':'badge-gray','Скрыт':'badge-red'};
+var revRatingBadge = function(r){ return (r.indexOf('★★★★★') === 0) ? 'badge-green' : 'badge-blue'; };
+
+function renderReviews() {
+  var tbody = document.getElementById('rev-tbody');
+  if (!tbody) return;
+  var list = getAllReviews();
+  document.getElementById('rev-count').textContent = 'Отзывы (' + list.length + ')';
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px;">Отзывов нет</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(r){
+    return '<tr>'
+      + '<td><strong>' + r.author + '</strong></td>'
+      + '<td style="font-size:12px;">' + r.event + '</td>'
+      + '<td><span class="badge ' + revRatingBadge(r.rating) + '">' + r.rating + '</span></td>'
+      + '<td><span class="badge ' + (revStatusBadge[r.status] || 'badge-gray') + '">' + r.status + '</span></td>'
+      + '<td><button class="btn btn-outline btn-sm" onclick="openEditReview(\'' + r.id + '\')">✏️</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function openAddReview() {
+  document.getElementById('rev-modal-title').textContent = '➕ Новый отзыв';
+  document.getElementById('rev-id').value = '';
+  document.getElementById('rev-author').value = '';
+  document.getElementById('rev-event').value = '';
+  document.getElementById('rev-rating').value = '★★★★★ Отлично';
+  document.getElementById('rev-status').value = 'Опубликован';
+  document.getElementById('btn-delete-review').style.display = 'none';
+  document.getElementById('editReviewModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditReview(id) {
+  var r = getAllReviews().find(function(x){ return x.id === id; });
+  if (!r) { toast('Отзыв не найден'); return; }
+  document.getElementById('rev-modal-title').textContent = '✏️ Редактировать отзыв';
+  document.getElementById('rev-id').value = r.id;
+  document.getElementById('rev-author').value = r.author;
+  document.getElementById('rev-event').value = r.event;
+  document.getElementById('rev-rating').value = r.rating;
+  document.getElementById('rev-status').value = r.status;
+  document.getElementById('btn-delete-review').style.display = 'inline-flex';
+  document.getElementById('editReviewModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+  document.getElementById('editReviewModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveReview() {
+  var id = document.getElementById('rev-id').value;
+  var author = document.getElementById('rev-author').value.trim();
+  var event_ = document.getElementById('rev-event').value.trim();
+  if (!author || !event_) { toast('Заполните автора и событие'); return; }
+  var data = {
+    author: author,
+    event: event_,
+    rating: document.getElementById('rev-rating').value,
+    status: document.getElementById('rev-status').value,
+  };
+  var ov = getReviewOverrides();
+  if (id) {
+    ov.edits[id] = data;
+  } else {
+    var newId = 'rev_custom_' + Date.now();
+    data.id = newId;
+    ov.added = ov.added || [];
+    ov.added.push(data);
+  }
+  saveReviewOverrides(ov);
+  closeReviewModal();
+  renderReviews();
+  toast('✅ Отзыв сохранён!');
+}
+
+function deleteReview() {
+  var id = document.getElementById('rev-id').value;
+  if (!id) return;
+  if (!confirm('Удалить этот отзыв?')) return;
+  var ov = getReviewOverrides();
+  ov.deleted = ov.deleted || [];
+  if (ov.deleted.indexOf(id) < 0) ov.deleted.push(id);
+  saveReviewOverrides(ov);
+  closeReviewModal();
+  renderReviews();
+  toast('🗑 Отзыв удалён');
+}
+
 // Инициализация
 loadDashboard();
 loadEvents();
 applyLocalEdits();
 setTimeout(renderVenues, 100);
 renderSources();
+renderArticles();
+renderReviews();
 </script>
 
 <!-- ═══ МОДАЛЬНОЕ ОКНО — РЕДАКТИРОВАНИЕ СОБЫТИЯ ═══ -->
@@ -1899,6 +2145,111 @@ renderSources();
       <button class="btn btn-outline" onclick="closeSourceModal()">Отмена</button>
       <button class="btn btn-outline" id="btn-delete-source" style="color:#c8102e;border-color:#c8102e;display:none;" onclick="deleteSource()">🗑 Удалить</button>
       <button class="btn btn-red" onclick="saveSource()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ МОДАЛЬНОЕ ОКНО — РЕДАКТИРОВАНИЕ СТАТЬИ ═══ -->
+<div id="editArticleModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeArticleModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="art-modal-title">✏️ Статья</h3>
+      <button class="modal-close" onclick="closeArticleModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="art-id">
+      <div class="form-row">
+        <div class="form-group" style="flex:0 0 90px;">
+          <label class="form-label">Иконка</label>
+          <input class="form-input" id="art-icon" placeholder="📝">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Заголовок</label>
+          <input class="form-input" id="art-title" placeholder="Заголовок статьи">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Категория</label>
+          <select class="form-select" id="art-category">
+            <option value="Подборка">Подборка</option>
+            <option value="Театр">Театр</option>
+            <option value="Кино">Кино</option>
+            <option value="Гид">Гид</option>
+            <option value="Выставки">Выставки</option>
+            <option value="Рецензия">Рецензия</option>
+            <option value="Семья">Семья</option>
+            <option value="Интервью">Интервью</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Автор</label>
+          <input class="form-input" id="art-author" placeholder="Редакция Афиши">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Дата</label>
+          <input class="form-input" id="art-date" placeholder="10 июня 2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Просмотры</label>
+          <input class="form-input" id="art-views" type="number" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeArticleModal()">Отмена</button>
+      <button class="btn btn-outline" id="btn-delete-article" style="color:#c8102e;border-color:#c8102e;display:none;" onclick="deleteArticle()">🗑 Удалить</button>
+      <button class="btn btn-red" onclick="saveArticle()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ МОДАЛЬНОЕ ОКНО — РЕДАКТИРОВАНИЕ ОТЗЫВА ═══ -->
+<div id="editReviewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeReviewModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="rev-modal-title">✏️ Отзыв</h3>
+      <button class="modal-close" onclick="closeReviewModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rev-id">
+      <div class="form-group">
+        <label class="form-label">Автор</label>
+        <input class="form-input" id="rev-author" placeholder="Марина К.">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Событие</label>
+        <input class="form-input" id="rev-event" placeholder="Название мероприятия">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Оценка</label>
+          <select class="form-select" id="rev-rating">
+            <option value="★★★★★ Отлично">★★★★★ Отлично</option>
+            <option value="★★★★★ Великолепно">★★★★★ Великолепно</option>
+            <option value="★★★★★ Шедевр!">★★★★★ Шедевр!</option>
+            <option value="★★★★☆ Хорошо">★★★★☆ Хорошо</option>
+            <option value="★★★☆☆ Нормально">★★★☆☆ Нормально</option>
+            <option value="★★☆☆☆ Так себе">★★☆☆☆ Так себе</option>
+            <option value="★☆☆☆☆ Плохо">★☆☆☆☆ Плохо</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Статус</label>
+          <select class="form-select" id="rev-status">
+            <option value="Опубликован">Опубликован</option>
+            <option value="На модерации">На модерации</option>
+            <option value="Скрыт">Скрыт</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeReviewModal()">Отмена</button>
+      <button class="btn btn-outline" id="btn-delete-review" style="color:#c8102e;border-color:#c8102e;display:none;" onclick="deleteReview()">🗑 Удалить</button>
+      <button class="btn btn-red" onclick="saveReview()">💾 Сохранить</button>
     </div>
   </div>
 </div>

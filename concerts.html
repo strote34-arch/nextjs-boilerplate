@@ -202,7 +202,7 @@ a{color:inherit;text-decoration:none;}
 .vbtn.active{background:var(--red);color:#fff;}
 
 /* CONCERT GRID */
-.concert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.concert-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:24px;}
 .concert-card{background:#fff;border-radius:4px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .2s,transform .2s;position:relative;}
 .concert-card:hover{box-shadow:0 8px 28px rgba(0,0,0,0.16);transform:translateY(-3px);}
 .pushkin-badge{background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:3px;display:inline-flex;align-items:center;gap:4px;}
@@ -343,7 +343,7 @@ a{color:inherit;text-decoration:none;}
 #sharePanel{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;animation:slideUp .25s ease;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sp-title{font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-align:center;margin-bottom:16px;color:#1a1a1a;}
-.sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.sp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;}
 .sp-btn{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px 4px;border-radius:10px;transition:background .15s;border:none;background:none;}
 .sp-btn:hover{background:#f4f2ee;}
 .sp-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
@@ -1096,10 +1096,10 @@ document.addEventListener('click', function(e) {
 <style>
 /* ═══ CONCERTS — мобильная адаптация ═══════════════════════════ */
 @media(max-width:1024px){
-  .concert-grid{grid-template-columns:repeat(2,1fr)!important;gap:14px;}
+  .concert-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px;}
 }
 @media(max-width:680px){
-  .concert-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px;}
+  .concert-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px;}
   .header-inner{padding:0 10px!important;height:50px!important;}
   .logo{font-size:20px!important;}
   .filter-bar,.date-tabs{overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none;padding:8px 10px!important;gap:6px!important;}
@@ -1117,7 +1117,7 @@ document.addEventListener('click', function(e) {
   .main-layout,[class*="layout"]{grid-template-columns:1fr!important;}
 }
 @media(max-width:400px){
-  .concert-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px;}
+  .concert-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px;}
   .c-title{font-size:11px!important;}
   .c-poster{aspect-ratio:1/1!important;}
 }
@@ -2417,7 +2417,7 @@ const CONCERTS = [
     price:3000, priceMax:10000, hot:false, newShow:false, city:'Волгоград',
     desc:'Александр Серов в Волгограде. Выставочный комплекс ВолгоградЭКСПО.',
     venues:[{name:'Выставочный комплекс «ВолгоградЭКСПО»',addr:'пр. Ленина, 46А, Волгоград',cap:'2000',times:['18:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
+    photo:'images/concerts/serov.jpg', pushkin:false, cat:'concert'},
   {id:'vlg_arena_01', title:'Ленинград — концерт на стадионе',
     artist:'Ленинград', genre:'Рок', icon:'🎸', color:'#0a1a0a',
     date:'1 августа 2026', dateShort:'1 авг', dateISO:'2026-08-01', dayLabel:'Сб',
@@ -2647,9 +2647,7 @@ const CONCERTS = [
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:1200, priceMax:3000, hot:false, newShow:true, city:'Волгоград',
     desc:'Легенда ВИА Александр Дроздов с любимыми хитами.',
-    photo:'https://cdn.kassir.ru/vlg/poster/04/043acdd8384f03a211b3c36aba3df62a.jpg',
-    venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград',url:'venue-dom-oficerov.html'}],
-    ytId:'', zones:[], ticketUrl:'https://vlg.kassir.ru/koncert/legenda-via-aleksandr-drozdov?utm_source=afishiru&utm_medium=referral&utm_campaign=afisha2026',
+    photo:'images/concerts/drozdov.jpg',
     venueUrl:'venue-dom-oficerov.html'},
   {id:'vlg_k15',title:'Фактор 2 — концерт',artist:'Фактор 2',genre:'Шансон',icon:'🎤',color:'#2a1a0a',date:'29 июля 2026', dateShort:'29 июл', dateISO:'2026-07-29',dayLabel:'Сб',age:'18+',duration:'2 ч',rating:0,votes:0,price:2200,priceMax:4000,hot:false,newShow:false,city:'Волгоград',desc:'Фактор 2 в Волгограде. Зая, Малолетка и новые треки.',photo:'https://cdn.kassir.ru/vlg/poster/ac/ac7ffa885c82c5bc0a7dca1a23565988.jpg',ticketUrl:'https://vlg.kassir.ru/koncert/faktor-2?utm_source=afishiru&utm_medium=referral&utm_campaign=afisha2026',venues:[{name:'Kultura Concert Hall',addr:'ул. Советская, 29',cap:'1500',times:['19:30'],city:'Волгоград'}],ytId:'',zones:[]},
   {id:'fil_019', title:'Музыкальный батл: Волга систерс & Волга бразерс',
@@ -2937,7 +2935,7 @@ const CONCERTS = [
     age:'18+', duration:'3 ч', rating:0, votes:0,
     price:0, priceMax:0, hot:false, newShow:false, city:'Волгоград',
     desc:'Виктория Алексеева с группой и тату-мастер. Арт-гостиная. Вход свободный.',
-    photo:null,
+    photo:'images/concerts/jazz-alekseeva.webp',
     venues:[{name:'Ресторан Волгоград',addr:'ул. Мира, 12, Волгоград',cap:'',times:['21:00'],city:'Волгоград'}],
     ytId:'', zones:[]},
   {id:'rvlg_008', title:'Трибьют групп Звери и Ленинград',
@@ -5059,7 +5057,7 @@ function _showSharePanel(title, url) {
         <button id="_sharePanelClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">✕</button>
       </div>
       <div style="font-size:13px;color:#666;margin-bottom:16px;padding:10px 12px;background:#f9f7f4;border-radius:6px;font-weight:700;">📍 ${title}</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">${btnHtml}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px;">${btnHtml}</div>
       <div style="display:flex;gap:8px;">
         <input id="_shareUrlInp" value="${url}" readonly style="flex:1;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:12px;color:#666;outline:none;"/>
         <button id="_shareCopyBtn" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;white-space:nowrap;">Скопировать</button>
@@ -7478,7 +7476,7 @@ window._onGeoCity = function(city, source) {
     "age": "18+",
     "duration": "2 ч",
     "content": "Эротическая комедия для взрослых «Взрослые игры» на сцене филармонии.",
-    "photo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop&auto=format",
+    "photo": "images/concerts/vzroslye-igry.jpg",
     "status": "approved",
     "submittedBy": "parser@afishi.ru",
     "submittedAt": "25.04.2026",
@@ -7501,7 +7499,7 @@ window._onGeoCity = function(city, source) {
     "age": "16+",
     "duration": "2 ч",
     "content": "Юмористическая программа «Палата бизнес-класса».",
-    "photo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop&auto=format",
+    "photo": "images/concerts/palata.jpg",
     "status": "approved",
     "submittedBy": "parser@afishi.ru",
     "submittedAt": "25.04.2026",
@@ -7570,7 +7568,7 @@ window._onGeoCity = function(city, source) {
     "age": "12+",
     "duration": "2 ч",
     "content": "Органные обработки легендарных рок-хитов — неожиданное и захватывающее сочетание.",
-    "photo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop&auto=format",
+    "photo": "images/concerts/organ-rock.webp",
     "status": "approved",
     "submittedBy": "parser@afishi.ru",
     "submittedAt": "25.04.2026",
@@ -7683,7 +7681,7 @@ window._onGeoCity = function(city, source) {
     "age": "12+",
     "duration": "2 ч",
     "content": "Саундтрек из «Ведьмака» в симфоническом исполнении при свечах.",
-    "photo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop&auto=format",
+    "photo": "images/concerts/soundtracks-kinokoncert.webp",
     "status": "approved",
     "submittedBy": "parser@afishi.ru",
     "submittedAt": "25.04.2026",
@@ -8122,7 +8120,7 @@ function openSharePanel(title, url) {
   ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
   ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;">'
     +'<div style="font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-align:center;margin-bottom:16px;">📤 Поделиться</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
+    +'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;">'
     +'<a href="https://vk.com/share.php?url='+u+'&title='+t+'" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;padding:8px 4px;border-radius:10px;">'
     +'<div style="width:44px;height:44px;border-radius:12px;background:#4a76a8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">VK</div>'
     +'<span style="font-size:9px;font-weight:700;color:#555;font-family:Oswald,sans-serif;text-transform:uppercase;">ВКонтакте</span></a>'

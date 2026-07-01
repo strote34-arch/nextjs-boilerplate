@@ -505,7 +505,7 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
 #sharePanel{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;animation:slideUp .25s ease;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sp-title{font-family:Oswald,sans-serif;font-size:16px;font-weight:700;text-align:center;margin-bottom:16px;color:#1a1a1a;}
-.sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.sp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;}
 .sp-btn{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px 4px;border-radius:10px;transition:background .15s;border:none;background:none;}
 .sp-btn:hover{background:#f4f2ee;}
 .sp-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
@@ -649,7 +649,7 @@ footer { background: var(--dark); color: #aaa; margin-top: 40px; padding: 32px 0
 .city-link{font-size:13px;padding:3px 0;}
 .city-link:hover{color:var(--red);}
 
-.events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.events-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px;}
 .events-list{margin-bottom:28px;}
 
 .banner-strip{max-width:1200px;margin:0 auto 20px;padding:0 16px;}
@@ -1353,7 +1353,7 @@ if (typeof ARTICLES_DB === 'undefined') {
   </div>
 
   <!-- AI cards grid -->
-  <div id="aiGrid" style="display:grid !important;grid-template-columns:repeat(2,1fr) !important;gap:10px !important;"></div>
+  <div id="aiGrid" style="display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:10px !important;"></div>
 
   <!-- AI explanation -->
   <div id="aiExplanation" style="display:none; margin-top:12px; padding:12px 16px; background:linear-gradient(135deg,#f8f5ff,#fff5fb); border:1px solid #e8d5f5; border-radius:8px; font-size:13px; color:#555; line-height:1.5;">
@@ -2308,7 +2308,7 @@ var CONCERTS_DB = [
     price:3000, priceMax:10000, hot:false, newShow:false, city:'Волгоград',
     desc:'Александр Серов в Волгограде. Выставочный комплекс ВолгоградЭКСПО.',
     venues:[{name:'Выставочный комплекс «ВолгоградЭКСПО»',addr:'пр. Ленина, 46А, Волгоград',cap:'2000',times:['18:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
+    photo:'images/concerts/serov.jpg', pushkin:false, cat:'concert'},
   {id:'vlg_arena_01', title:'Ленинград — концерт на стадионе',
     artist:'Ленинград', genre:'Рок', icon:'🎸', color:'#0a1a0a',
     date:'1 августа 2026', dateShort:'1 авг', dateISO:'2026-08-01', dayLabel:'Сб',
@@ -2538,9 +2538,7 @@ var CONCERTS_DB = [
     age:'6+', duration:'2 ч', rating:0, votes:0,
     price:1200, priceMax:3000, hot:false, newShow:true, city:'Волгоград',
     desc:'Легенда ВИА Александр Дроздов с любимыми хитами.',
-    photo:'https://cdn.kassir.ru/vlg/poster/04/043acdd8384f03a211b3c36aba3df62a.jpg',
-    venues:[{name:'Дом Офицеров',addr:'просп. Ленина, 31, Волгоград',cap:'',times:['19:00'],city:'Волгоград',url:'venue-dom-oficerov.html'}],
-    ytId:'', zones:[], ticketUrl:'https://vlg.kassir.ru/koncert/legenda-via-aleksandr-drozdov?utm_source=afishiru&utm_medium=referral&utm_campaign=afisha2026',
+    photo:'images/concerts/drozdov.jpg',
     venueUrl:'venue-dom-oficerov.html'},
   {id:'vlg_k15',title:'Фактор 2 — концерт',artist:'Фактор 2',genre:'Шансон',icon:'🎤',color:'#2a1a0a',date:'29 июля 2026', dateShort:'29 июл', dateISO:'2026-07-29',dayLabel:'Сб',age:'18+',duration:'2 ч',rating:0,votes:0,price:2200,priceMax:4000,hot:false,newShow:false,city:'Волгоград',desc:'Фактор 2 в Волгограде. Зая, Малолетка и новые треки.',photo:'https://cdn.kassir.ru/vlg/poster/ac/ac7ffa885c82c5bc0a7dca1a23565988.jpg',ticketUrl:'https://vlg.kassir.ru/koncert/faktor-2?utm_source=afishiru&utm_medium=referral&utm_campaign=afisha2026',venues:[{name:'Kultura Concert Hall',addr:'ул. Советская, 29',cap:'1500',times:['19:30'],city:'Волгоград'}],ytId:'',zones:[]},
   {id:'fil_019', title:'Музыкальный батл: Волга систерс & Волга бразерс',
@@ -2828,7 +2826,7 @@ var CONCERTS_DB = [
     age:'18+', duration:'3 ч', rating:0, votes:0,
     price:0, priceMax:0, hot:false, newShow:false, city:'Волгоград',
     desc:'Виктория Алексеева с группой и тату-мастер. Арт-гостиная. Вход свободный.',
-    photo:null,
+    photo:'images/concerts/jazz-alekseeva.webp',
     venues:[{name:'Ресторан Волгоград',addr:'ул. Мира, 12, Волгоград',cap:'',times:['21:00'],city:'Волгоград'}],
     ytId:'', zones:[]},
   {id:'rvlg_008', title:'Трибьют групп Звери и Ленинград',

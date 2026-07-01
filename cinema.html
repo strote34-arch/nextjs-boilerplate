@@ -180,7 +180,7 @@ a{color:inherit;text-decoration:none;}
 .view-btn.active{background:var(--red);color:#fff;}
 
 /* FILM GRID */
-.film-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.film-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
 .film-card{background:#fff;border-radius:4px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .2s,transform .2s;position:relative;}
 .film-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.16);transform:translateY(-3px);}
 .film-poster{width:100%;aspect-ratio:2/3;display:block;position:relative;overflow:hidden;background:#111;}
@@ -982,28 +982,27 @@ function safeGet(id) {
 </script>
 
 <style>
-<style>
 /* ═══ CINEMA — мобильная адаптация ════════════════════ */
 @media(max-width:900px){
-  .film-grid{grid-template-columns:repeat(3,1fr)!important;gap:14px;}
+  .film-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px;}
 }
 @media(max-width:600px){
-  .film-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px;}
+  .film-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px;}
   .header-inner{padding:0 10px!important;height:50px!important;}
   .logo{font-size:20px!important;}
   .filter-bar,.genre-bar{gap:6px!important;padding:8px 10px!important;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;}
   .filter-btn{font-size:11px!important;padding:5px 10px!important;white-space:nowrap;flex-shrink:0;}
   /* Постер — основная проблема: делаем высоким и правильным */
-  .film-card{border-radius:8px!important;overflow:hidden;}
-  .film-poster{height:220px!important;width:100%!important;object-fit:cover!important;}
-  .film-poster-bg{height:220px!important;width:100%!important;}
-  .film-poster-img{height:220px!important;width:100%!important;object-fit:cover!important;}
-  .film-poster-wrap{height:220px!important;}
+  .film-card{border-radius:8px!important;overflow:hidden;min-width:0!important;}
+  .film-poster{aspect-ratio:2/3!important;height:auto!important;width:100%!important;min-width:0!important;object-fit:cover!important;}
+  .film-poster-bg{width:100%!important;height:100%!important;min-width:0!important;}
+  .film-poster-img{width:100%!important;height:100%!important;min-width:0!important;object-fit:cover!important;}
+  .film-poster-wrap{width:100%!important;min-width:0!important;}
   .film-badge,.film-fbadge{font-size:9px!important;padding:2px 5px!important;}
   .film-age{font-size:9px!important;}
   .film-body{padding:8px!important;}
   .film-genre{font-size:9px!important;margin-bottom:3px!important;}
-  .film-title{font-size:12px!important;font-weight:700;line-height:1.3;margin-bottom:4px!important;}
+  .film-title{font-size:12px!important;font-weight:700;line-height:1.3;margin-bottom:4px!important;white-space:normal!important;word-break:break-word!important;}
   .film-meta{font-size:10px!important;}
   .film-rating-row{gap:3px!important;}
   .film-score{font-size:11px!important;}
@@ -1017,8 +1016,8 @@ function safeGet(id) {
   .date-tabs{overflow-x:auto!important;scrollbar-width:none;}
 }
 @media(max-width:380px){
-  .film-grid{grid-template-columns:1fr!important;gap:10px;}
-  .film-poster,.film-poster-bg,.film-poster-img,.film-poster-wrap{height:300px!important;}
+  .film-grid{grid-template-columns:minmax(0,1fr)!important;gap:10px;}
+  .film-poster,.film-poster-bg,.film-poster-img,.film-poster-wrap{height:auto!important;aspect-ratio:2/3!important;}
 }
 @media(pointer:coarse){
   .film-card:hover{transform:none!important;}
@@ -2618,7 +2617,7 @@ function _showSharePanel(title, url) {
         <button id="_sharePanelClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">✕</button>
       </div>
       <div style="font-size:13px;color:#666;margin-bottom:16px;padding:10px 12px;background:#f9f7f4;border-radius:6px;font-weight:700;">📍 ${title}</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">${btnHtml}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px;">${btnHtml}</div>
       <div style="display:flex;gap:8px;">
         <input id="_shareUrlInp" value="${url}" readonly style="flex:1;border:1.5px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:12px;color:#666;outline:none;"/>
         <button id="_shareCopyBtn" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;white-space:nowrap;">Скопировать</button>

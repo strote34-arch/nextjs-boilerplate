@@ -3,6 +3,22 @@
    Адаптация для экранов 320px–768px
    ════════════════════════════════════════════════════════════════ */
 
+/* ── Anti-shake: запрет горизонтального скролла/пустот на мобильных ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+body {
+  position: relative;
+  width: 100%;
+}
+/* Явно ограничиваем ширину типовых широких блоков (карточки, гриды, ряды) */
+.container, .main-layout, .wrap, section, .grid, .row,
+.event-card, .event-grid, .film-grid, .concert-grid,
+.hero-main, .hero-aside, .date-strip-inner {
+  max-width: 100%;
+}
+
 /* ── Base ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
