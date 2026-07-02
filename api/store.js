@@ -38,12 +38,14 @@ async function loadDoc() {
 }
 
 async function saveDoc(doc) {
-  await put(DOC_PATH, JSON.stringify(doc), {
+  const result = await put(DOC_PATH, JSON.stringify(doc), {
     access: 'private',
     contentType: 'application/json',
     allowOverwrite: true,
     cacheControlMaxAge: 60, // минимум, разрешённый Vercel Blob — не хотим долгого кэша для этого файла
   });
+  console.log('[api/store] saveDoc wrote:', JSON.stringify(result), 'doc keys:', Object.keys(doc));
+  return result;
 }
 
 export default async function handler(req, res) {
@@ -63,6 +65,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const doc = await loadDoc();
+      console.log('[api/store] GET loadDoc returned keys:', Object.keys(doc));
       const key = req.query && req.query.key;
       if (key) return res.json({ ok: true, key, value: doc[key] !== undefined ? doc[key] : null });
       return res.json({ ok: true, data: doc });
@@ -74,6 +77,7 @@ export default async function handler(req, res) {
       if (!key) return res.status(400).json({ error: 'key required' });
 
       const doc = await loadDoc();
+      console.log('[api/store] POST before-write doc keys:', Object.keys(doc));
 
       if (value !== undefined) {
         doc[key] = value;
@@ -84,7 +88,13 @@ export default async function handler(req, res) {
       }
 
       await saveDoc(doc);
-      return res.json({ ok: true, key, value: doc[key] });
+
+      // Верификация: перечитываем документ заново (отдельный запрос), чтобы убедиться,
+      // что запись реально видна, а не просто "не упала с ошибкой"
+      const verify = await loadDoc();
+      console.log('[api/store] POST after-write verify keys:', Object.keys(verify), 'has key:', key in verify);
+
+      return res.json({ ok: true, key, value: doc[key], verified: key in verify && JSON.stringify(verify[key]) === JSON.stringify(doc[key]) });
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });
