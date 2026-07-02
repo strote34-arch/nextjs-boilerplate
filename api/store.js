@@ -19,8 +19,13 @@ async function loadDoc() {
     if (!res.ok) return {};
     return await res.json();
   } catch (e) {
-    // Блоб ещё не создан — начинаем с пустого документа
-    return {};
+    // BlobNotFoundError (документ ещё не создан) — это нормально, начинаем с пустого.
+    // Любую другую ошибку (auth, network...) логируем и пробрасываем дальше,
+    // чтобы не маскировать реальные сбои как "пустые данные".
+    const name = e && (e.name || e.code || '');
+    if (String(name).toLowerCase().includes('notfound')) return {};
+    console.error('[api/store] loadDoc error:', e && e.message || e);
+    throw e;
   }
 }
 
