@@ -16,7 +16,8 @@ async function loadDoc() {
   try {
     const info = await head(DOC_PATH);
     const authToken = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_OIDC_TOKEN;
-    const res = await fetch(info.url, {
+    const bustUrl = info.url + (info.url.includes('?') ? '&' : '?') + '_=' + Date.now();
+    const res = await fetch(bustUrl, {
       cache: 'no-store',
       headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
     });
@@ -41,6 +42,7 @@ async function saveDoc(doc) {
     access: 'private',
     contentType: 'application/json',
     allowOverwrite: true,
+    cacheControlMaxAge: 60, // минимум, разрешённый Vercel Blob — не хотим долгого кэша для этого файла
   });
 }
 
