@@ -907,44 +907,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (!concEl) return;
-    
-    // Загрузить концерты из CONCERTS_DB или localStorage
-    var allConcerts = [];
-    try {
-      // Из статичного CONCERTS на странице concerts.html через sessionStorage
-      var stored = sessionStorage.getItem('afishi_concerts_cache');
-      if (stored) allConcerts = JSON.parse(stored);
-    } catch(e) {}
-    
-    // Фильтровать по названию площадки
-    var today = new Date(); today.setHours(0,0,0,0);
-    var todayISO = today.toISOString().slice(0,10);
-    var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-    
-    var concerts = allConcerts.filter(function(c){
-      return (c.venue || '').toLowerCase().indexOf(vname.toLowerCase().slice(0, 10)) >= 0
-        && c.dateISO && c.dateISO >= todayISO;
-    }).sort(function(a, b){ return a.dateISO < b.dateISO ? -1 : 1; });
-    
-    // Если нет данных из кэша — показать заглушку
-    if (!concerts.length) {
-      concEl.innerHTML = '<div style="background:#f9f7f4;border-radius:8px;padding:20px;text-align:center;color:#888;">'
-        + '<div style="font-size:32px;margin-bottom:8px;">🎸</div>'
-        + '<div style="font-weight:700;margin-bottom:4px;">Концерты на площадке</div>'
-        + '<div style="font-size:13px;">Смотрите актуальные события в разделе <a href="concerts.html" style="color:#c8102e;">Концерты</a></div>'
-        + '</div>';
-      return;
+
+    // Загрузить концерты напрямую из concerts.html (надёжно, не зависит от того,
+    // открывал ли посетитель сначала страницу /concerts — раньше ждали sessionStorage,
+    // которую НИКТО и никогда не заполнял, поэтому эта секция всегда была пустой)
+    function renderVenueConcerts(allConcerts) {
+      var today = new Date(); today.setHours(0,0,0,0);
+      var todayISO = today.toISOString().slice(0,10);
+
+      var concerts = allConcerts.filter(function(c){
+        var venueMatch = (c.venues || []).some(function(v){
+          return (v.name || '').toLowerCase().indexOf(vname.toLowerCase().slice(0, 10)) >= 0;
+        });
+        return venueMatch && c.dateISO && c.dateISO >= todayISO;
+      }).sort(function(a, b){ return a.dateISO < b.dateISO ? -1 : 1; });
+
+      if (!concerts.length) {
+        concEl.innerHTML = '<div style="background:#f9f7f4;border-radius:8px;padding:20px;text-align:center;color:#888;">'
+          + '<div style="font-size:32px;margin-bottom:8px;">🎸</div>'
+          + '<div style="font-weight:700;margin-bottom:4px;">Концерты на площадке</div>'
+          + '<div style="font-size:13px;">Смотрите актуальные события в разделе <a href="concerts.html" style="color:#c8102e;">Концерты</a></div>'
+          + '</div>';
+        return;
+      }
+
+      concEl.innerHTML = concerts.slice(0,6).map(function(c){
+        var timeStr = (c.venues && c.venues[0] && c.venues[0].times && c.venues[0].times[0]) || '';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);">'
+          + '<div style="display:flex;align-items:center;gap:12px;">'
+          + '<div style="width:40px;height:40px;border-radius:8px;background:'+(c.color||'#333')+';display:flex;align-items:center;justify-content:center;font-size:20px;">'+(c.icon||'🎫')+'</div>'
+          + '<div><div style="font-weight:700;font-size:14px;">'+c.title+'</div>'
+          + '<div style="font-size:12px;color:#888;">📅 '+c.date+(timeStr?' · ⏰ '+timeStr:'')+'</div></div></div>'
+          + '<a href="concerts.html" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:8px 14px;border-radius:4px;text-decoration:none;">Билеты →</a>'
+          + '</div>';
+      }).join('');
     }
-    
-    concEl.innerHTML = concerts.slice(0,6).map(function(c){
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);">'
-        + '<div style="display:flex;align-items:center;gap:12px;">'
-        + '<div style="width:40px;height:40px;border-radius:8px;background:'+c.color+';display:flex;align-items:center;justify-content:center;font-size:20px;">'+c.icon+'</div>'
-        + '<div><div style="font-weight:700;font-size:14px;">'+c.title+'</div>'
-        + '<div style="font-size:12px;color:#888;">📅 '+c.date+(c.time?' · ⏰ '+c.time:'')+'</div></div></div>'
-        + '<a href="concerts.html" style="background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;padding:8px 14px;border-radius:4px;text-decoration:none;">Билеты →</a>'
-        + '</div>';
-    }).join('');
+
+    fetch('concerts.html')
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        var m = html.match(/(var _today[\s\S]*?const CONCERTS\s*=\s*\[[\s\S]*?\n\];)/);
+        if (!m) throw new Error('CONCERTS не найден в concerts.html');
+        var arr = new Function(m[1] + '\nreturn CONCERTS;')();
+        renderVenueConcerts(arr);
+      })
+      .catch(function(err){
+        console.warn('[venueConcerts] не удалось загрузить концерты:', err);
+        renderVenueConcerts([]);
+      });
   });
 })();
 </script>
