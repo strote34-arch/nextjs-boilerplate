@@ -46,12 +46,16 @@ export default async function handler(req, res) {
     const pathname = `photos/${Date.now()}-${safeName}.${ext}`;
 
     const blob = await put(pathname, buffer, {
-      access: 'public',
+      access: 'private',
       contentType,
       addRandomSuffix: true,
     });
 
-    return res.json({ ok: true, url: blob.url });
+    // Хранилище приватное — отдаём ссылку на наш публичный прокси, а не сырой blob.url
+    // (сырую ссылку браузер посетителя открыть не сможет, туда нужна авторизация).
+    const proxyUrl = `/api/photo?p=${encodeURIComponent(blob.pathname)}`;
+
+    return res.json({ ok: true, url: proxyUrl });
   } catch (e) {
     return res.status(500).json({ error: 'server_error', message: String(e && e.message || e) });
   }

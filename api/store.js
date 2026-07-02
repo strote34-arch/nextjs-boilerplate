@@ -15,7 +15,11 @@ const DOC_PATH = 'data/site-data.json';
 async function loadDoc() {
   try {
     const info = await head(DOC_PATH);
-    const res = await fetch(info.url, { cache: 'no-store' });
+    const authToken = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_OIDC_TOKEN;
+    const res = await fetch(info.url, {
+      cache: 'no-store',
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    });
     if (!res.ok) return {};
     return await res.json();
   } catch (e) {
@@ -34,7 +38,7 @@ async function loadDoc() {
 
 async function saveDoc(doc) {
   await put(DOC_PATH, JSON.stringify(doc), {
-    access: 'public',
+    access: 'private',
     contentType: 'application/json',
     allowOverwrite: true,
   });
