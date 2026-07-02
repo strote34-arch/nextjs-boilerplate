@@ -22,8 +22,11 @@ async function loadDoc() {
     // BlobNotFoundError (документ ещё не создан) — это нормально, начинаем с пустого.
     // Любую другую ошибку (auth, network...) логируем и пробрасываем дальше,
     // чтобы не маскировать реальные сбои как "пустые данные".
-    const name = e && (e.name || e.code || '');
-    if (String(name).toLowerCase().includes('notfound')) return {};
+    const name = String((e && (e.name || e.code)) || '').toLowerCase();
+    const msg = String((e && e.message) || '').toLowerCase();
+    const isNotFound = name.includes('notfound') || name.includes('not_found')
+      || msg.includes('does not exist') || msg.includes('not found');
+    if (isNotFound) return {};
     console.error('[api/store] loadDoc error:', e && e.message || e);
     throw e;
   }
