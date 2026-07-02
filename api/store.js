@@ -83,6 +83,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (e) {
+    console.error('[api/store] handler error:', req.method, e && e.stack || e);
     return res.status(500).json({ error: 'server_error', message: String(e && e.message || e) });
   }
 }
