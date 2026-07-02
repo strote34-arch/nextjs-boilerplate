@@ -1607,13 +1607,21 @@ window.saveEditedConcert = function saveEditedConcert() {
     }
   }
 
-  // Persist photo to afishi_concert_photos so it survives page reload
+  // Persist photo to server (Vercel Blob via /api/store) so it's visible to ALL visitors,
+  // + localStorage as an instant local fallback/cache
   if (updates.photo) {
     try {
       var _cp = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}');
       _cp[String(id)] = updates.photo;
       localStorage.setItem('afishi_concert_photos', JSON.stringify(_cp));
     } catch(e) {}
+    fetch('/api/store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'concertPhotos', patch: { [String(id)]: updates.photo } })
+    }).then(function(r){ return r.json(); }).then(function(r){
+      if (!r.ok) console.warn('Фото сохранено только локально (сервер недоступен):', r.message || r.error);
+    }).catch(function(){ /* офлайн — фото уже сохранено локально */ });
   }
 
   // ── Handle section/venue transfer ──────────────────────────
@@ -2097,30 +2105,84 @@ function uploadConcertPhoto(input) {
   if (!input.files || !input.files[0]) return;
   var cid = (document.getElementById('mUploadPhotoBtn') || {}).dataset.cid || '';
   if (!cid) return;
+  var file = input.files[0];
   var reader = new FileReader();
   reader.onload = function(e) {
-    var dataUrl = e.target.result;
-    // Сохранить в afishi_concert_photos
-    try {
-      var cp = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}');
-      cp[cid] = dataUrl;
-      localStorage.setItem('afishi_concert_photos', JSON.stringify(cp));
-      // Обновить постер
-      var mpost = document.getElementById('mposter');
-      if (mpost) {
-        mpost.style.cssText = 'background:#111;padding:0;overflow:hidden;';
-        mpost.innerHTML = '<img loading="lazy" src="' + dataUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;">';
-      }
-      document.getElementById('mUploadPhotoBtn').style.display = 'none';
-      // Toast
-      var t = document.createElement('div');
-      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#28a745;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border-radius:6px;z-index:9999;';
-      t.textContent = '✅ Афиша добавлена!';
-      document.body.appendChild(t);
-      setTimeout(function(){t.remove();}, 2500);
-    } catch(e) { alert('Ошибка сохранения: ' + e.message); }
+    var rawDataUrl = e.target.result;
+    // Сжимаем/уменьшаем фото в браузере перед отправкой — телефонные фото часто 3-8 МБ,
+    // а постеру не нужно больше ~1000px по ширине
+    var img = new Image();
+    img.onload = function() {
+      var MAX_W = 1000;
+      var scale = Math.min(1, MAX_W / img.width);
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      finishUpload(dataUrl, rawDataUrl);
+    };
+    img.onerror = function() { finishUpload(rawDataUrl, rawDataUrl); };
+    img.src = rawDataUrl;
   };
-  reader.readAsDataURL(input.files[0]);
+  reader.readAsDataURL(file);
+
+  function finishUpload(dataUrl, previewUrl) {
+    var mpost = document.getElementById('mposter');
+    // Сразу показываем превью локально, пока идёт загрузка на сервер
+    if (mpost) {
+      mpost.style.cssText = 'background:#111;padding:0;overflow:hidden;position:relative;';
+      mpost.innerHTML = '<img loading="lazy" src="' + previewUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;opacity:.6;">'
+        + '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;">⏳ Загрузка на сервер...</div>';
+    }
+    function showToast(msg, ok) {
+      var t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:' + (ok ? '#28a745' : '#c8102e') + ';color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border-radius:6px;z-index:9999;';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 3000);
+    }
+    fetch('/api/upload-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataUrl: dataUrl, filename: cid })
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(r){
+        if (!r.ok) throw new Error(r.message || r.error || 'upload failed');
+        var permanentUrl = r.url;
+        // Сохранить постоянную ссылку и на сервере (видно всем), и локально (мгновенный кэш)
+        try {
+          var cp = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}');
+          cp[cid] = permanentUrl;
+          localStorage.setItem('afishi_concert_photos', JSON.stringify(cp));
+        } catch(e) {}
+        fetch('/api/store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'concertPhotos', patch: { [cid]: permanentUrl } })
+        }).catch(function(){});
+        if (mpost) {
+          mpost.innerHTML = '<img loading="lazy" src="' + permanentUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;">';
+        }
+        document.getElementById('mUploadPhotoBtn').style.display = 'none';
+        showToast('✅ Афиша загружена и видна всем посетителям!', true);
+      })
+      .catch(function(err){
+        // Сервер недоступен/хранилище не настроено — сохраняем как раньше, только локально
+        try {
+          var cp2 = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}');
+          cp2[cid] = previewUrl;
+          localStorage.setItem('afishi_concert_photos', JSON.stringify(cp2));
+        } catch(e) {}
+        if (mpost) {
+          mpost.innerHTML = '<img loading="lazy" src="' + previewUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;">';
+        }
+        document.getElementById('mUploadPhotoBtn').style.display = 'none';
+        showToast('⚠️ Сохранено только в этом браузере (сервер: ' + err.message + ')', false);
+      });
+  }
 }
 
 function _showVenueMap(name, addr, city) {
@@ -3965,6 +4027,24 @@ function init() {
 
   syncConcertsToAdmin();
   applyFilters();
+
+  // ── Догружаем фото афиш с сервера (видно ВСЕМ посетителям, не только тому, кто загрузил) ──
+  fetch('/api/store?key=concertPhotos').then(function(r){ return r.json(); }).then(function(r){
+    if (!r || !r.ok || !r.value) return;
+    var serverPhotos = r.value;
+    var changed = false;
+    var localCache = {};
+    try { localCache = JSON.parse(localStorage.getItem('afishi_concert_photos') || '{}'); } catch(e) {}
+    Object.keys(serverPhotos).forEach(function(pid) {
+      if (localCache[pid] !== serverPhotos[pid]) { localCache[pid] = serverPhotos[pid]; changed = true; }
+      var _cev = CONCERTS.find(function(x) { return String(x.id) === String(pid); });
+      if (_cev && serverPhotos[pid]) _cev.photo = serverPhotos[pid];
+    });
+    if (changed) {
+      try { localStorage.setItem('afishi_concert_photos', JSON.stringify(localCache)); } catch(e) {}
+      applyFilters();
+    }
+  }).catch(function(){ /* сервер недоступен — остаёмся на localStorage-версии */ });
   // sync city pill
   document.querySelectorAll('.city-pill').forEach(p => {
     p.classList.toggle('active', (p.dataset.city || p.textContent.trim()) === savedCity);
