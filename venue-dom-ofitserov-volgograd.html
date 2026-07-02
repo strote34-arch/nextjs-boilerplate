@@ -885,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ── Концерты на площадке ─────────────────────────────────────────
 (function() {
   document.addEventListener('DOMContentLoaded', function() {
-    var venueName = document.querySelector('.venue-name') || document.querySelector('h1');
+    var venueName = document.querySelector('.venue-name') || document.querySelector('.hero-name') || document.querySelector('h1');
     var vname = venueName ? venueName.textContent.trim() : '';
     
     // Найти контейнер для концертов
@@ -896,7 +896,7 @@ document.addEventListener('DOMContentLoaded', function() {
       section.className = 'venue-concerts-section';
       section.style.cssText = 'max-width:800px;margin:24px auto;padding:0 16px;';
       section.innerHTML = '<h2 style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;">🎸 Ближайшие концерты</h2>'
-        + '<div id="venueConcerts"></div>';
+        + '<div id="venueConcerts" style="max-height:520px;overflow-y:auto;padding-right:4px;"></div>';
       
       var main = document.querySelector('.content') || document.querySelector('main') || document.body;
       var footer = document.querySelector('footer');
@@ -931,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      concEl.innerHTML = concerts.slice(0,6).map(function(c){
+      concEl.innerHTML = concerts.slice(0,30).map(function(c){
         var timeStr = (c.venues && c.venues[0] && c.venues[0].times && c.venues[0].times[0]) || '';
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);">'
           + '<div style="display:flex;align-items:center;gap:12px;">'
