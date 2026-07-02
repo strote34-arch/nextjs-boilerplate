@@ -8,21 +8,18 @@
 // Требует переменную окружения BLOB_READ_WRITE_TOKEN — появляется автоматически
 // после подключения Vercel Blob Store в настройках проекта (Storage → Create Database → Blob).
 
-import { put, head } from '@vercel/blob';
+import { put, get } from '@vercel/blob';
 
 const DOC_PATH = 'data/site-data.json';
 
 async function loadDoc() {
   try {
-    const info = await head(DOC_PATH);
-    const authToken = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_OIDC_TOKEN;
-    const bustUrl = info.url + (info.url.includes('?') ? '&' : '?') + '_=' + Date.now();
-    const res = await fetch(bustUrl, {
-      cache: 'no-store',
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-    });
-    if (!res.ok) return {};
-    return await res.json();
+    const result = await get(DOC_PATH, { access: 'private' });
+    if (!result || result.statusCode !== 200 || !result.stream) return {};
+    const chunks = [];
+    for await (const chunk of result.stream) chunks.push(chunk);
+    const text = Buffer.concat(chunks).toString('utf-8');
+    return JSON.parse(text);
   } catch (e) {
     // BlobNotFoundError (документ ещё не создан) — это нормально, начинаем с пустого.
     // Любую другую ошибку (auth, network...) логируем и пробрасываем дальше,

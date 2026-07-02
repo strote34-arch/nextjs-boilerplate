@@ -5,7 +5,7 @@
 //
 // GET /api/photo?p=<pathname>  (pathname — то, что вернул /api/upload-photo)
 
-import { head } from '@vercel/blob';
+import { get } from '@vercel/blob';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,18 +13,15 @@ export default async function handler(req, res) {
   if (!p) return res.status(400).json({ error: 'p (pathname) required' });
 
   try {
-    const info = await head(p);
-    const authToken = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_OIDC_TOKEN;
-    const upstream = await fetch(info.url, {
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-    });
-    if (!upstream.ok) {
-      return res.status(upstream.status === 404 ? 404 : 502).json({ error: 'upstream_error', status: upstream.status });
+    const result = await get(p, { access: 'private' });
+    if (!result || result.statusCode !== 200 || !result.stream) {
+      return res.status(404).json({ error: 'not_found' });
     }
-    const buf = Buffer.from(await upstream.arrayBuffer());
-    res.setHeader('Content-Type', info.contentType || 'application/octet-stream');
+    res.setHeader('Content-Type', result.blob.contentType || 'application/octet-stream');
     res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
-    res.status(200).end(buf);
+    const chunks = [];
+    for await (const chunk of result.stream) chunks.push(chunk);
+    res.status(200).end(Buffer.concat(chunks));
   } catch (e) {
     console.error('[api/photo] error:', e && e.message || e);
     return res.status(404).json({ error: 'not_found' });
