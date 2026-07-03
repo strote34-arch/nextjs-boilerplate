@@ -1933,6 +1933,18 @@ footer {
       </div>
       <a href="concerts.html" style="display:block;text-align:center;margin-top:10px;font-family:Oswald,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);text-decoration:none;">Все события →</a>
     </div>
+
+    <!-- Вертикальный баннер 240x400 -->
+    <div style="margin-top:16px;">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#999;text-align:center;margin-bottom:4px;">РЕКЛАМА</div>
+      <div class="ad-slot" id="ad-sidebar-240" style="width:240px;height:400px;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;display:flex;align-items:center;justify-content:center;margin:0 auto;overflow:hidden;position:relative;">
+        <div style="text-align:center;color:#aaa;">
+          <div style="font-size:32px;margin-bottom:8px;">📢</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Реклама</div>
+          <div style="font-size:10px;margin-top:4px;">240 × 400</div>
+        </div>
+      </div>
+    </div>
   </aside>
 </div>
 
@@ -5424,6 +5436,276 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
   document.addEventListener('DOMContentLoaded', renderUserBtn);
 })();
 
+</script>
+
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// AFISHI BANNER SYSTEM v1 — управляется через админку
+// ════════════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  var PAGE_ID = (function() {
+    var p = location.pathname.split('/').pop().replace('.html','') || 'index';
+    return p || 'index';
+  })();
+
+  // ── Получить конфиг баннеров из localStorage ─────────────────
+  function getBannerConfig() {
+    try {
+      var cfg = JSON.parse(localStorage.getItem('afishi_banners') || 'null');
+      return cfg || getDefaultConfig();
+    } catch(e) { return getDefaultConfig(); }
+  }
+
+  function getDefaultConfig() {
+    return {
+      enabled: true,
+      banners: [
+        {
+          id: 'banner_default_1',
+          name: 'Яндекс.Директ — Sidebar 240×400',
+          type: 'yandex',
+          format: '240x400',
+          yandexBlockId: '',
+          pages: ['all'],
+          cities: ['all'],
+          active: false,
+          impressions: 0,
+          clicks: 0,
+          maxImpressions: 0
+        },
+        {
+          id: 'banner_house_1',
+          name: 'House Ad — АфишиПлюс',
+          type: 'html',
+          format: '240x400',
+          html: '<a href="loyalty.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#1a1a1a,#2a1a3a);color:#fff;text-decoration:none;padding:20px;text-align:center;"><div style="font-size:48px;margin-bottom:12px;">⭐</div><div style="font-family:Oswald,sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;">АфишиПлюс</div><div style="font-size:13px;opacity:.7;margin-bottom:16px;">Скидка 15% на все билеты</div><div style="background:#c9a84c;color:#1a1a1a;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px 20px;border-radius:4px;">от 299 ₽/мес</div></a>',
+          pages: ['all'],
+          cities: ['all'],
+          active: true,
+          impressions: 0,
+          clicks: 0,
+          maxImpressions: 0
+        }
+      ]
+    };
+  }
+
+  // ── Скрыть рекламу для Plus ──────────────────────────────────
+  try {
+    var ly = JSON.parse(localStorage.getItem('afishi_loyalty') || 'null');
+    if (ly && (ly.tier === 'gold' || ly.tier === 'platinum')) {
+      document.body.classList.add('afishi-plus-' + (ly.tier === 'gold' ? 'gold' : 'plat'));
+      return; // не рендерим баннеры для подписчиков
+    }
+  } catch(e) {}
+
+  // ── Определить текущий город ─────────────────────────────────
+  var PAGE_ID = 'concerts';
+
+  var _bannerCity = (function() {
+    try { return localStorage.getItem('afishi_city') || 'Волгоград'; } catch(e) { return 'Волгоград'; }
+  })();
+
+  // ── Выбрать подходящий баннер ────────────────────────────────
+  function pickBanner(cfg) {
+    if (!cfg.enabled) return null;
+    var candidates = (cfg.banners || []).filter(function(b) {
+      if (!b.active) return false;
+      // Page filter
+      var pageOk = b.pages.includes('all') || b.pages.includes(PAGE_ID);
+      if (!pageOk) return false;
+      // City filter
+      var cityOk = b.cities.includes('all') || b.cities.includes(_bannerCity);
+      if (!cityOk) return false;
+      // Impression limit
+      if (b.maxImpressions > 0 && b.impressions >= b.maxImpressions) return false;
+      return true;
+    });
+    if (!candidates.length) return null;
+    // Random from candidates (weighted rotation)
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  // ── Записать показ ────────────────────────────────────────────
+  function recordImpression(bannerId) {
+    try {
+      var cfg = JSON.parse(localStorage.getItem('afishi_banners') || 'null');
+      if (!cfg) return;
+      var b = (cfg.banners || []).find(function(x){ return x.id === bannerId; });
+      if (b) { b.impressions = (b.impressions || 0) + 1; }
+      localStorage.setItem('afishi_banners', JSON.stringify(cfg));
+    } catch(e) {}
+  }
+
+  // ── Записать клик ─────────────────────────────────────────────
+  function recordClick(bannerId) {
+    try {
+      var cfg = JSON.parse(localStorage.getItem('afishi_banners') || 'null');
+      if (!cfg) return;
+      var b = (cfg.banners || []).find(function(x){ return x.id === bannerId; });
+      if (b) { b.clicks = (b.clicks || 0) + 1; }
+      localStorage.setItem('afishi_banners', JSON.stringify(cfg));
+    } catch(e) {}
+  }
+
+  // ── Рендер баннера ────────────────────────────────────────────
+  function renderBanner(banner, container) {
+    var formatH = {'240x400': 400, '160x600': 600, '300x250': 250, 'native': 0}[banner.format] || 400;
+    var formatCls = {'240x400':'ad-v-240','160x600':'ad-v-160','300x250':'ad-v-300','native':'ad-native-card'}[banner.format] || 'ad-v-240';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'ad-sidebar-wrap';
+    wrap.dataset.bannerId = banner.id;
+
+    var label = document.createElement('div');
+    label.className = 'ad-sidebar-label';
+    label.textContent = 'Реклама';
+    wrap.appendChild(label);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'ad-sidebar-close';
+    closeBtn.title = 'Закрыть';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = function() { wrap.style.display = 'none'; };
+    wrap.appendChild(closeBtn);
+
+    var inner = document.createElement('div');
+    inner.className = formatCls;
+
+    if (banner.type === 'yandex' && banner.yandexBlockId) {
+      // Яндекс.Директ блок
+      inner.innerHTML = '<div id="yandex_rtb_' + banner.yandexBlockId + '"></div>';
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+      // Load Yandex script
+      (function(w, d, n, s, t) {
+        w[n] = w[n] || [];
+        w[n].push(function() {
+          if (window.Ya && window.Ya.Context) {
+            Ya.Context.AdvManager.render({
+              blockId: banner.yandexBlockId,
+              renderTo: 'yandex_rtb_' + banner.yandexBlockId,
+              async: true
+            });
+          }
+        });
+        t = d.getElementsByTagName('script')[0];
+        s = d.createElement('script');
+        s.type = 'text/javascript';
+        s.src = '//an.yandex.ru/system/context.js';
+        s.async = true;
+        t.parentNode.insertBefore(s, t);
+      })(this, this.document, 'yandexContextAsyncCallbacks');
+
+    } else if (banner.type === 'html' && banner.html) {
+      // Произвольный HTML баннер
+      inner.innerHTML = banner.html;
+      // Track clicks
+      inner.addEventListener('click', function() { recordClick(banner.id); });
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+
+    } else if (banner.type === 'image' && banner.imageUrl) {
+      // Картинка-баннер
+      var link = document.createElement('a');
+      link.href = banner.linkUrl || '#';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.style.cssText = 'display:block;width:100%;height:100%;';
+      link.addEventListener('click', function() { recordClick(banner.id); });
+      var img = document.createElement('img');
+      img.src = banner.imageUrl;
+      img.alt = banner.name || 'Реклама';
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      link.appendChild(img);
+      inner.appendChild(link);
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+
+    } else if (banner.type === 'code' && banner.code) {
+      // Произвольный код (iframe src или embed)
+      inner.innerHTML = banner.code;
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+
+    } else {
+      // Заглушка-плейсхолдер (баннер активен но не настроен)
+      inner.innerHTML = '<div class="ad-placeholder-inner"><div style="font-size:36px;margin-bottom:8px;">📢</div><div>Рекламное место</div><div style="font-size:9px;opacity:.5;margin-top:4px;">' + (banner.format || '240×400') + '</div></div>';
+      wrap.appendChild(inner);
+      container.insertBefore(wrap, container.firstChild);
+    }
+
+    recordImpression(banner.id);
+  }
+
+  // ── Инициализация ─────────────────────────────────────────────
+  function initBanners() {
+    var cfg = getBannerConfig();
+    var banners = (cfg.banners || []).filter(function(b) { return b.active; });
+
+    // Group banners by slot
+    var bySlot = {};
+    banners.forEach(function(b) {
+      var slot = b.slot || '';
+      if (!bySlot[slot]) bySlot[slot] = [];
+      bySlot[slot].push(b);
+    });
+
+    // Inject into named slots first (ad-top, ad-sidebar-240, etc.)
+    Object.keys(bySlot).forEach(function(slotId) {
+      if (!slotId) return; // handle no-slot banners below
+      var el = document.getElementById(slotId);
+      if (!el) return;
+      // Pick one banner for this slot
+      var candidates = bySlot[slotId].filter(function(b) {
+        var pageOk = b.pages.includes('all') || b.pages.includes(PAGE_ID);
+        var cityOk = b.cities.includes('all') || b.cities.includes(_bannerCity);
+        var limitOk = b.maxImpressions <= 0 || b.impressions < b.maxImpressions;
+        return pageOk && cityOk && limitOk;
+      });
+      if (!candidates.length) return;
+      var b = candidates[0];
+      // Inject into the slot element
+      if (b.type === 'html' && b.html) {
+        el.innerHTML = b.html;
+        el.addEventListener('click', function() { recordClick(b.id); });
+      } else if (b.type === 'image' && b.imageUrl) {
+        el.innerHTML = '<a href="' + (b.linkUrl||'#') + '" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;"><img loading="lazy" src="' + b.imageUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;"></a>';
+        el.addEventListener('click', function() { recordClick(b.id); });
+      } else if (b.type === 'code' && b.code) {
+        el.innerHTML = b.code;
+      }
+      recordImpression(b.id);
+    });
+
+    // Banners without slot — inject into aside (legacy behaviour)
+    var noSlot = (bySlot[''] || []).filter(function(b) {
+      var pageOk = b.pages.includes('all') || b.pages.includes(PAGE_ID);
+      var cityOk = b.cities.includes('all') || b.cities.includes(_bannerCity);
+      var limitOk = b.maxImpressions <= 0 || b.impressions < b.maxImpressions;
+      return pageOk && cityOk && limitOk;
+    });
+    if (noSlot.length) {
+      var aside = document.querySelector('aside');
+      if (aside) renderBanner(noSlot[0], aside);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBanners);
+  } else {
+    initBanners();
+  }
+
+  // Expose for admin panel
+  window.AfishiBanners = {
+    getConfig: getBannerConfig,
+    reload: initBanners
+  };
+})();
 </script>
 
 </body>
