@@ -8144,8 +8144,14 @@ function shareEvent(title, url) { openSharePanel(title, url); }
 
 <script>
 // ── Загрузка реальных событий из KudaGo ──────────────────────
+// KudaGo покрывает только крупные города из своего списка — Волгоград (основной
+// город сайта) там не представлен, запрос для него всегда вернёт ошибку.
+// Пропускаем вызов для городов, которых там точно нет, чтобы не засорять консоль.
+var KUDAGO_SUPPORTED_CITIES = ['Москва','Санкт-Петербург','Екатеринбург','Новосибирск','Казань','Нижний Новгород','Краснодар','Самара','Челябинск','Пермь','Красноярск','Уфа'];
+
 async function loadKudaGoEvents(city) {
   city = city || window.currentCity || 'volgograd';
+  if (KUDAGO_SUPPORTED_CITIES.indexOf(city) < 0) return; // KudaGo не покрывает этот город
   var citySlug = {'Волгоград':'volgograd','Москва':'msk','Санкт-Петербург':'spb'}[city] || city.toLowerCase();
   try {
     var r = await fetch('/api/kudago?city=' + citySlug + '&cat=concert&page_size=20');
