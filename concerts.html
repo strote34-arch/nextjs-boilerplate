@@ -1862,12 +1862,11 @@ window.saveEditedConcert = function saveEditedConcert() {
     <div style="display:flex;align-items:stretch;gap:8px;">
       <div class="date-tabs" id="dateTabs" style="flex:1;min-width:0;"></div>
       <div style="position:relative;flex-shrink:0;">
-        <button id="otherDaysBtn" onclick="var inp=document.getElementById('otherDaysInput'); if(inp.showPicker){inp.showPicker();}else{inp.click();}"
+        <button id="otherDaysBtn" onclick="toggleCalendarPopup()"
           style="height:100%;min-height:56px;padding:0 14px;background:#fff;border:1.5px solid var(--border);border-radius:6px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
           <span style="font-size:16px;">📅</span>Другие дни
         </button>
-        <input type="date" id="otherDaysInput" style="position:absolute;inset:0;opacity:0;pointer-events:none;width:1px;height:1px;"
-          onchange="if(this.value){ window._activeDateISO = this.value; activeDate = -1; renderDateTabs(); applyFilters(); }">
+        <div id="calendarPopup" style="display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:500;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:12px;width:280px;"></div>
       </div>
     </div>
 
@@ -3695,11 +3694,6 @@ var MONTHS_RU = ['','янв','фев','мар','апр','май','июн','ию�
 (function buildDates() {
   var today = new Date();
   today.setHours(0,0,0,0);
-  var otherInput = document.getElementById('otherDaysInput');
-  if (otherInput) {
-    var y = today.getFullYear(), m = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
-    otherInput.min = y+'-'+m+'-'+dd;
-  }
   var result = [];
   for (var i = 0; i < 14; i++) {
     var d = new Date(today);
@@ -4084,6 +4078,112 @@ function renderDateTabs() {
     }
   }
 }
+
+// ====================================================
+// CALENDAR POPUP («Другие дни») — жирным + кружком дни, где есть мероприятия
+// ====================================================
+var _calMonth = null;
+
+function toggleCalendarPopup() {
+  var pop = document.getElementById('calendarPopup');
+  if (!pop) return;
+  if (pop.style.display === 'block') { pop.style.display = 'none'; return; }
+  if (!_calMonth) {
+    var t = new Date();
+    _calMonth = { year: t.getFullYear(), month: t.getMonth() };
+  }
+  renderCalendarPopup();
+  pop.style.display = 'block';
+}
+
+function changeCalMonth(delta) {
+  _calMonth.month += delta;
+  if (_calMonth.month < 0) { _calMonth.month = 11; _calMonth.year--; }
+  if (_calMonth.month > 11) { _calMonth.month = 0; _calMonth.year++; }
+  renderCalendarPopup();
+}
+
+function renderCalendarPopup() {
+  var pop = document.getElementById('calendarPopup');
+  if (!pop) return;
+  var y = _calMonth.year, m = _calMonth.month;
+  var MONTHS_FULL = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var DOW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+  // Дни, на которые есть мероприятия в текущем городе
+  var eventDates = {};
+  var cityNow = (typeof currentCity !== 'undefined' && currentCity) || (function(){ try { return localStorage.getItem('afishi_city'); } catch(e){ return null; } })() || 'Волгоград';
+  CONCERTS.forEach(function(c) {
+    if (c.city === cityNow && c.dateISO) eventDates[c.dateISO] = true;
+  });
+
+  var first = new Date(y, m, 1);
+  var startDow = (first.getDay() + 6) % 7; // понедельник = 0
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var todayISO = today.toISOString().slice(0, 10);
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    + '<button onclick="changeCalMonth(-1)" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--mid);padding:2px 10px;">‹</button>'
+    + '<div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;">' + MONTHS_FULL[m] + ' ' + y + '</div>'
+    + '<button onclick="changeCalMonth(1)" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--mid);padding:2px 10px;">›</button>'
+    + '</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">';
+  DOW.forEach(function(d) { html += '<div style="text-align:center;font-size:10px;color:#999;font-weight:700;padding:4px 0;">' + d + '</div>'; });
+  html += '</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
+  for (var i = 0; i < startDow; i++) html += '<div></div>';
+  for (var day = 1; day <= daysInMonth; day++) {
+    var dISO = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    var hasEvents = !!eventDates[dISO];
+    var isPast = dISO < todayISO;
+    var isToday = dISO === todayISO;
+    var isActive = window._activeDateISO === dISO;
+
+    // Явное, заметное отличие — не просто font-weight (на 12px это почти незаметно),
+    // а отдельный фон + рамка + цвет + точка-индикатор снизу
+    var cellStyle = 'position:relative;text-align:center;padding:8px 0 10px;border-radius:6px;font-size:13px;cursor:pointer;box-sizing:border-box;';
+    var numStyle = '';
+    var dotHtml = '';
+    if (isPast) {
+      cellStyle += 'color:#ddd;cursor:default;';
+    } else if (isActive) {
+      cellStyle += 'background:var(--red);box-shadow:0 2px 8px rgba(200,16,46,.35);';
+      numStyle = 'color:#fff;font-weight:800;';
+    } else if (hasEvents) {
+      cellStyle += 'background:#fff2f2;border:1.5px solid var(--red);';
+      numStyle = 'color:var(--red);font-weight:800;';
+      dotHtml = '<span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--red);"></span>';
+    } else {
+      cellStyle += 'border:1.5px solid transparent;';
+      numStyle = 'color:var(--mid);font-weight:400;';
+    }
+    if (isToday && !isActive) cellStyle += 'box-shadow:inset 0 0 0 1.5px #999;';
+
+    html += '<div style="' + cellStyle + '"' + (isPast ? '' : ' onclick="pickCalendarDate(\'' + dISO + '\')"') + '>'
+      + '<span style="' + numStyle + '">' + day + '</span>' + dotHtml + '</div>';
+  }
+  html += '</div><div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:11px;color:#777;">'
+    + '<span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#fff2f2;border:1.5px solid var(--red);flex-shrink:0;"></span> есть мероприятия</div>';
+  pop.innerHTML = html;
+}
+
+function pickCalendarDate(iso) {
+  window._activeDateISO = iso;
+  activeDate = -1;
+  var pop = document.getElementById('calendarPopup');
+  if (pop) pop.style.display = 'none';
+  renderDateTabs();
+  applyFilters();
+}
+
+// Закрыть попап по клику вне его
+document.addEventListener('click', function(e) {
+  var pop = document.getElementById('calendarPopup');
+  var btn = document.getElementById('otherDaysBtn');
+  if (pop && pop.style.display === 'block' && !pop.contains(e.target) && e.target !== btn && !(btn && btn.contains(e.target))) {
+    pop.style.display = 'none';
+  }
+});
 
 // ====================================================
 // FILTERS & RENDER
