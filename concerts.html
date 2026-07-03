@@ -814,6 +814,13 @@ body.afishi-plus-plat  .ad-sidebar-wrap{display:none!important;}
   opacity:0;transition:opacity .2s;line-height:1;}
 .concert-card:hover .c-edit-btn,
 .concert-list-item:hover .c-edit-btn{opacity:1;}
+/* На тач-устройствах (телефоны/планшеты) hover недоступен — показываем кнопку всегда */
+@media (hover: none) {
+  .c-edit-btn{opacity:1;background:rgba(0,0,0,.7);}
+}
+@media (max-width:768px) {
+  .c-edit-btn{opacity:1;background:rgba(0,0,0,.7);padding:7px 10px;font-size:15px;}
+}
 .concert-card{position:relative;}
 .concert-list-item{position:relative;}
 /* Edit modal labels/inputs */
