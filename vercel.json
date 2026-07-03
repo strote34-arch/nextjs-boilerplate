@@ -21,6 +21,10 @@
     {
       "path": "/api/kudago",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/sync-filarmonia",
+      "schedule": "0 7 * * 1"
     }
   ],
   "headers": [

@@ -4470,6 +4470,24 @@ document.addEventListener('DOMContentLoaded', function() {
         changed3 = true;
       }
 
+      // ── Новинки филармонии от автопарсера (/api/sync-filarmonia, раз в неделю) ──
+      var vfAuto = r.data.filarmoniaEvents || {};
+      Object.keys(vfAuto).forEach(function(vfId) {
+        var fe = vfAuto[vfId];
+        if (delIds.indexOf(vfId) >= 0) return;
+        var dup = CONCERTS_DB.some(function(x){ return x.title === fe.title && x.dateISO === fe.dateISO; });
+        if (dup) return;
+        CONCERTS_DB.push({
+          id: vfId, title: fe.title, artist: 'Волгоградская филармония', genre: 'Концерт',
+          icon: '🎻', color: '#0a0a1a', date: fe.date, dateShort: fe.dateShort, dateISO: fe.dateISO,
+          dayLabel: '', age: fe.age || '0+', duration: '2 ч', rating: 0, votes: 0,
+          price: 400, priceMax: 2500, hot: false, newShow: true, city: 'Волгоград',
+          desc: '', photo: fe.photo, pushkin: !!fe.pushkin, ticketUrl: fe.ticketUrl,
+          venues: [{ name: 'ЦКЗ Волгоградская Филармония', addr: 'наб. 62-й Армии, 4, Волгоград', cap: '', times: [fe.time || '19:00'], city: 'Волгоград' }],
+        });
+        changed3 = true;
+      });
+
       if (changed3 && typeof renderPage === 'function') renderPage(city);
     })
     .catch(function(){ /* сервер недоступен — остаёмся на локальной копии */ });
