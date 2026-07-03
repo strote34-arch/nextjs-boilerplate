@@ -1329,35 +1329,35 @@ var KIDS_DB = [
    cat:'Цирк',age:'0+',price:'от 1000 ₽',venue:'Волгоградский государственный цирк',city:'Волгоград',
    dateISO:'2026-08-01',endDateISO:'2026-08-30',date:'с 1 по 30 августа 2026',time:'',rating:4.9,hot:true,
    ticketUrl:'https://vog.ticketland.ru/cirki/saratovskiy-cirk/tigry-na-zemle-i-v-vozdukhe/',
-   desc:'Аттракцион Ярослава Запашного — потомственного артиста старейшей цирковой династии в пятом поколении. Воздушные гимнасты, акробаты, высшая школа верховой езды, дрессированные попугаи и финальный номер «Тигры на земле и в воздухе».'},
+   desc:'Аттракцион Ярослава Запашного — потомственного артиста старейшей цирковой династии в пятом поколении. Воздушные гимнасты, акробаты, высшая школа верховой езды, дрессированные попугаи и финальный номер «Тигры на земле и в воздухе».',photo:'https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&h=600&fit=crop'},
   {id:'k002',title:'Буратино — спектакль ТЮЗ',icon:'🎭',color:'#1a0a2e',
    cat:'Театр',age:'4+',price:'от 300 ₽',venue:'ТЮЗ Волгоград',city:'Волгоград',
    dateISO:'2026-06-28',date:'28 июня 2026',time:'12:00',rating:4.7,
-   desc:'Знаменитая сказка Алексея Толстого на сцене ТЮЗа.'},
+   desc:'Знаменитая сказка Алексея Толстого на сцене ТЮЗа.',photo:'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=600&fit=crop'},
   {id:'k003',title:'Динозавры — выставка-музей',icon:'🦕',color:'#2a5c2a',
    cat:'Выставка',age:'5+',price:'от 350 ₽',venue:'Музей ИЗО Волгоград',city:'Волгоград',
    dateISO:'2026-07-05',date:'5 июля 2026',time:'10:00',rating:4.6,
-   desc:'Движущиеся фигуры динозавров в натуральную величину.'},
+   desc:'Движущиеся фигуры динозавров в натуральную величину.',photo:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=600&fit=crop'},
   {id:'k004',title:'Планетарий — Звёздное небо',icon:'🌟',color:'#000033',
    cat:'Наука',age:'6+',price:'от 250 ₽',venue:'Волгоградский планетарий',city:'Волгоград',
    dateISO:'2026-07-12',date:'12 июля 2026',time:'11:00',rating:4.9,hot:true,
-   desc:'Путешествие по звёздному небу и планетам Солнечной системы.'},
+   desc:'Путешествие по звёздному небу и планетам Солнечной системы.',photo:'https://images.unsplash.com/photo-1468164016595-6a6cbc2c1f3f?w=400&h=600&fit=crop'},
   {id:'k005',title:'Мастер-класс: Лепка из глины',icon:'🏺',color:'#8B4513',
    cat:'Мастер-класс',age:'5+',price:'от 500 ₽',venue:'Дом творчества',city:'Волгоград',
    dateISO:'2026-06-22',date:'22 июня 2026',time:'14:00',rating:4.5,
-   desc:'Создайте свою неповторимую фигурку под руководством мастера.'},
+   desc:'Создайте свою неповторимую фигурку под руководством мастера.',photo:'https://images.unsplash.com/photo-1602491453631-e2a5ad90a131?w=400&h=600&fit=crop'},
   {id:'k006',title:'Питер Пэн — балет для детей',icon:'🧚',color:'#003366',
    cat:'Балет',age:'5+',price:'от 350 ₽',venue:'Волгоградский музыкальный театр',city:'Волгоград',
    dateISO:'2026-06-28',date:'28 июня 2026',time:'12:00',rating:4.7,
-   desc:'Волшебная история о мальчике, который не хочет взрослеть.'},
+   desc:'Волшебная история о мальчике, который не хочет взрослеть.',photo:'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=400&h=600&fit=crop'},
   {id:'k007',title:'Аквапарк — весь день',icon:'🏊',color:'#0066cc',
    cat:'Отдых',age:'0+',price:'от 800 ₽',venue:'Аквапарк Волгоград',city:'Волгоград',
    dateISO:'2026-07-04',date:'4 июля 2026',time:'10:00',rating:4.4,
-   desc:'Горки, бассейны, волновой бассейн — весёлый день для всей семьи.'},
+   desc:'Горки, бассейны, волновой бассейн — весёлый день для всей семьи.',photo:'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop'},
   {id:'k008',title:'Квест: Пираты Волги',icon:'🏴‍☠️',color:'#2a1a0a',
    cat:'Квест',age:'8+',price:'от 600 ₽',venue:'Квест-клуб Приключения',city:'Волгоград',
    dateISO:'2026-07-11',date:'11 июля 2026',time:'15:00',rating:4.6,
-   desc:'Увлекательный квест для детей с загадками и сюрпризами.'},
+   desc:'Увлекательный квест для детей с загадками и сюрпризами.',photo:'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&h=600&fit=crop'},
 ];
 
 function renderKidsPage(city) {
@@ -1411,8 +1411,9 @@ function renderKidsPage(city) {
   grid.style.display = '';
   grid.innerHTML = events.map(function(ev) {
     return '<div class="kcard" style="cursor:pointer;" onclick="'+(ev.ticketUrl ? "window.open('"+ev.ticketUrl+"','_blank')" : "alert('"+ev.title.replace(/'/g,"\\'")+"')")+'">'
-      + '<div class="kcard-img" style="background:'+ev.color+';">'
-      + '<span class="big-icon">'+ev.icon+'</span>'
+      + '<div class="kcard-img" style="background:'+ev.color+';position:relative;overflow:hidden;">'
+      + (ev.photo ? '<img loading="lazy" src="'+ev.photo+'" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">' : '')
+      + '<span class="big-icon" style="'+(ev.photo ? 'opacity:0;' : '')+'position:relative;">'+ev.icon+'</span>'
       + '<div class="age-ribbon" style="background:var(--red);">'+ev.age+'</div>'
       + '<div class="kcard-cat-badge" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">'+ev.cat+'</div>'
       + '</div>'
