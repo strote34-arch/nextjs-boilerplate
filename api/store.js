@@ -41,7 +41,8 @@ async function saveDoc(doc) {
     allowOverwrite: true,
     cacheControlMaxAge: 60, // минимум, разрешённый Vercel Blob — не хотим долгого кэша для этого файла
   });
-  console.log('[api/store] saveDoc wrote:', JSON.stringify(result), 'doc keys:', Object.keys(doc));
+  const nestedSummary = Object.keys(doc).map(k => k + ':[' + (doc[k] && typeof doc[k] === 'object' ? Object.keys(doc[k]).join(',') : '') + ']').join(' ');
+  console.log('[api/store] saveDoc wrote:', result.etag, '|', nestedSummary);
   return result;
 }
 
@@ -72,26 +73,34 @@ export default async function handler(req, res) {
       const body = req.body || {};
       const { key, patch, value } = body;
       if (!key) return res.status(400).json({ error: 'key required' });
-
-      const doc = await loadDoc();
-      console.log('[api/store] POST before-write doc keys:', Object.keys(doc));
-
-      if (value !== undefined) {
-        doc[key] = value;
-      } else if (patch !== undefined) {
-        doc[key] = Object.assign({}, doc[key] || {}, patch);
-      } else {
+      if (value === undefined && patch === undefined) {
         return res.status(400).json({ error: 'patch or value required' });
       }
 
-      await saveDoc(doc);
+      // Защита от гонки записи: если два запроса пишут почти одновременно, второй может
+      // прочитать документ ДО того, как первый сохранит свои изменения, и своей записью
+      // затереть их. Поэтому после сохранения перепроверяем и, если запись не устояла,
+      // повторяем цикл чтение-слияние-запись заново (до 3 попыток).
+      let finalDoc = null;
+      let ok = false;
+      for (let attempt = 1; attempt <= 3 && !ok; attempt++) {
+        const doc = await loadDoc();
+        if (value !== undefined) {
+          doc[key] = value;
+        } else {
+          doc[key] = Object.assign({}, doc[key] || {}, patch);
+        }
+        await saveDoc(doc);
+        const verify = await loadDoc();
+        const match = key in verify && JSON.stringify(verify[key]) === JSON.stringify(doc[key]);
+        console.log('[api/store] POST attempt', attempt, 'verified:', match);
+        if (match) { ok = true; finalDoc = doc; }
+      }
 
-      // Верификация: перечитываем документ заново (отдельный запрос), чтобы убедиться,
-      // что запись реально видна, а не просто "не упала с ошибкой"
-      const verify = await loadDoc();
-      console.log('[api/store] POST after-write verify keys:', Object.keys(verify), 'has key:', key in verify);
-
-      return res.json({ ok: true, key, value: doc[key], verified: key in verify && JSON.stringify(verify[key]) === JSON.stringify(doc[key]) });
+      if (!ok) {
+        return res.status(409).json({ error: 'write_conflict', message: 'Не удалось сохранить после 3 попыток — слишком много одновременных записей' });
+      }
+      return res.json({ ok: true, key, value: finalDoc[key], verified: true });
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });

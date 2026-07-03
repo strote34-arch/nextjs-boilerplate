@@ -1620,8 +1620,15 @@ window.saveEditedConcert = function saveEditedConcert() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: 'concertPhotos', patch: { [String(id)]: updates.photo } })
     }).then(function(r){ return r.json(); }).then(function(r){
-      if (!r.ok) console.warn('Фото сохранено только локально (сервер недоступен):', r.message || r.error);
-    }).catch(function(){ /* офлайн — фото уже сохранено локально */ });
+      if (!r.ok) {
+        console.warn('Фото сохранено только локально (сервер недоступен):', r.message || r.error);
+        if (typeof showToast === 'function') showToast('⚠️ Фото сохранено только в этом браузере — на сервере не подтвердилось', false);
+        else alert('⚠️ Фото сохранено только в этом браузере — на сервере не подтвердилось');
+      }
+    }).catch(function(){
+      console.warn('Фото сохранено только локально (сеть недоступна)');
+      if (typeof showToast === 'function') showToast('⚠️ Фото сохранено только в этом браузере — нет связи с сервером', false);
+    });
   }
 
   // ── Handle section/venue transfer ──────────────────────────
@@ -2162,7 +2169,13 @@ function uploadConcertPhoto(input) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'concertPhotos', patch: { [cid]: permanentUrl } })
-        }).catch(function(){});
+        }).then(function(r){ return r.json(); }).then(function(sr){
+          if (!sr || !sr.ok) {
+            showToast('⚠️ Файл загружен, но запись в общую базу не подтвердилась — попробуйте ещё раз', false);
+          }
+        }).catch(function(){
+          showToast('⚠️ Файл загружен, но не удалось подтвердить сохранение — попробуйте ещё раз', false);
+        });
         if (mpost) {
           mpost.innerHTML = '<img loading="lazy" src="' + permanentUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;">';
         }
