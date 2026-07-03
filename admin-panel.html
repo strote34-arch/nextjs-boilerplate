@@ -281,6 +281,18 @@ tr:hover td{background:#fafafa;}
       <div class="panel-title">🎪 Мероприятия</div>
       <div class="panel-sub">Все события сайта — концерты, спектакли, стендап, шоу</div>
 
+      <!-- Автопарсер афиши филармонии -->
+      <div style="background:#f9f7f4;border:1px solid #e8e4de;border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px;">🔄 Автопарсер Волгоградской филармонии</div>
+          <div style="font-size:12px;color:#888;">Каждый понедельник в 7:00 сам подтягивает новинки с volgogradfilarmonia.ru</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="syncFilStatus" style="font-size:12px;color:#888;"></span>
+          <button class="btn btn-red btn-sm" onclick="runFilarmoniaSync()">▶ Запустить сейчас</button>
+        </div>
+      </div>
+
       <!-- Фильтры -->
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center;">
         <label style="font-size:12px;font-weight:700;color:#666;">ГОРОД:</label>
@@ -1416,6 +1428,26 @@ function deleteEvent(evId, title) {
   }).catch(function(){
     toast('⚠️ Удалено только в этом браузере — нет связи с сервером');
   });
+}
+
+function runFilarmoniaSync() {
+  var statusEl = document.getElementById('syncFilStatus');
+  statusEl.textContent = '⏳ Запускаю...';
+  fetch('/api/sync-filarmonia?manual=1')
+    .then(function(r){ return r.json(); })
+    .then(function(r){
+      if (r && r.ok) {
+        statusEl.textContent = '✅ Найдено ' + r.totalFound + ', новых: ' + r.newCount;
+        toast('✅ Синхронизация завершена — новых событий: ' + r.newCount);
+      } else {
+        statusEl.textContent = '❌ Ошибка: ' + (r && r.error || 'неизвестная');
+        toast('❌ Ошибка синхронизации: ' + (r && r.error || 'см. консоль'));
+      }
+    })
+    .catch(function(err){
+      statusEl.textContent = '❌ Сбой запроса';
+      toast('❌ Не удалось связаться с сервером: ' + err.message);
+    });
 }
 
 function getEdits() {

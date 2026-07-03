@@ -1628,8 +1628,8 @@ function renderTheaters(city) {
   }
   grid.innerHTML = list.map(function(th){
     var evs=(th.events||[]).map(function(ev){
-      return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
-        +'<span>'+ev.title+'</span><div><span style="color:#c8102e;font-weight:700;">'+ev.date+'</span>'
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
+        +'<span>'+ev.title+(ev.pushkin?' <span style="background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-left:6px;white-space:nowrap;">🏛 Пушк. карта</span>':'')+'</span><div><span style="color:#c8102e;font-weight:700;">'+ev.date+'</span>'
         +(ev.time?' '+ev.time:'')+'</div></div>';
     }).join('');
     return '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);">'
@@ -1758,6 +1758,27 @@ document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.city-pill').forEach(function(p){
     p.classList.toggle('active', p.textContent.trim() === city);
   });
+
+  // ── Спектакли, найденные автопарсером филармонии (/api/sync-filarmonia, раз в неделю) ──
+  fetch('/api/store').then(function(r){ return r.json(); }).then(function(r){
+    if (!r || !r.ok || !r.data) return;
+    var vfAuto = r.data.filarmoniaEvents || {};
+    var deleted = r.data.deletedEvents || {};
+    var ckz = (THEATERS_DB['Волгоград'] || []).find(function(v){ return v.id === 'ckz'; });
+    if (!ckz) return;
+    var changed = false;
+    Object.keys(vfAuto).forEach(function(vfId) {
+      var fe = vfAuto[vfId];
+      if (!fe.isSpectacle) return; // концерты сюда не добавляем
+      if (deleted[vfId]) return;
+      var dup = (ckz.events || []).some(function(e){ return e.title === fe.title && e.date === fe.date; });
+      if (dup) return;
+      ckz.events = ckz.events || [];
+      ckz.events.push({ title: fe.title, date: fe.date, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO });
+      changed = true;
+    });
+    if (changed && typeof renderTheaters === 'function') renderTheaters(city);
+  }).catch(function(){ /* сервер недоступен — остаёмся на локальной копии */ });
 });
 </script>
 

@@ -25,7 +25,7 @@ async function fetchPage(start) {
   const url = start ? `${SOURCE_BASE}?start=${start}` : SOURCE_BASE;
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; afishiru-sync/1.0)' },
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`fetch ${url} -> ${res.status}`);
   return res.text();
@@ -113,6 +113,11 @@ function parseEvents(html) {
     const ageMatch = chunk.match(/\b(0|3|6|12|16|18)\+/);
     const age = ageMatch ? ageMatch[0] : '0+';
 
+    // Концерт или спектакль? Ищем характерные слова рядом с событием.
+    // Филармония в основном даёт концерты, но регулярно привозит гастрольные
+    // антрепризные спектакли — их нужно показывать в разделе «Театр», не «Концерты»
+    const isSpectacle = /(?:^|\W)(спектакль|постановка|антреприза|моноспектакль|трагикомедия)(?:\W|$)/i.test(chunk);
+
     events.push({
       id: 'vfauto_' + slug,
       slug,
@@ -123,6 +128,7 @@ function parseEvents(html) {
       time,
       age,
       pushkin,
+      isSpectacle,
       photo,
       ticketUrl: `${SOURCE_BASE}/${slug}`,
     });
@@ -152,11 +158,6 @@ async function saveResult(baseUrl, byId) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: 'filarmoniaEvents', value: byId }),
   });
-  await fetch(`${baseUrl}/api/store`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: 'filarmoniaLastSync', value: new Date().toISOString() }),
-  });
 }
 
 export default async function handler(req, res) {
@@ -170,12 +171,15 @@ export default async function handler(req, res) {
   }
 
   try {
+    const pageResults = await Promise.allSettled(PAGES.map(fetchPage));
     let allEvents = [];
-    for (const start of PAGES) {
-      const html = await fetchPage(start);
-      const events = parseEvents(html);
-      allEvents = allEvents.concat(events);
-    }
+    pageResults.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        allEvents = allEvents.concat(parseEvents(r.value));
+      } else {
+        console.error('[sync-filarmonia] page', PAGES[i], 'failed:', r.reason && r.reason.message);
+      }
+    });
 
     // Дедуп по slug (на случай пересечения страниц)
     const bySlug = {};

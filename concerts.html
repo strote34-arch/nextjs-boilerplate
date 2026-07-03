@@ -4150,6 +4150,7 @@ function init() {
     var vfAuto = r.data.filarmoniaEvents || {};
     Object.keys(vfAuto).forEach(function(vfId) {
       var fe = vfAuto[vfId];
+      if (fe.isSpectacle) return; // спектакли идут в раздел «Театр», не сюда
       if (delIds.indexOf(vfId) >= 0) return; // вручную удалено — не добавлять обратно
       // Не дублировать, если такое же название+дата уже есть (добавлено вручную раньше)
       var dup = CONCERTS.some(function(x){ return x.title === fe.title && x.dateISO === fe.dateISO; });

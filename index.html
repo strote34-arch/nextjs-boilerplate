@@ -4474,6 +4474,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var vfAuto = r.data.filarmoniaEvents || {};
       Object.keys(vfAuto).forEach(function(vfId) {
         var fe = vfAuto[vfId];
+        if (fe.isSpectacle) return; // спектакли — в раздел «Театр»
         if (delIds.indexOf(vfId) >= 0) return;
         var dup = CONCERTS_DB.some(function(x){ return x.title === fe.title && x.dateISO === fe.dateISO; });
         if (dup) return;
