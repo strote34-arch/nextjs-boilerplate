@@ -4263,6 +4263,29 @@ document.addEventListener('DOMContentLoaded', function() {
   renderPage(city);
   // Показать бургер после рендера шапки
   if (typeof showBurger === 'function') showBurger();
+
+  // ── Догружаем актуальные фото афиш из concerts.html (единый источник правды) ──
+  // На главной хранится своя копия данных (CONCERTS_DB), которая может отставать
+  // от того, что реально прописано/загружено на странице /concerts. Подтягиваем
+  // фото оттуда и перерисовываем «Подобрано для вас» и другие блоки.
+  fetch('concerts.html')
+    .then(function(r){ return r.text(); })
+    .then(function(html){
+      var m = html.match(/(var _today[\s\S]*?const CONCERTS\s*=\s*\[[\s\S]*?\n\];)/);
+      if (!m) return;
+      var freshConcerts = new Function(m[1] + '\nreturn CONCERTS;')();
+      var changed = false;
+      freshConcerts.forEach(function(fc) {
+        var srcPhoto = fc.photo || fc.poster;
+        if (!srcPhoto) return;
+        var target = CONCERTS_DB.find(function(x){ return String(x.id) === String(fc.id); });
+        if (target && target.photo !== srcPhoto) { target.photo = srcPhoto; changed = true; }
+      });
+      if (changed && typeof renderPage === 'function') {
+        renderPage(city);
+      }
+    })
+    .catch(function(){ /* concerts.html недоступен — остаёмся на локальной копии данных */ });
 });
 </script>
 
