@@ -1852,7 +1852,17 @@ window.saveEditedConcert = function saveEditedConcert() {
 <div class="page-main">
   <div>
     <!-- Date tabs -->
-    <div class="date-tabs" id="dateTabs"></div>
+    <div style="display:flex;align-items:stretch;gap:8px;">
+      <div class="date-tabs" id="dateTabs" style="flex:1;min-width:0;"></div>
+      <div style="position:relative;flex-shrink:0;">
+        <button id="otherDaysBtn" onclick="var inp=document.getElementById('otherDaysInput'); if(inp.showPicker){inp.showPicker();}else{inp.click();}"
+          style="height:100%;min-height:56px;padding:0 14px;background:#fff;border:1.5px solid var(--border);border-radius:6px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+          <span style="font-size:16px;">📅</span>Другие дни
+        </button>
+        <input type="date" id="otherDaysInput" style="position:absolute;inset:0;opacity:0;pointer-events:none;width:1px;height:1px;"
+          onchange="if(this.value){ window._activeDateISO = this.value; activeDate = -1; renderDateTabs(); applyFilters(); }">
+      </div>
+    </div>
 
     <div class="view-head">
       <div class="view-title" id="sectionTitle">Концерты в Волгограде</div>
@@ -3678,8 +3688,13 @@ var MONTHS_RU = ['','янв','фев','мар','апр','май','июн','ию�
 (function buildDates() {
   var today = new Date();
   today.setHours(0,0,0,0);
+  var otherInput = document.getElementById('otherDaysInput');
+  if (otherInput) {
+    var y = today.getFullYear(), m = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
+    otherInput.min = y+'-'+m+'-'+dd;
+  }
   var result = [];
-  for (var i = 0; i < 8; i++) {
+  for (var i = 0; i < 14; i++) {
     var d = new Date(today);
     d.setDate(d.getDate() + i);
     result.push({
@@ -4020,6 +4035,23 @@ function renderDateTabs() {
     }; })(i, d);
     el.appendChild(t);
   });
+
+  // Кнопка «Другие дни» — подсветить и показать выбранную дату, если она вне 14-дневной полосы
+  var otherBtn = document.getElementById('otherDaysBtn');
+  if (otherBtn) {
+    if (activeDate === -1 && window._activeDateISO) {
+      var p = window._activeDateISO.split('-');
+      otherBtn.innerHTML = '<span style="font-size:16px;">📅</span>' + p[2] + '.' + p[1];
+      otherBtn.style.background = 'var(--red)';
+      otherBtn.style.color = '#fff';
+      otherBtn.style.borderColor = 'var(--red)';
+    } else {
+      otherBtn.innerHTML = '<span style="font-size:16px;">📅</span>Другие дни';
+      otherBtn.style.background = '#fff';
+      otherBtn.style.color = 'var(--mid)';
+      otherBtn.style.borderColor = 'var(--border)';
+    }
+  }
 }
 
 // ====================================================
