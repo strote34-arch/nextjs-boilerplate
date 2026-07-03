@@ -308,7 +308,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <table>
           <thead><tr>
-            <th>Дата</th><th>Название</th><th>Тип</th><th>Город</th><th>Площадка</th><th>Статус</th>
+            <th>Дата</th><th>Название</th><th>Тип</th><th>Город</th><th>Площадка</th><th>Статус</th><th>Действия</th>
           </tr></thead>
           <tbody id="ev-tbody">
             <tr><td colspan="6" style="text-align:center;color:#aaa;padding:30px;">Загрузка...</td></tr>
@@ -1098,7 +1098,7 @@ function renderEvents() {
       +'<td style="font-size:12px;">'+e.city+'</td>'
       +'<td style="font-size:12px;color:#555;">'+(e.venue||'—')+'</td>'
       +'<td>'+status+ticket+'</td>'
-      +'<td><button class="btn btn-outline btn-sm" onclick="openEditEvent(\'' + e.id + '\')">✏️</button></td>'
+      +'<td><button class="btn btn-outline btn-sm" onclick="openEditEvent(\'' + e.id + '\')" title="Редактировать">✏️</button> <button class="btn btn-outline btn-sm" style="color:#c8102e;border-color:#c8102e;" onclick="deleteEvent(\'' + e.id + '\',\'' + e.title.replace(/'/g,"\\'") + '\')" title="Удалить">🗑</button></td>'
       +'</tr>';
   }).join('');
 }
@@ -1388,6 +1388,36 @@ function loadYmStats() {
 // Ключ хранилища правок
 var EDITS_KEY = 'afishi_event_edits';
 
+function deleteEvent(evId, title) {
+  if (!confirm('Удалить «' + title + '»? Оно исчезнет с сайта для всех посетителей.')) return;
+
+  // Локально — мгновенная обратная связь
+  try {
+    var del = JSON.parse(localStorage.getItem('afishi_deleted_concerts') || '[]');
+    if (del.indexOf(evId) < 0) del.push(evId);
+    localStorage.setItem('afishi_deleted_concerts', JSON.stringify(del));
+  } catch(e) {}
+
+  // Убрать из текущей таблицы
+  ALL_EVENTS = ALL_EVENTS.filter(function(e){ return e.id !== evId; });
+  renderEvents();
+
+  // На сервер — чтобы удаление увидели все посетители сайта
+  fetch('/api/store', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'deletedEvents', patch: { [evId]: true } })
+  }).then(function(r){ return r.json(); }).then(function(r){
+    if (r && r.ok) {
+      toast('✅ Удалено — исчезло у всех посетителей сайта');
+    } else {
+      toast('⚠️ Удалено только в этом браузере — сервер не подтвердил');
+    }
+  }).catch(function(){
+    toast('⚠️ Удалено только в этом браузере — нет связи с сервером');
+  });
+}
+
 function getEdits() {
   try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; }
 }
@@ -1488,7 +1518,21 @@ function saveEditEvent() {
 
   closeModal();
   renderEvents();
-  toast('✅ Сохранено! Изменения хранятся локально.');
+
+  // На сервер — чтобы правку увидели ВСЕ посетители сайта, а не только этот браузер
+  fetch('/api/store', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'eventEdits', patch: { [evId]: edits[evId] } })
+  }).then(function(r){ return r.json(); }).then(function(r){
+    if (r && r.ok) {
+      toast('✅ Сохранено и видно всем посетителям сайта!');
+    } else {
+      toast('⚠️ Сохранено только в этом браузере — сервер не подтвердил (' + (r && (r.message||r.error) || 'нет ответа') + ')');
+    }
+  }).catch(function(){
+    toast('⚠️ Сохранено только в этом браузере — нет связи с сервером');
+  });
 }
 
 function deleteEditOverride() {
@@ -1500,6 +1544,13 @@ function deleteEditOverride() {
   // Восстановить из оригинала (перезагрузить)
   loadEvents();
   toast('↩ Правки для этого события сброшены');
+
+  // Убрать и с сервера
+  fetch('/api/store', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'eventEdits', unset: evId })
+  }).catch(function(){});
 }
 
 // Применить локальные правки к ALL_EVENTS при загрузке

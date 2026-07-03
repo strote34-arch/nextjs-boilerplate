@@ -4005,6 +4005,30 @@ function init() {
       applyFilters();
     }
   }).catch(function(){ /* сервер недоступен — остаёмся на localStorage-версии */ });
+
+  // ── Догружаем правки и удаления событий из админ-панели (/admin-panel → Мероприятия) ──
+  fetch('/api/store').then(function(r){ return r.json(); }).then(function(r){
+    if (!r || !r.ok || !r.data) return;
+    var changed2 = false;
+
+    // Правки полей (название/дата/площадка и т.д.)
+    var edits = r.data.eventEdits || {};
+    Object.keys(edits).forEach(function(evId) {
+      var ev = CONCERTS.find(function(x) { return String(x.id) === String(evId); });
+      if (ev) { Object.assign(ev, edits[evId]); changed2 = true; }
+    });
+
+    // Удалённые события
+    var deleted = r.data.deletedEvents || {};
+    var delIds = Object.keys(deleted).filter(function(k){ return deleted[k]; });
+    if (delIds.length) {
+      for (var _sdi = CONCERTS.length - 1; _sdi >= 0; _sdi--) {
+        if (delIds.indexOf(String(CONCERTS[_sdi].id)) >= 0) { CONCERTS.splice(_sdi, 1); changed2 = true; }
+      }
+    }
+
+    if (changed2) applyFilters();
+  }).catch(function(){ /* сервер недоступен — остаёмся на локальной версии */ });
   // sync city pill
   document.querySelectorAll('.city-pill').forEach(p => {
     p.classList.toggle('active', (p.dataset.city || p.textContent.trim()) === savedCity);

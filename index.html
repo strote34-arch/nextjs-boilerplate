@@ -4323,6 +4323,30 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       if (changed2 && typeof renderPage === 'function') renderPage(city);
     })
+    .catch(function(){ /* сервер недоступен — остаёмся на локальной копии */ })
+    .then(function(){
+      // ── Правки и удаления событий из /admin-panel → Мероприятия — применяем последними
+      return fetch('/api/store').then(function(r){ return r.json(); });
+    })
+    .then(function(r){
+      if (!r || !r.ok || !r.data) return;
+      var changed3 = false;
+
+      var edits = r.data.eventEdits || {};
+      Object.keys(edits).forEach(function(evId) {
+        var ev = CONCERTS_DB.find(function(x) { return String(x.id) === String(evId); });
+        if (ev) { Object.assign(ev, edits[evId]); changed3 = true; }
+      });
+
+      var deleted = r.data.deletedEvents || {};
+      var delIds = Object.keys(deleted).filter(function(k){ return deleted[k]; });
+      if (delIds.length) {
+        CONCERTS_DB = CONCERTS_DB.filter(function(x){ return delIds.indexOf(String(x.id)) < 0; });
+        changed3 = true;
+      }
+
+      if (changed3 && typeof renderPage === 'function') renderPage(city);
+    })
     .catch(function(){ /* сервер недоступен — остаёмся на локальной копии */ });
 });
 </script>

@@ -71,10 +71,10 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       const body = req.body || {};
-      const { key, patch, value } = body;
+      const { key, patch, value, unset } = body;
       if (!key) return res.status(400).json({ error: 'key required' });
-      if (value === undefined && patch === undefined) {
-        return res.status(400).json({ error: 'patch or value required' });
+      if (value === undefined && patch === undefined && unset === undefined) {
+        return res.status(400).json({ error: 'patch, value or unset required' });
       }
 
       // Защита от гонки записи: если два запроса пишут почти одновременно, второй может
@@ -85,14 +85,19 @@ export default async function handler(req, res) {
       let ok = false;
       for (let attempt = 1; attempt <= 3 && !ok; attempt++) {
         const doc = await loadDoc();
-        if (value !== undefined) {
+        if (unset !== undefined) {
+          // Убрать один вложенный ключ (например, сбросить правку одного события)
+          if (doc[key] && typeof doc[key] === 'object') delete doc[key][unset];
+        } else if (value !== undefined) {
           doc[key] = value;
         } else {
           doc[key] = Object.assign({}, doc[key] || {}, patch);
         }
         await saveDoc(doc);
         const verify = await loadDoc();
-        const match = key in verify && JSON.stringify(verify[key]) === JSON.stringify(doc[key]);
+        const match = unset !== undefined
+          ? JSON.stringify(verify[key]) === JSON.stringify(doc[key])
+          : (key in verify && JSON.stringify(verify[key]) === JSON.stringify(doc[key]));
         console.log('[api/store] POST attempt', attempt, 'verified:', match);
         if (match) { ok = true; finalDoc = doc; }
       }
