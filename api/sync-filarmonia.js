@@ -1,10 +1,11 @@
 // /api/sync-filarmonia.js — еженедельный автопарсер афиши volgogradfilarmonia.ru
-// v2 — переписан на cheerio (реальный разбор DOM) вместо регулярок по тексту.
-// Регулярочная версия периодически путала заголовок/дату одного события с соседним,
-// потому что резала "сырой" текст по позиции символа, а не по границам HTML-тегов.
-// Теперь для каждой ссылки на событие ищем НАСТОЯЩИЙ containing-элемент карточки
-// (ближайший предок, который содержит только это событие) и достаём данные строго
-// из него — исключает переползание данных между соседними событиями в принципе.
+// v3 — точные границы карточки события. Каждая карточка на сайте устроена так:
+//   [картинка-ссылка на /afishi/concerts/SLUG] ... текст события ...
+//   [ссылка-обёртка "Подробнее" на /afishi/concerts/SLUG с картинкой transparent.png]
+// То есть slug встречается ДВАЖДЫ на карточку: в начале (постер) и в конце
+// (invisible-обёртка "читать дальше"). Это даёт точную, надёжную границу карточки —
+// в отличие от предыдущих версий, которые угадывали границу по эвристикам и путали
+// заголовок/дату соседних событий.
 
 import * as cheerio from 'cheerio';
 
@@ -30,47 +31,44 @@ const TIME_RE = /(\d{1,2}):(\d{2})/;
 async function fetchPage(start) {
   const url = start ? `${SOURCE_BASE}?start=${start}` : SOURCE_BASE;
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; afishiru-sync/2.0)' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; afishiru-sync/3.0)' },
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`fetch ${url} -> ${res.status}`);
   return res.text();
 }
 
-function findEventCard($, linkEl) {
-  let el = $(linkEl);
-  for (let hops = 0; hops < 8; hops++) {
-    const parent = el.parent();
-    if (!parent || parent.length === 0 || parent.is('body')) break;
-    const text = parent.text();
-    if (DATE_RE.test(text) && text.length < 1500) {
-      const grandparent = parent.parent();
-      if (grandparent && grandparent.length && grandparent.text().length > text.length * 2.5) {
-        return parent;
-      }
-      el = parent;
-      continue;
-    }
-    el = parent;
-  }
-  return el;
-}
-
 function parseEventsFromHtml(html) {
-  const $ = cheerio.load(html);
+  // Найти позиции ВСЕХ ссылок на детальные страницы в исходном HTML, с привязкой к slug
+  const linkRe = /<a\s[^>]*href=["']([^"']*\/afishi\/concerts\/([a-z0-9-]+))["'][^>]*>/gi;
+  const occurrences = []; // { slug, startIdx }
+  let m;
+  while ((m = linkRe.exec(html))) {
+    occurrences.push({ slug: m[2], startIdx: m.index });
+  }
+
+  // Сгруппировать по slug — каждое событие встречается минимум дважды:
+  // 1) ссылка-обёртка над постером (начало карточки)
+  // 2) ссылка-обёртка "transparent.png" в конце карточки (граница конца)
+  const bySlug = new Map();
+  occurrences.forEach(o => {
+    if (!bySlug.has(o.slug)) bySlug.set(o.slug, []);
+    bySlug.get(o.slug).push(o.startIdx);
+  });
+
   const events = [];
-  const seenSlugs = new Set();
 
-  $('a[href*="/afishi/concerts/"]').each((_, linkEl) => {
-    const href = $(linkEl).attr('href') || '';
-    const m = href.match(/afishi\/concerts\/([a-z0-9-]+)/);
-    if (!m) return;
-    const slug = m[1];
-    if (seenSlugs.has(slug)) return;
-    seenSlugs.add(slug);
+  bySlug.forEach((positions, slug) => {
+    if (positions.length < 2) return; // нет закрывающей границы — не рискуем, пропускаем
+    const blockStart = positions[0];
+    const lastLinkStart = positions[positions.length - 1];
+    // Найти конец тега </a> после последнего вхождения — это и есть граница конца карточки
+    const closeIdx = html.indexOf('</a>', lastLinkStart);
+    const blockEnd = closeIdx === -1 ? lastLinkStart + 200 : closeIdx + 4;
+    const blockHtml = html.slice(blockStart, blockEnd);
 
-    const card = findEventCard($, linkEl);
-    const cardText = card.text().replace(/\s+/g, ' ').trim();
+    const $ = cheerio.load(blockHtml);
+    const cardText = $.root().text().replace(/\s+/g, ' ').trim();
 
     const dateMatch = cardText.match(DATE_RE);
     if (!dateMatch) return;
@@ -91,22 +89,18 @@ function parseEventsFromHtml(html) {
     }
     const dateISO = `${year}-${monthNum}-${day}`;
 
-    let title = card.find('h1,h2,h3,h4').first().text().trim();
-    if (!title) {
-      const linkText = $(linkEl).text().trim();
-      if (linkText && linkText.length > 3 && linkText.length < 120) title = linkText;
-    }
+    const title = $('h1,h2,h3,h4').first().text().trim();
     if (!title) return;
 
     const isMainHall = /Концертный зал Волгоградской филармонии/i.test(cardText);
     if (!isMainHall) return;
 
-    const imgSrc = card.find('img').first().attr('src') || '';
+    const imgSrc = $('img').first().attr('src') || '';
     const photo = imgSrc
       ? (imgSrc.startsWith('http') ? imgSrc : new URL(imgSrc, SOURCE_BASE).href)
       : null;
 
-    const pushkin = card.find('img[src*="push"]').length > 0 || /пушкинск/i.test(cardText);
+    const pushkin = $('img[src*="push"]').length > 0;
     const ageMatch = cardText.match(/\b(0|3|6|12|16|18)\+/);
     const age = ageMatch ? ageMatch[0] : '0+';
     const isSpectacle = /(?:^|\s)(спектакль|постановка|антреприза|моноспектакль|трагикомедия)(?:\s|$)/i.test(cardText);
