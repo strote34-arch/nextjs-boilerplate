@@ -953,7 +953,7 @@ footer {
 <script>
 /* ── Городские кнопки ──────────────────────────────── */
 function renderCityPills(city) {
-  var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар'];
+  var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Воронеж','Ставрополь','Саратов','Сочи'];
   var el = document.getElementById('cityPillsContainer');
   if (!el) return;
   el.innerHTML = '<span class="city-label">Город:</span>'
@@ -1358,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Города
   var pillsEl = document.getElementById('cityPillsContainer');
   if (pillsEl) {
-    var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар'];
+    var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Воронеж','Ставрополь','Саратов','Сочи'];
     pillsEl.innerHTML = '<span class="city-label">Город:</span>'
       + cities.map(function(c){
           return '<button class="city-pill'+(c===city?' active':'')
@@ -1453,7 +1453,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // City pills
   var pillsEl = document.getElementById('cityPillsContainer');
   if (pillsEl) {
-    var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар'];
+    var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Воронеж','Ставрополь','Саратов','Сочи'];
     pillsEl.innerHTML = '<span class="city-label">Город:</span>'
       + cities.map(function(c){
           return '<button class="city-pill'+(c===city?' active':'')

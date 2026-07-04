@@ -1,14 +1,26 @@
-// /api/sync-arenahall.js — еженедельная проверка афиши arenahall.info/vlg/ (Кроп Арена)
-// Площадка «КРОП АРЕНА», Волгоград, ул. Космонавтов, 30.
+// /api/sync-arenahall.js — еженедельная проверка афиши arenahall.info по ВСЕМ городам сети.
 // Сайт — обычный статический HTML (Bitrix CMS), не JS-приложение — парсится
 // стандартным серверным fetch. Каждое событие — <div class="item-box"> с чёткой
 // структурой: постер, <h4>Название</h4>, и <p> с городом/площадкой/датой/временем/ценой.
+//
+// В Волгограде на странице показываются события НЕСКОЛЬКИХ площадок (КРОП АРЕНА,
+// а также сторонний FERRUM) — оставляем только КРОП АРЕНА. Для остальных городов
+// точное название их конкретной площадки сети нам неизвестно (не хотим гадать),
+// поэтому берём площадку ТОЧНО ТАК, как она указана на странице, без фильтра.
 
 import * as cheerio from 'cheerio';
 
-const SOURCE_URL = 'https://arenahall.info/vlg/e/';
 const BASE_URL = 'https://arenahall.info';
-const TARGET_VENUE = 'КРОП АРЕНА';
+const CITIES = [
+  { path: 'krd', name: 'Краснодар' },
+  { path: 'rst', name: 'Ростов-на-Дону' },
+  { path: 'vrn', name: 'Воронеж' },
+  { path: 'vlg', name: 'Волгоград', venueFilter: 'КРОП АРЕНА' },
+  { path: 'stl', name: 'Ставрополь' },
+  { path: 'srt', name: 'Саратов' },
+  { path: 'sch', name: 'Сочи' },
+  { path: 'msk', name: 'Москва' },
+];
 
 const MONTHS_SHORT = {
   '01': 'янв', '02': 'фев', '03': 'мар', '04': 'апр', '05': 'мая', '06': 'июн',
@@ -22,16 +34,17 @@ const DATE_RE = /(\d{2})\.(\d{2})\.(\d{4})/;
 const TIME_RE = /(\d{1,2}):(\d{2}):\d{2}/;
 const PRICE_RE = /(\d[\d ]*)\s*руб/;
 
-async function fetchPage() {
-  const res = await fetch(SOURCE_URL, {
+async function fetchCityPage(cityPath) {
+  const url = `${BASE_URL}/${cityPath}/e/`;
+  const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; afishiru-sync/1.0)' },
     signal: AbortSignal.timeout(10000),
   });
-  if (!res.ok) throw new Error(`fetch ${SOURCE_URL} -> ${res.status}`);
+  if (!res.ok) throw new Error(`fetch ${url} -> ${res.status}`);
   return res.text();
 }
 
-function parseEvents(html) {
+function parseEvents(html, city) {
   const $ = cheerio.load(html);
   const events = [];
   const seenSlugs = new Set();
@@ -50,10 +63,12 @@ function parseEvents(html) {
 
     const pText = $el.find('.item-box-desc p').first();
     const pHtml = pText.html() || '';
-    // <a>Волгоград</a><br><a>ПЛОЩАДКА, адрес</a><br>ДАТА<br>ВРЕМЯ<br>ЦЕНА руб.
+    // <a>Город</a><br><a>ПЛОЩАДКА, адрес</a><br>ДАТА<br>ВРЕМЯ<br>ЦЕНА руб.
     const venueLinkMatch = pHtml.match(/<a[^>]*>([^<]*)<\/a>\s*<br\s*\/?>\s*<a[^>]*>([^<]*)<\/a>/i);
     const venueFull = venueLinkMatch ? venueLinkMatch[2].trim() : '';
-    if (!venueFull.toUpperCase().includes(TARGET_VENUE)) return; // другая площадка (напр. FERRUM) — пропускаем
+
+    // Фильтр по конкретной площадке — только там, где мы её точно знаем (Волгоград)
+    if (city.venueFilter && !venueFull.toUpperCase().includes(city.venueFilter)) return;
 
     const plainText = pText.text();
     const dateMatch = plainText.match(DATE_RE);
@@ -65,18 +80,24 @@ function parseEvents(html) {
     const monthNum = dateMatch[2];
     const year = dateMatch[3];
     const dateISO = `${year}-${monthNum}-${day}`;
+
+    // Пропускаем абонементы (не единичное мероприятие) и явно прошедшие даты
+    if (/абонемент/i.test(title)) return;
+    const todayISO = new Date().toISOString().slice(0, 10);
+    if (dateISO < todayISO) return;
+
     const time = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : '19:00';
     const price = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : 0;
 
     const imgSrc = $el.find('img').first().attr('src') || '';
     const photo = imgSrc ? new URL(imgSrc, BASE_URL).href : null;
 
-    // Адрес — часть строки venueFull после первой запятой
     const commaIdx = venueFull.indexOf(',');
-    const venueAddr = commaIdx >= 0 ? venueFull.slice(commaIdx + 1).trim() + ', Волгоград' : 'ул. Космонавтов, 30, Волгоград';
+    const venueName = commaIdx >= 0 ? venueFull.slice(0, commaIdx).trim() : venueFull;
+    const venueAddr = commaIdx >= 0 ? venueFull.slice(commaIdx + 1).trim() + ', ' + city.name : city.name;
 
     events.push({
-      id: 'arenahall_' + slug,
+      id: 'arenahall_' + city.path + '_' + slug,
       slug,
       title,
       dateISO,
@@ -85,6 +106,8 @@ function parseEvents(html) {
       time,
       price,
       photo,
+      city: city.name,
+      venueName: venueName || 'Arena Hall',
       venueAddr,
       ticketUrl: `${BASE_URL}${href}`,
     });
@@ -121,11 +144,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const html = await fetchPage();
-    const events = parseEvents(html);
+    const cityResults = await Promise.allSettled(
+      CITIES.map(city => fetchCityPage(city.path).then(html => parseEvents(html, city)))
+    );
+
+    let allEvents = [];
+    const perCityCount = {};
+    cityResults.forEach((r, i) => {
+      const city = CITIES[i];
+      if (r.status === 'fulfilled') {
+        allEvents = allEvents.concat(r.value);
+        perCityCount[city.name] = r.value.length;
+      } else {
+        console.error('[sync-arenahall]', city.name, 'failed:', r.reason && r.reason.message);
+        perCityCount[city.name] = 'ошибка: ' + (r.reason && r.reason.message);
+      }
+    });
 
     const byId = {};
-    events.forEach(e => { byId[e.id] = e; });
+    allEvents.forEach(e => { byId[e.id] = e; });
 
     const proto = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -140,7 +177,8 @@ export default async function handler(req, res) {
       ok: true,
       totalFound: Object.keys(byId).length,
       newCount: newIds.length,
-      titles: Object.values(byId).map(e => e.title + ' | ' + e.dateISO + ' | от ' + e.price + '₽'),
+      perCity: perCityCount,
+      titles: Object.values(byId).map(e => e.city + ' | ' + e.title + ' | ' + e.dateISO + ' | от ' + e.price + '₽'),
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {

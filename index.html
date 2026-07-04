@@ -4118,7 +4118,7 @@ function renderExhibitCard(ex) {
 }
 
 function renderCityPills(city) {
-  var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар'];
+  var cities = ['Волгоград','Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Воронеж','Ставрополь','Саратов','Сочи'];
   var el = document.getElementById('cityPillsContainer');
   if (!el) return;
   el.innerHTML = '<span class="city-label">Город:</span>'
@@ -4333,15 +4333,15 @@ document.addEventListener('DOMContentLoaded', function() {
       Object.keys(ahAuto).forEach(function(ahId) {
         var ae = ahAuto[ahId];
         if (delIds.indexOf(ahId) >= 0) return;
-        var dup = CONCERTS_DB.some(function(x){ return x.title === ae.title && x.dateISO === ae.dateISO; });
+        var dup = CONCERTS_DB.some(function(x){ return x.title === ae.title && x.dateISO === ae.dateISO && x.city === ae.city; });
         if (dup) return;
         CONCERTS_DB.push({
           id: ahId, title: ae.title, artist: ae.title, genre: 'Концерт',
           icon: '🎸', color: '#0a1a1a', date: ae.date, dateShort: ae.dateShort, dateISO: ae.dateISO,
           dayLabel: '', age: '12+', duration: '2 ч', rating: 0, votes: 0,
-          price: ae.price || 0, priceMax: (ae.price || 0) * 2, hot: false, newShow: true, city: 'Волгоград',
+          price: ae.price || 0, priceMax: (ae.price || 0) * 2, hot: false, newShow: true, city: ae.city || 'Волгоград',
           desc: '', photo: ae.photo, ticketUrl: ae.ticketUrl,
-          venues: [{ name: 'КРОП АРЕНА', addr: ae.venueAddr || 'ул. Космонавтов, 30, Волгоград', cap: '', times: [ae.time || '19:00'], city: 'Волгоград' }],
+          venues: [{ name: ae.venueName || 'Arena Hall', addr: ae.venueAddr || '', cap: '', times: [ae.time || '19:00'], city: ae.city || 'Волгоград' }],
         });
         changed3 = true;
       });
