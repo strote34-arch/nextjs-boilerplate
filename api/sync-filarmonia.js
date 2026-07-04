@@ -39,39 +39,33 @@ async function fetchPage(start) {
 }
 
 function parseEventsFromHtml(html) {
-  // Найти позиции ВСЕХ ссылок на детальные страницы в исходном HTML, с привязкой к slug
+  // Найти ПЕРВОЕ вхождение каждой ссылки на детальную страницу события, по порядку
+  // появления в документе. (Повторные вхождения того же slug — в блоках "Купить билет",
+  // "поделиться", виджетах "похожие мероприятия" и т.п. — сознательно игнорируем,
+  // они могут быть где угодно на странице и не годятся как граница карточки.)
   const linkRe = /<a\s[^>]*href=["']([^"']*\/afishi\/concerts\/([a-z0-9-]+))["'][^>]*>/gi;
-  const occurrences = []; // { slug, startIdx }
+  const seen = new Set();
+  const firstOccurrences = []; // { slug, startIdx }, в порядке появления
   let m;
   while ((m = linkRe.exec(html))) {
-    occurrences.push({ slug: m[2], startIdx: m.index });
+    const slug = m[2];
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    firstOccurrences.push({ slug, startIdx: m.index });
   }
-
-  // Сгруппировать по slug — каждое событие встречается минимум дважды:
-  // 1) ссылка-обёртка над постером (начало карточки)
-  // 2) ссылка-обёртка "transparent.png" в конце карточки (граница конца)
-  const bySlug = new Map();
-  occurrences.forEach(o => {
-    if (!bySlug.has(o.slug)) bySlug.set(o.slug, []);
-    bySlug.get(o.slug).push(o.startIdx);
-  });
 
   const events = [];
 
-  bySlug.forEach((positions, slug) => {
-    if (positions.length < 2) return; // нет закрывающей границы — не рискуем, пропускаем
-    const blockStart = positions[0];
-    const lastLinkStart = positions[positions.length - 1];
-    // Найти конец тега </a> после последнего вхождения — это и есть граница конца карточки
-    const closeIdx = html.indexOf('</a>', lastLinkStart);
-    const blockEnd = closeIdx === -1 ? lastLinkStart + 200 : closeIdx + 4;
-    const blockHtml = html.slice(blockStart, blockEnd);
+  for (let i = 0; i < firstOccurrences.length; i++) {
+    const { slug, startIdx } = firstOccurrences[i];
+    const endIdx = i + 1 < firstOccurrences.length ? firstOccurrences[i + 1].startIdx : html.length;
+    const blockHtml = html.slice(startIdx, endIdx);
 
     const $ = cheerio.load(blockHtml);
     const cardText = $.root().text().replace(/\s+/g, ' ').trim();
 
     const dateMatch = cardText.match(DATE_RE);
-    if (!dateMatch) return;
+    if (!dateMatch) continue;
     const timeMatch = cardText.match(TIME_RE);
 
     const day = dateMatch[1].padStart(2, '0');
@@ -90,10 +84,10 @@ function parseEventsFromHtml(html) {
     const dateISO = `${year}-${monthNum}-${day}`;
 
     const title = $('h1,h2,h3,h4').first().text().trim();
-    if (!title) return;
+    if (!title) continue;
 
     const isMainHall = /Концертный зал Волгоградской филармонии/i.test(cardText);
-    if (!isMainHall) return;
+    if (!isMainHall) continue;
 
     const imgSrc = $('img').first().attr('src') || '';
     const photo = imgSrc
@@ -119,7 +113,7 @@ function parseEventsFromHtml(html) {
       photo,
       ticketUrl: `${SOURCE_BASE}/${slug}`,
     });
-  });
+  }
 
   return events;
 }

@@ -25,6 +25,14 @@
     {
       "path": "/api/sync-filarmonia",
       "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/trailer-sync-events",
+      "schedule": "0 11 * * 6"
+    },
+    {
+      "path": "/api/trailer-sync-events",
+      "schedule": "0 11 * * 0"
     }
   ],
   "headers": [
