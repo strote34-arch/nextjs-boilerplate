@@ -27,6 +27,10 @@
       "schedule": "0 7 * * 1"
     },
     {
+      "path": "/api/sync-kultura",
+      "schedule": "0 7 * * 2"
+    },
+    {
       "path": "/api/trailer-sync-events",
       "schedule": "0 11 * * 6"
     },
