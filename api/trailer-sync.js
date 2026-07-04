@@ -231,6 +231,21 @@ async function syncFilmDatabaseTrailers() {
 
 // ── MAIN ───────────────────────────────────────────────────────
 export default async function handler(req, res) {
+  // ── Объединено с бывшим /api/trailers-get.js (освобождение слота под лимитом
+  // Vercel Hobby — 12 serverless-функций на деплой) ──
+  // Публичный проксирующий вызов для cinema.html: /api/trailer-sync?action=get
+  if (req.query.action === 'get') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=3600');
+    try {
+      const r = await fetch(`${WORKER_URL}/api/trailers`);
+      const data = await r.json();
+      return res.status(200).json(data);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   // Проверка что это Cron или авторизованный вызов
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

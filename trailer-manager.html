@@ -275,7 +275,7 @@ async function loadFilms() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('filmList').innerHTML = '';
   try {
-    var r = await fetch(SITE_URL + '/api/trailers-get');
+    var r = await fetch(SITE_URL + '/api/trailer-sync?action=get');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     var d = await r.json();
     allFilms = d.trailers || [];

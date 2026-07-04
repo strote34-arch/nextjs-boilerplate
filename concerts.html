@@ -4106,6 +4106,24 @@ function init() {
       changed2 = true;
     });
 
+    // ── Новинки Кроп Арены (/api/sync-arenahall, по средам) ──
+    var ahAuto = r.data.arenaHallEvents || {};
+    Object.keys(ahAuto).forEach(function(ahId) {
+      var ae = ahAuto[ahId];
+      if (delIds.indexOf(ahId) >= 0) return;
+      var dup = CONCERTS.some(function(x){ return x.title === ae.title && x.dateISO === ae.dateISO; });
+      if (dup) return;
+      CONCERTS.push({
+        id: ahId, title: ae.title, artist: ae.title, genre: 'Концерт',
+        icon: '🎸', color: '#0a1a1a', date: ae.date, dateShort: ae.dateShort, dateISO: ae.dateISO,
+        dayLabel: '', age: '12+', duration: '2 ч', rating: 0, votes: 0,
+        price: ae.price || 0, priceMax: (ae.price || 0) * 2, hot: false, newShow: true, city: 'Волгоград',
+        desc: '', photo: ae.photo, ticketUrl: ae.ticketUrl,
+        venues: [{ name: 'КРОП АРЕНА', addr: ae.venueAddr || 'ул. Космонавтов, 30, Волгоград', cap: '', times: [ae.time || '19:00'], city: 'Волгоград' }],
+      });
+      changed2 = true;
+    });
+
     if (changed2) applyFilters();
   }).catch(function(){ /* сервер недоступен — остаёмся на локальной версии */ });
   // sync city pill
