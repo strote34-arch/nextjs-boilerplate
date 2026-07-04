@@ -3453,7 +3453,7 @@ const CONCERTS = [
    venues:[{name:'Kultura Concert Hall',addr:'ул. Советская, 29',times:['21:00'],city:'Волгоград'}],
    desc:'Сольный концерт Ваграма Вазяна.',
    ticketUrl:'https://vog.ticketland.ru/koncertnye-zaly/kultura-concert-hall/vagram-vazyan-volgograd-kultura/',
-   photo:'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400&h=600&fit=crop',cat:'concert'},
+   photo:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=600&fit=crop',cat:'concert'},
   {id:'tl_lumisfera',title:'Lumisfera. Симфония в парке при свечах',genre:'Классика',icon:'🕯️',color:'#1a1a00',
    date:'23 июля 2026',dateShort:'23 июл',dateISO:'2026-07-23',dayLabel:'Чт',
    age:'6+',duration:'2 ч',rating:0,votes:0,
@@ -3562,10 +3562,10 @@ const CONCERTS = [
    date:'7 ноября 2026',dateShort:'7 ноя',dateISO:'2026-11-07',dayLabel:'Сб',
    age:'16+',duration:'2.5 ч',rating:0,votes:0,
    price:11500,priceMax:25000,hot:true,city:'Волгоград',
-   venues:[{name:'«Экспоцентр» (г. Волгоград)',times:['19:00'],city:'Волгоград'}],
+   venues:[{name:'«Экспоцентр» (г. Волгоград)',addr:'пр-т им. В.И. Ленина, 65а, Волгоград',cap:'до 2000 чел.',times:['19:00'],city:'Волгоград'}],
    desc:'Большое сольное шоу Сергея Лазарева «Шоумен».',
    ticketUrl:'https://vog.ticketland.ru/koncertnye-zaly/kongress-kholl-dgtu/sergey-lazarev-shoumen/',
-   photo:'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400&h=600&fit=crop',cat:'concert'},
+   photo:'https://sergeylazarev.ru/wp-content/uploads/2025/09/opengraph_lazarev.jpg',cat:'concert'},
   {id:'tl_stas_pekha',title:'Стас Пьеха',genre:'Поп',icon:'🎤',color:'#001a2a',
    date:'22 ноября 2026',dateShort:'22 ноя',dateISO:'2026-11-22',dayLabel:'Вс',
    age:'12+',duration:'2 ч',rating:0,votes:0,
@@ -4903,7 +4903,7 @@ function openModal(id, goTickets=false) {
     vl.innerHTML+=`<div class="m-venue-row" id="vrow-${v.name.replace(/\s/g,'_')}">
       <div class="m-venue-head" onclick="toggleVenueRow(this)">
         <div><div class="m-venue-name">📍 ${v.name}${_vurl} <a href="venue-concert-city.html" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;color:var(--gold);">🏟️ Площадки города →</a>
-      <a href="venue-concert.html" style="font-size:11px;font-weight:700;color:var(--red,#c8102e);margin-left:6px;" onclick="event.stopPropagation()">→ О площадке</a></div><div class="m-venue-addr">${v.addr} · ${v.cap}</div></div>
+      <a href="venue-concert.html" style="font-size:11px;font-weight:700;color:var(--red,#c8102e);margin-left:6px;" onclick="event.stopPropagation()">→ О площадке</a></div><div class="m-venue-addr">${[v.addr, v.cap].filter(Boolean).join(" · ")}</div></div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:var(--light);">▾</span>
           <button data-vname="${v.name}" data-vaddr="${v.addr||''}" data-vcity="${v.city||''}" onclick="event.stopPropagation();_showVenueMap(this.dataset.vname,this.dataset.vaddr,this.dataset.vcity || currentCity,'')" style="background:none;border:1px solid #e0e0e0;border-radius:3px;font-size:10px;font-weight:700;color:var(--light);padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.3px;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0e0e0';this.style.color='var(--light)'">🗺️ Карта</button>

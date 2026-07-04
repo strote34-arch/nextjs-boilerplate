@@ -2343,7 +2343,7 @@ function openModal(id, goTickets=false) {
     vl.innerHTML+=`<div class="m-venue-row" id="vrow-${v.name.replace(/\s/g,'_')}">
       <div class="m-venue-head" onclick="toggleVenueRow(this)">
         <div><div class="m-venue-name">📍 ${v.name}${_vurl} <a href="venue-concert-city.html" style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;color:var(--gold);">🏟️ Площадки города →</a>
-      <a href="venue-concert.html" style="font-size:11px;font-weight:700;color:var(--red,#c8102e);margin-left:6px;" onclick="event.stopPropagation()">→ О площадке</a></div><div class="m-venue-addr">${v.addr} · ${v.cap}</div></div>
+      <a href="venue-concert.html" style="font-size:11px;font-weight:700;color:var(--red,#c8102e);margin-left:6px;" onclick="event.stopPropagation()">→ О площадке</a></div><div class="m-venue-addr">${[v.addr, v.cap].filter(Boolean).join(" · ")}</div></div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:var(--light);">▾</span>
           <button data-vname="${v.name}" data-vaddr="${v.addr|''}" data-vcity="${v.city|''}" onclick="event.stopPropagation();_showVenueMap(this.dataset.vname,this.dataset.vaddr,this.dataset.vcity || currentCity,'')" style="background:none;border:1px solid #e0e0e0;border-radius:3px;font-size:10px;font-weight:700;color:var(--light);padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.3px;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0e0e0';this.style.color='var(--light)'">🗺️ Карта</button>
