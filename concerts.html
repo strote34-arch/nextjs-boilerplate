@@ -3469,7 +3469,7 @@ const CONCERTS = [
    desc:'Концерт рэп-исполнителя Code80.',
    ticketUrl:'https://vog.ticketland.ru/koncertnye-zaly/kultura-concert-hall/code80-v-volgograde-1/',
    photo:'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop',cat:'concert'},
-  {id:'tl_archi',title:'Archi (Арчи)',genre:'Хип-хоп',icon:'🎤',color:'#1a0a1a',
+  {id:'tl_archi',title:'Archi (Арчи)',artist:'Archi',genre:'Хип-хоп',icon:'🎤',color:'#1a0a1a',
    date:'7 августа 2026',dateShort:'7 авг',dateISO:'2026-08-07',dayLabel:'Пт',
    age:'16+',duration:'2 ч',rating:0,votes:0,
    price:1600,priceMax:4000,hot:false,city:'Волгоград',
@@ -4890,7 +4890,8 @@ function openModal(id, goTickets=false) {
       return url ? '<a href="' + url + '" style="color:var(--red);text-decoration:none;">' + vn + ' →</a>' : vn;
     })()],
     ['Цены', `от ${(c.price|| 0).toLocaleString('ru')} до ${(c.priceMax|| 0).toLocaleString('ru')} ₽`]
-  ].map(([k,v])=>`<tr><td style="color:#888;padding:5px 0;width:110px;font-size:12px;vertical-align:top;">${k}</td><td style="font-size:13px;font-weight:700;padding:5px 0;">${v}</td></tr>`).join('');
+  ].filter(function(row){ return row[1] !== undefined && row[1] !== null && row[1] !== ''; })
+   .map(([k,v])=>`<tr><td style="color:#888;padding:5px 0;width:110px;font-size:12px;vertical-align:top;">${k}</td><td style="font-size:13px;font-weight:700;padding:5px 0;">${v}</td></tr>`).join('');
 
   // Venues tab
   const vl = document.getElementById('mvenueList');

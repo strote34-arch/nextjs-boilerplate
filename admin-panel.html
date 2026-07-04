@@ -1088,22 +1088,24 @@ function renderEvents() {
     var typeOk = EV_TYPE_FILTER==='all'||e.type===EV_TYPE_FILTER;
     return cityOk&&typeOk;
   });
+  var upcoming = evs.filter(function(e){ return !e.dateISO || e.dateISO >= TODAY; });
+  var past = evs.filter(function(e){ return e.dateISO && e.dateISO < TODAY; });
+
   var cnt=document.getElementById('ev-count');
-  if(cnt) cnt.textContent='Показано: '+evs.length+' из '+ALL_EVENTS.length;
+  if(cnt) cnt.textContent='Показано: '+upcoming.length+' из '+ALL_EVENTS.length+(past.length?' (+ '+past.length+' прошедших)':'');
   var tbody=document.getElementById('ev-tbody');
   if(!tbody) return;
-  if(!evs.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#aaa;padding:24px;">Нет событий</td></tr>';return;}
   var TL={concert:'🎵 Концерт',theater:'🎭 Театр',standup:'🎤 Стендап',cinema:'🎬 Кино',art:'🎨 Арт'};
   var TB={concert:'badge-blue',theater:'badge-green',standup:'badge-gray',cinema:'badge-red',art:'badge-gray'};
-  tbody.innerHTML=evs.map(function(e){
-    var isPast=e.dateISO&&e.dateISO<TODAY;
+
+  function rowHtml(e, isPast) {
     var status=!e.dateISO
       ?'<span class="badge badge-gray">Дата ?</span>'
       :isPast
         ?'<span class="badge badge-gray" style="background:#f0f0f0;color:#888;">✓ Прошло</span>'
         :'<span class="badge badge-green">● Скоро</span>';
     var ticket=e.ticketUrl?'<a href="'+e.ticketUrl+'" target="_blank" style="font-size:10px;color:#c8102e;margin-left:4px;">🎟</a>':'';
-    return '<tr style="opacity:'+(isPast?'0.5':'1')+'">'
+    return '<tr>'
       +'<td style="white-space:nowrap;font-size:12px;color:#888;">'+(e.dateISO||'—')+(e.time?' '+e.time:'')+'</td>'
       +'<td><strong>'+e.title+'</strong>'+(e.cast&&e.cast!==e.title?'<br><span style="font-size:11px;color:#aaa;">'+e.cast+'</span>':'')+'</td>'
       +'<td><span class="badge '+(TB[e.type]||'badge-gray')+'">'+(TL[e.type]||e.type)+'</span></td>'
@@ -1112,7 +1114,31 @@ function renderEvents() {
       +'<td>'+status+ticket+'</td>'
       +'<td><button class="btn btn-outline btn-sm" onclick="openEditEvent(\'' + e.id + '\')" title="Редактировать">✏️</button> <button class="btn btn-outline btn-sm" style="color:#c8102e;border-color:#c8102e;" onclick="deleteEvent(\'' + e.id + '\',\'' + e.title.replace(/'/g,"\\'") + '\')" title="Удалить">🗑</button></td>'
       +'</tr>';
-  }).join('');
+  }
+
+  var html = upcoming.length
+    ? upcoming.map(function(e){ return rowHtml(e, false); }).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:24px;">Нет предстоящих событий</td></tr>';
+
+  if (past.length) {
+    html += '<tr id="ev-past-toggle-row"><td colspan="7" style="padding:0;border:none;">'
+      + '<button class="btn btn-outline btn-sm" style="width:100%;margin:8px 0;" onclick="togglePastEvents()">'
+      + '<span id="ev-past-toggle-label">📁 Показать прошедшие (' + past.length + ')</span></button>'
+      + '</td></tr>'
+      + '<tbody id="ev-past-tbody" style="display:none;">'
+      + past.map(function(e){ return rowHtml(e, true); }).join('')
+      + '</tbody>';
+  }
+  tbody.innerHTML = html;
+}
+
+function togglePastEvents() {
+  var pastBody = document.getElementById('ev-past-tbody');
+  var label = document.getElementById('ev-past-toggle-label');
+  if (!pastBody) return;
+  var showing = pastBody.style.display !== 'none';
+  pastBody.style.display = showing ? 'none' : 'table-row-group';
+  if (label) label.textContent = (showing ? '📁 Показать прошедшие (' : '📂 Скрыть прошедшие (') + pastBody.children.length + ')';
 }
 
 
@@ -1457,6 +1483,34 @@ function saveEdits(edits) {
   localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
 }
 
+function handleEditPhotoSelect(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var photoStatus = document.getElementById('edit-photo-status');
+  photoStatus.textContent = '⏳ Обработка...';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 1000;
+      var scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      window._editPhotoPending = dataUrl;
+      var previewImg = document.getElementById('edit-photo-preview');
+      previewImg.src = dataUrl;
+      previewImg.style.display = 'block';
+      photoStatus.textContent = '✓ Готово к сохранению';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function openEditEvent(evId) {
   // Найти событие в ALL_EVENTS
   var ev = null;
@@ -1476,6 +1530,23 @@ function openEditEvent(evId) {
   document.getElementById('edit-cast').value  = ov.cast   || ev.cast   || '';
   document.getElementById('edit-genre').value = ov.genre  || ev.genre  || '';
   document.getElementById('edit-ticket').value= ov.ticketUrl||ev.ticketUrl||'';
+  document.getElementById('edit-desc').value  = ov.desc   || ev.desc   || '';
+  document.getElementById('edit-price').value = ov.price  || ev.price || '';
+  document.getElementById('edit-pricemax').value = ov.priceMax || ev.priceMax || '';
+
+  // Афиша — текущее фото (правка или оригинал)
+  var curPhoto = ov.photo || ev.photo || '';
+  var previewImg = document.getElementById('edit-photo-preview');
+  var photoStatus = document.getElementById('edit-photo-status');
+  window._editPhotoPending = null; // сбросить незагруженный файл от прошлого открытия формы
+  if (curPhoto) {
+    previewImg.src = curPhoto;
+    previewImg.style.display = 'block';
+    photoStatus.textContent = '';
+  } else {
+    previewImg.style.display = 'none';
+    photoStatus.textContent = 'Афиши пока нет';
+  }
 
   // Выбрать город
   var selCity = document.getElementById('edit-city');
@@ -1536,6 +1607,9 @@ function saveEditEvent() {
     genre:     document.getElementById('edit-genre').value.trim(),
     age:       document.getElementById('edit-age').value,
     ticketUrl: document.getElementById('edit-ticket').value.trim(),
+    desc:      document.getElementById('edit-desc').value.trim(),
+    price:     parseInt(document.getElementById('edit-price').value) || undefined,
+    priceMax:  parseInt(document.getElementById('edit-pricemax').value) || undefined,
     _editedAt: new Date().toISOString(),
   };
   saveEdits(edits);
@@ -1565,6 +1639,28 @@ function saveEditEvent() {
   }).catch(function(){
     toast('⚠️ Сохранено только в этом браузере — нет связи с сервером');
   });
+
+  // Если выбрано новое фото — залить отдельно (та же серверная система, что и у /concerts)
+  if (window._editPhotoPending) {
+    var photoData = window._editPhotoPending;
+    window._editPhotoPending = null;
+    fetch('/api/upload-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataUrl: photoData })
+    }).then(function(r){ return r.json(); }).then(function(r){
+      var finalUrl = (r && r.url) || photoData;
+      return fetch('/api/store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'concertPhotos', patch: { [evId]: finalUrl } })
+      });
+    }).then(function(){
+      toast('✅ Афиша загружена');
+    }).catch(function(){
+      toast('⚠️ Не удалось загрузить афишу на сервер');
+    });
+  }
 }
 
 function deleteEditOverride() {
@@ -2165,6 +2261,31 @@ renderReviews();
       <div class="form-group">
         <label class="form-label">Состав / Артисты</label>
         <input class="form-input" id="edit-cast" placeholder="Имя артиста, группа...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Описание</label>
+        <textarea class="form-input" id="edit-desc" rows="3" placeholder="О чём мероприятие..." style="resize:vertical;"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Цена от (₽)</label>
+          <input class="form-input" id="edit-price" type="number" placeholder="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Цена до (₽)</label>
+          <input class="form-input" id="edit-pricemax" type="number" placeholder="5000">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Афиша (фото)</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <img id="edit-photo-preview" style="width:70px;height:100px;object-fit:cover;border-radius:4px;background:#f0f0f0;display:none;">
+          <div style="flex:1;">
+            <input type="file" id="edit-photo-file" accept="image/*" style="display:none;" onchange="handleEditPhotoSelect(this)">
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('edit-photo-file').click()">📁 Загрузить файл</button>
+            <span id="edit-photo-status" style="font-size:12px;color:#888;margin-left:8px;"></span>
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
