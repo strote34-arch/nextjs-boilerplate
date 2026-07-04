@@ -1632,8 +1632,9 @@ function renderTheaters(city) {
     else document.body.appendChild(grid);
   }
   grid.innerHTML = list.map(function(th){
-    var evs=(th.events||[]).map(function(ev){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">'
+    var evs=(th.events||[]).map(function(ev, evIdx){
+      var evRef = th.id + '_' + evIdx;
+      return '<div onclick="event.stopPropagation();openShowModal(\''+evRef+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;cursor:pointer;" onmouseover="this.style.background=\'#faf8f5\'" onmouseout="this.style.background=\'\'">'
         +'<span>'+ev.title+(ev.pushkin?' <span style="background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-left:6px;white-space:nowrap;">🏛 Пушк. карта</span>':'')+'</span><div><span style="color:#c8102e;font-weight:700;">'+ev.date+'</span>'
         +(ev.time?' '+ev.time:'')+'</div></div>';
     }).join('');
@@ -1799,43 +1800,120 @@ function togglePushkinTheater() {
 }
 
 // ── openShowModal — открыть спектакль: описание + билеты + отзывы ─
+function _shareModal() {
+  var title = document.getElementById('mtitle');
+  var text = title ? title.textContent : 'Спектакль';
+  if (navigator.share) {
+    navigator.share({ title: text, text: text, url: location.href }).catch(function(){});
+  } else {
+    navigator.clipboard && navigator.clipboard.writeText(location.href);
+    if (typeof toast === 'function') toast('🔗 Ссылка скопирована');
+    else alert('Ссылка скопирована: ' + location.href);
+  }
+}
+
+function switchMTab(tabName) {
+  var modal = document.getElementById('showModal');
+  if (!modal) return;
+  if (tabName === 'tickets') {
+    var ticketEl = document.getElementById('mtickets');
+    if (ticketEl && ticketEl.href) { window.open(ticketEl.href, '_blank'); return; }
+  }
+  modal.querySelectorAll('.mtab').forEach(function(t){ t.classList.remove('active'); });
+  modal.querySelectorAll('.mpane').forEach(function(p){ p.classList.remove('active'); });
+  var tabs = modal.querySelectorAll('.mtab');
+  var order = ['info','schedule','map','tickets','trailer','reviews'];
+  var idx = order.indexOf(tabName);
+  if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+  var pane = document.getElementById('mpane-' + tabName);
+  if (pane) pane.classList.add('active');
+  if (tabName === 'reviews') {
+    var revPane = document.getElementById('mpane-reviews');
+    if (revPane && !revPane.dataset.filled) {
+      revPane.dataset.filled = '1';
+      revPane.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">Отзывов пока нет. Будьте первым, кто поделится впечатлением!</div>';
+    }
+  }
+}
+
 function openShowModal(showId) {
   // Найти спектакль в THEATERS_DB
   var show = null;
-  var theaterName = '';
+  var theaterObj = null;
   if (typeof THEATERS_DB !== 'undefined') {
     Object.keys(THEATERS_DB).forEach(function(city) {
       (THEATERS_DB[city]||[]).forEach(function(th) {
         (th.events||[]).forEach(function(ev, i) {
           if ((th.id + '_' + i) === showId || ev.id === showId) {
-            show = ev; theaterName = th.name;
+            show = ev; theaterObj = th;
           }
         });
       });
     });
   }
   if (!show) { show = {title: showId, desc: '', price: '', date: ''}; }
+  var theaterName = theaterObj ? theaterObj.name : '';
 
   var modal = document.getElementById('showModal');
   if (!modal) return;
 
-  // Заполнить модал
+  // ── Шапка: афиша, жанр, название, мета ──
   var title = document.getElementById('mtitle');
   var genre = document.getElementById('mgenre');
   var meta  = document.getElementById('mmeta');
   var poster = document.getElementById('mposter');
 
   if (title) title.textContent = show.title || '';
-  if (genre) genre.textContent = '🎭 Спектакль' + (theaterName ? ' · ' + theaterName : '');
-  if (meta)  meta.innerHTML = (show.date ? '📅 ' + show.date : '') + (show.time ? ' · ⏰ ' + show.time : '') + (show.price ? ' · 💰 ' + show.price : '');
-  if (poster) poster.innerHTML = '<div style="font-size:56px;display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#1a0a2e,#3d1a7a);">🎭</div>';
+  if (genre) genre.innerHTML = '🎭 ' + (show.genre || 'Спектакль') + (theaterName ? ' · ' + theaterName : '') + (show.pushkin ? ' <span style="background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-left:6px;">🏛 Пушкинская карта</span>' : '');
+  if (meta)  meta.innerHTML = (show.date ? '📅 ' + show.date : '') + (show.time ? ' · ⏰ ' + show.time : '') + (show.age ? ' · ' + show.age : '') + (show.price ? ' · 💰 ' + show.price : '');
+  if (poster) poster.innerHTML = show.photo
+    ? '<img src="'+show.photo+'" style="width:100%;height:100%;object-fit:cover;">'
+    : '<div style="font-size:56px;display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#1a0a2e,#3d1a7a);">🎭</div>';
 
-  // Описание
-  var descEl = document.getElementById('msynopsis') || document.getElementById('mdesc');
-  if (!descEl) {
-    descEl = modal.querySelector('.modal-synopsis') || modal.querySelector('.modal-desc');
+  // ── Вкладка «О спектакле»: описание + детали ──
+  var descEl = document.getElementById('mdesc');
+  if (descEl) descEl.textContent = show.desc || ('Спектакль «' + show.title + '»' + (theaterName ? ' в постановке театра «' + theaterName + '»' : '') + '. Подробности уточняйте по ссылке ниже.');
+  var castEl = document.getElementById('mcast');
+  if (castEl) castEl.innerHTML = show.cast ? '<div style="font-size:13px;color:#888;margin-top:8px;"><strong>В ролях:</strong> ' + show.cast + '</div>' : '';
+  var detailsEl = document.getElementById('mdetails');
+  if (detailsEl) {
+    var rows = [];
+    if (theaterName) rows.push(['Площадка', theaterName]);
+    if (show.genre) rows.push(['Жанр', show.genre]);
+    if (show.age) rows.push(['Возраст', show.age]);
+    if (show.price) rows.push(['Цена', show.price]);
+    detailsEl.innerHTML = rows.map(function(r){
+      return '<tr><td style="padding:6px 10px 6px 0;color:#888;">'+r[0]+'</td><td style="padding:6px 0;font-weight:700;">'+r[1]+'</td></tr>';
+    }).join('');
   }
-  if (descEl) descEl.textContent = show.desc || 'Классическая постановка одного из лучших театров города.';
+
+  // ── Вкладка «Расписание» ──
+  var schedEl = document.getElementById('mschedule');
+  if (schedEl) {
+    schedEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f9f7f4;border-radius:6px;margin-bottom:8px;">'
+      + '<div><strong>' + (show.date||'') + '</strong>' + (show.time ? ' · ' + show.time : '') + (theaterName ? '<div style="font-size:12px;color:#888;margin-top:2px;">📍 ' + theaterName + '</div>' : '') + '</div>'
+      + '<button class="btn-red" style="padding:8px 16px;font-size:12px;" onclick="switchMTab(\'tickets\')">Билеты</button></div>';
+  }
+
+  // ── Вкладка «Как добраться» (карта) ──
+  var mapEl = document.getElementById('mpane-map');
+  if (mapEl && theaterObj) {
+    var mapQuery = encodeURIComponent(theaterObj.addr || theaterName);
+    mapEl.innerHTML = '<div style="margin-bottom:10px;font-size:13px;color:#666;">📍 ' + (theaterObj.addr || '') + '</div>'
+      + '<iframe src="https://yandex.ru/map-widget/v1/?text=' + mapQuery + '" width="100%" height="320" frameborder="0" style="border-radius:6px;"></iframe>'
+      + (theaterObj.phone ? '<div style="margin-top:10px;font-size:13px;">☎ ' + theaterObj.phone + '</div>' : '');
+  }
+
+  // ── Вкладка «Трейлер» — ищем на нашем канале YouTube (@afishiru) ──
+  var trailerEl = document.getElementById('mpane-trailer');
+  if (trailerEl) {
+    var searchQ = encodeURIComponent(show.title);
+    trailerEl.innerHTML = '<div style="text-align:center;padding:30px 20px;">'
+      + '<div style="font-size:40px;margin-bottom:12px;">▶️</div>'
+      + '<div style="font-size:14px;color:#666;margin-bottom:16px;">Видео по этому спектаклю на нашем YouTube-канале</div>'
+      + '<a href="https://www.youtube.com/@afishiru/search?query=' + searchQ + '" target="_blank" style="display:inline-block;background:#ff0000;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px 24px;border-radius:4px;text-decoration:none;">▶ Найти на канале afishiru</a>'
+      + '</div>';
+  }
 
   // Билеты — добавить если нет
   var ticketEl = document.getElementById('mtickets');
@@ -1844,16 +1922,18 @@ function openShowModal(showId) {
     if (tickWrap) {
       var btn = document.createElement('a');
       btn.id = 'mtickets';
-      btn.href = 'https://qtickets.ru';
+      btn.href = (theaterObj && theaterObj.ticketUrl) || 'https://qtickets.ru';
       btn.target = '_blank';
       btn.style.cssText = 'display:inline-block;background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px 24px;border-radius:4px;text-decoration:none;margin-top:12px;';
       btn.textContent = '🎟️ Купить билет';
       tickWrap.appendChild(btn);
     }
   } else {
+    ticketEl.href = (theaterObj && theaterObj.ticketUrl) || 'https://qtickets.ru';
     ticketEl.style.display = '';
   }
 
+  switchMTab('info');
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }

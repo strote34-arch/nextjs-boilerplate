@@ -1409,11 +1409,13 @@ function renderKidsPage(city) {
   }
 
   grid.style.display = '';
-  grid.innerHTML = events.map(function(ev) {
+  var KIDS_GRADIENTS = ['linear-gradient(135deg,#ff9a56,#ff6b6b)','linear-gradient(135deg,#a8e063,#56ab2f)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#f857a6,#ff5858)','linear-gradient(135deg,#ffd452,#ff9a3c)','linear-gradient(135deg,#7f7fd5,#91eae4)'];
+  grid.innerHTML = events.map(function(ev, evi) {
+    var bg = ev.photo ? ev.color : KIDS_GRADIENTS[evi % KIDS_GRADIENTS.length];
     return '<div class="kcard" style="cursor:pointer;" onclick="'+(ev.ticketUrl ? "window.open('"+ev.ticketUrl+"','_blank')" : "alert('"+ev.title.replace(/'/g,"\\'")+"')")+'">'
-      + '<div class="kcard-img" style="background:'+ev.color+';position:relative;overflow:hidden;">'
+      + '<div class="kcard-img" style="background:'+bg+';position:relative;overflow:hidden;">'
       + (ev.photo ? '<img loading="lazy" src="'+ev.photo+'" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">' : '')
-      + '<span class="big-icon" style="'+(ev.photo ? 'opacity:0;' : '')+'position:relative;">'+ev.icon+'</span>'
+      + '<span class="big-icon" style="'+(ev.photo ? 'opacity:0;' : '')+'position:relative;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));">'+ev.icon+'</span>'
       + '<div class="age-ribbon" style="background:var(--red);">'+ev.age+'</div>'
       + '<div class="kcard-cat-badge" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">'+ev.cat+'</div>'
       + '</div>'
