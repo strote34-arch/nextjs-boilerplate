@@ -32,6 +32,7 @@ window.switchCity = function(city, btn) {
 </script>
 
 <meta charset="UTF-8">
+<script src="geo-set.js"></script>
 <meta name="description" content="Афиша театральных спектаклей Волгограда. НЭТ, Царицынская опера, ТЮЗ. Билеты онлайн.">
 <meta property="og:title" content="Театр и балет в Волгограде — Афиши.ру">
 <meta property="og:description" content="Афиша театральных спектаклей Волгограда. НЭТ, Царицынская опера, ТЮЗ. Билеты онлайн.">
@@ -1526,6 +1527,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window._onGeoCity = function(city) {
     if (orig) orig(city);
     updateFooterVenues(city);
+    if (typeof renderTheaters === 'function') renderTheaters(city);
   };
 })();
 </script>

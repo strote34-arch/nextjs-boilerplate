@@ -66,128 +66,14 @@ function trackTicketClick(url, title) {
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta charset="UTF-8">
+<script src="geo-set.js"></script>
 <script>
-// ── IP-геолокация (определение города по IP) ─────────────────────
-// Запускается только если город не выбран вручную
-(function() {
-  var CITY_MAP = {
-    // Города России → стандартное название для afishi.ru
-    'Volgograd':'Волгоград', 'Volzhskiy':'Волгоград',
-    'Moscow':'Москва', 'Moskva':'Москва',
-    'Saint Petersburg':'Санкт-Петербург', 'St. Petersburg':'Санкт-Петербург',
-    'Yekaterinburg':'Екатеринбург', 'Ekaterinburg':'Екатеринбург',
-    'Kazan':'Казань', 'Krasnodar':'Краснодар',
-    'Rostov-on-Don':'Ростов-на-Дону', 'Novosibirsk':'Новосибирск',
-    'Omsk':'Омск', 'Samara':'Самара', 'Ufa':'Уфа',
-    'Chelyabinsk':'Челябинск', 'Perm':'Пермь', 'Voronezh':'Воронеж',
-    'Krasnoyarsk':'Красноярск', 'Irkutsk':'Иркутск',
-    'Vladivostok':'Владивосток', 'Nizhny Novgorod':'Нижний Новгород',
+  window.afishiOnCityDetected = function(city) {
+    // Если страница уже успела отрисоваться с другим городом (до того, как
+    // геолокация отработала) — тихо перерисовать под реальный
+    if (typeof renderPage === 'function') renderPage(city);
+    if (typeof renderCityPills === 'function') renderCityPills(city);
   };
-  
-  try {
-    var stored = localStorage.getItem('afishi_city');
-    var manual = localStorage.getItem('afishi_city_manual');
-    if (stored && manual === '1') return; // Пользователь выбрал сам — не трогаем
-    if (stored && !manual) return; // Уже есть — не меняем
-  } catch(e) {}
-
-  // ── Цепочка IP-сервисов (fallback) ───────────────────────────
-  // 1. ipapi.co       — 1 000 req/день, бесплатно, без ключа
-  // 2. ip-api.com     — 45 req/min, бесплатно, без ключа
-  // 3. freeipapi.com  — 60 req/min, бесплатно, без ключа
-  // 4. ip2location.io — 30 000 req/мес бесплатно (нужен API ключ)
-
-  function applyCity(cityEn) {
-    if (!cityEn) return false;
-    var city = CITY_MAP[cityEn] || null;
-    if (!city) {
-      var keys = Object.keys(CITY_MAP);
-      for (var i = 0; i < keys.length; i++) {
-        if (cityEn.indexOf(keys[i]) >= 0 || keys[i].indexOf(cityEn) >= 0) {
-          city = CITY_MAP[keys[i]]; break;
-        }
-      }
-    }
-    if (!city) return false;
-    try {
-      if (localStorage.getItem('afishi_city')) return true; // уже есть
-      localStorage.setItem('afishi_city', city);
-      localStorage.setItem('afishi_geo_source', 'ip');
-      var lbl = document.getElementById('cityTopLabel'); if (lbl) lbl.textContent = city;
-      var lbl2 = document.getElementById('cityLabel'); if (lbl2) lbl2.textContent = city;
-      if (typeof renderPage === 'function') setTimeout(function(){ renderPage(city); }, 100);
-    } catch(e) {}
-    return true;
-  }
-
-  // 1. ipapi.co — JSONP (поддерживает callback)
-  try {
-    var cb1 = 'afishi_geo_1_' + Date.now();
-    var s1 = document.createElement('script');
-    window[cb1] = function(data) {
-      try { document.head.removeChild(s1); } catch(e) {}
-      if (data && data.city) {
-        if (applyCity(data.city)) { delete window[cb1]; return; }
-      }
-      // Fallback → ip-api.com
-      tryIpApiCom();
-      delete window[cb1];
-    };
-    s1.src = 'https://ipapi.co/json/?callback=' + cb1;
-    s1.onerror = function() {
-      try{document.head.removeChild(s1);}catch(e){}
-      delete window[cb1];
-      tryIpApiCom();
-    };
-    document.head.appendChild(s1);
-  } catch(e) { tryIpApiCom(); }
-
-  // 2. ip-api.com — fetch JSON (fields=city,status)
-  function tryIpApiCom() {
-    if (localStorage.getItem('afishi_city')) return;
-    try {
-      fetch('https://ip-api.com/json/?fields=status,city&lang=en')
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if (d && d.status === 'success' && d.city) {
-            if (!applyCity(d.city)) tryFreeIpApi();
-          } else { tryFreeIpApi(); }
-        }).catch(function(){ tryFreeIpApi(); });
-    } catch(e) { tryFreeIpApi(); }
-  }
-
-  // 3. freeipapi.com — fetch JSON
-  function tryFreeIpApi() {
-    if (localStorage.getItem('afishi_city')) return;
-    try {
-      fetch('https://freeipapi.com/api/json/')
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if (d && d.cityName) {
-            if (!applyCity(d.cityName)) tryIp2Location();
-          } else { tryIp2Location(); }
-        }).catch(function(){ tryIp2Location(); });
-    } catch(e) { tryIp2Location(); }
-  }
-
-  // 4. ip2location.io — fetch JSON (нужен API ключ, иначе только страна)
-  function tryIp2Location() {
-    if (localStorage.getItem('afishi_city')) return;
-    try {
-      // Попробовать без ключа (возвращает страну но не город для бесплатного плана)
-      // Для получения города нужен ключ: https://www.ip2location.io/sign-up
-      var apiKey = '4rz5kxKy8Hq7qWzk1Ij37b9ciXNBwm75EAyNef34WEgaQz8iISYSF14uENS2XtPT'; // ip2location.io токен
-      var url = 'https://api.ip2location.io/?format=json&key=' + apiKey;
-      fetch(url)
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          // ip2location.io возвращает city_name
-          var city = (d && (d.city_name || d.city)) || null;
-          if (city) applyCity(city);
-        }).catch(function(){});
-    } catch(e) {}
-  }
-})();
 </script>
 <meta name="description" content="Афиша мероприятий Волгограда: концерты, театр, кино, выставки, детские события. Билеты онлайн на kassir.ru и kassy.ru.">
 <meta property="og:title" content="Афиши.ру — концерты, театр, кино в Волгограде">
