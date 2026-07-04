@@ -1,11 +1,10 @@
 // /api/sync-filarmonia.js — еженедельный автопарсер афиши volgogradfilarmonia.ru
-// v3 — точные границы карточки события. Каждая карточка на сайте устроена так:
-//   [картинка-ссылка на /afishi/concerts/SLUG] ... текст события ...
-//   [ссылка-обёртка "Подробнее" на /afishi/concerts/SLUG с картинкой transparent.png]
-// То есть slug встречается ДВАЖДЫ на карточку: в начале (постер) и в конце
-// (invisible-обёртка "читать дальше"). Это даёт точную, надёжную границу карточки —
-// в отличие от предыдущих версий, которые угадывали границу по эвристикам и путали
-// заголовок/дату соседних событий.
+// v5 — переписан на основе РЕАЛЬНОГО исходного кода страницы (получен от владельца
+// сайта через Ctrl+U). Каждое событие на странице — это отдельный
+// <div itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">,
+// это микроразметка schema.org, официальный и однозначный маркер границы карточки.
+// Предыдущие версии (v1-v4) угадывали границу по тексту/ссылкам вслепую и путали
+// данные соседних событий — с этим селектором такая путаница исключена в принципе.
 
 import * as cheerio from 'cheerio';
 
@@ -27,11 +26,12 @@ const MONTHS_FULL = {
 };
 const DATE_RE = /(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/;
 const TIME_RE = /(\d{1,2}):(\d{2})/;
+const MAIN_HALL = 'Концертный зал Волгоградской филармонии';
 
 async function fetchPage(start) {
   const url = start ? `${SOURCE_BASE}?start=${start}` : SOURCE_BASE;
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; afishiru-sync/3.0)' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; afishiru-sync/5.0)' },
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`fetch ${url} -> ${res.status}`);
@@ -39,65 +39,76 @@ async function fetchPage(start) {
 }
 
 function parseEventsFromHtml(html) {
-  // Найти ПЕРВОЕ вхождение каждой ссылки на детальную страницу события, по порядку
-  // появления в документе. (Повторные вхождения того же slug — в блоках "Купить билет",
-  // "поделиться", виджетах "похожие мероприятия" и т.п. — сознательно игнорируем,
-  // они могут быть где угодно на странице и не годятся как граница карточки.)
-  const linkRe = /<a\s[^>]*href=["']([^"']*\/afishi\/concerts\/([a-z0-9-]+))["'][^>]*>/gi;
-  const seen = new Set();
-  const firstOccurrences = []; // { slug, startIdx }, в порядке появления
-  let m;
-  while ((m = linkRe.exec(html))) {
-    const slug = m[2];
-    if (seen.has(slug)) continue;
-    seen.add(slug);
-    firstOccurrences.push({ slug, startIdx: m.index });
-  }
-
+  const $ = cheerio.load(html);
   const events = [];
 
-  for (let i = 0; i < firstOccurrences.length; i++) {
-    const { slug, startIdx } = firstOccurrences[i];
-    const endIdx = i + 1 < firstOccurrences.length ? firstOccurrences[i + 1].startIdx : html.length;
-    const blockHtml = html.slice(startIdx, endIdx);
+  // Официальная микроразметка schema.org — надёжная, однозначная граница карточки
+  $('div[itemprop="blogPost"]').each((_, el) => {
+    const $el = $(el);
 
-    const $ = cheerio.load(blockHtml);
-    const cardText = $.root().text().replace(/\s+/g, ' ').trim();
+    // Slug — из ссылки на детальную страницу (news-image или news-link)
+    const href = $el.find('a[href*="/afishi/concerts/"]').first().attr('href') || '';
+    const slugMatch = href.match(/afishi\/concerts\/([a-z0-9-]+)/);
+    if (!slugMatch) return;
+    const slug = slugMatch[1];
 
-    const dateMatch = cardText.match(DATE_RE);
-    if (!dateMatch) continue;
-    const timeMatch = cardText.match(TIME_RE);
+    // Площадка — строго из <p class="pre-mesto">, не из всего текста карточки
+    const venue = $el.find('p.pre-mesto').first().text().trim();
+    if (venue !== MAIN_HALL) return; // выездная площадка — не наш город, пропускаем
 
+    // Дата и время — из <p class="pre-date">DD месяц ДеньНедели  HH:MM</p>
+    const dateText = $el.find('p.pre-date').first().text();
+    const dateMatch = dateText.match(DATE_RE);
+    if (!dateMatch) return;
+    const timeMatch = dateText.match(TIME_RE);
     const day = dateMatch[1].padStart(2, '0');
     const monthNum = MONTHS[dateMatch[2]];
     const time = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : '19:00';
 
-    const seasonMatch = cardText.match(/Сезон\s+(\d{4})\s*[–-]\s*(\d{4})/);
+    // Год — из "Сезон YYYY – YYYY" в pre-intro. Сезон идёт СЕНТЯБРЬ→АВГУСТ, то есть
+    // месяцы 09-12 относятся к ПЕРВОМУ году сезона, а 01-08 — ко ВТОРОМУ.
+    // (Раньше было наоборот — из-за этого весь август 2026-го считался августом
+    // 2025-го, то есть уже прошедшим).
+    const introText = $el.find('p.pre-intro').first().text();
+    const seasonMatch = introText.match(/Сезон\s+(\d{4})\s*[–-]\s*(\d{4})/);
     let year;
     if (seasonMatch) {
-      year = parseInt(monthNum, 10) >= 8 ? parseInt(seasonMatch[1], 10) : parseInt(seasonMatch[2], 10);
+      const y1 = parseInt(seasonMatch[1], 10);
+      const y2 = parseInt(seasonMatch[2], 10);
+      year = parseInt(monthNum, 10) >= 9 ? y1 : y2;
     } else {
+      // Нет явного сезона (напр. только "12+") — берём ближайшую будущую дату
       const now = new Date();
       year = now.getFullYear();
       if (new Date(year, parseInt(monthNum, 10) - 1, parseInt(day, 10)) < now) year += 1;
     }
     const dateISO = `${year}-${monthNum}-${day}`;
 
-    const title = $('h1,h2,h3,h4').first().text().trim();
-    if (!title) continue;
+    // Заголовок — строго из <h2> внутри карточки
+    const title = $el.find('h2').first().text().trim();
+    if (!title) return;
 
-    const isMainHall = /Концертный зал Волгоградской филармонии/i.test(cardText);
-    if (!isMainHall) continue;
+    // Постер
+    const imgSrc = $el.find('img[src*="/cache/introtumbs/"]').first().attr('src') || '';
+    const photo = imgSrc ? new URL(imgSrc, SOURCE_BASE).href : null;
 
-    const imgSrc = $('img').first().attr('src') || '';
-    const photo = imgSrc
-      ? (imgSrc.startsWith('http') ? imgSrc : new URL(imgSrc, SOURCE_BASE).href)
-      : null;
+    // Пушкинская карта — точный класс иконки, не общий поиск по тексту
+    const pushkin = $el.find('img.push-icon').length > 0;
 
-    const pushkin = $('img[src*="push"]').length > 0;
-    const ageMatch = cardText.match(/\b(0|3|6|12|16|18)\+/);
-    const age = ageMatch ? ageMatch[0] : '0+';
-    const isSpectacle = /(?:^|\s)(спектакль|постановка|антреприза|моноспектакль|трагикомедия)(?:\s|$)/i.test(cardText);
+    // Возраст — из pre-intro (иногда там ТОЛЬКО возраст, напр. "12+") или из текста карточки
+    let age = '0+';
+    const ageInIntro = introText.match(/\b(0|3|6|12|16|18)\+/);
+    if (ageInIntro) {
+      age = ageInIntro[0];
+    } else {
+      const bodyText = $el.text();
+      const ageInBody = bodyText.match(/\b(0|3|6|12|16|18)\+/);
+      if (ageInBody) age = ageInBody[0];
+    }
+
+    // Концерт или спектакль — по ключевым словам в тексте карточки
+    const fullText = $el.text();
+    const isSpectacle = /(?:^|\s)(спектакль|постановка|антреприза|моноспектакль|трагикомедия)/i.test(fullText);
 
     events.push({
       id: 'vfauto_' + slug,
@@ -113,7 +124,7 @@ function parseEventsFromHtml(html) {
       photo,
       ticketUrl: `${SOURCE_BASE}/${slug}`,
     });
-  }
+  });
 
   return events;
 }
@@ -176,7 +187,7 @@ export default async function handler(req, res) {
       totalFound: Object.keys(bySlug).length,
       newCount: newSlugs.length,
       newSlugs,
-      titles: Object.values(byId).map(e => e.title + ' (' + e.dateISO + ')'),
+      titles: Object.values(byId).map(e => e.title + ' | ' + e.dateISO + ' | pushkin:' + e.pushkin + ' | spectacle:' + e.isSpectacle),
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
