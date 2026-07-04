@@ -15,7 +15,7 @@ const CITIES = [
   { path: 'krd', name: 'Краснодар' },
   { path: 'rst', name: 'Ростов-на-Дону' },
   { path: 'vrn', name: 'Воронеж' },
-  { path: 'vlg', name: 'Волгоград', venueFilter: 'КРОП АРЕНА' },
+  { path: 'vlg', name: 'Волгоград', venueFilter: 'КРОП АРЕНА', venueNameOverride: 'Кроп Арена', venueAddrOverride: 'Университетский просп., 107 (ТЦ «Акварель»), Волгоград' },
   { path: 'stl', name: 'Ставрополь' },
   { path: 'srt', name: 'Саратов' },
   { path: 'sch', name: 'Сочи' },
@@ -93,8 +93,8 @@ function parseEvents(html, city) {
     const photo = imgSrc ? new URL(imgSrc, BASE_URL).href : null;
 
     const commaIdx = venueFull.indexOf(',');
-    const venueName = commaIdx >= 0 ? venueFull.slice(0, commaIdx).trim() : venueFull;
-    const venueAddr = commaIdx >= 0 ? venueFull.slice(commaIdx + 1).trim() + ', ' + city.name : city.name;
+    const venueName = city.venueNameOverride || (commaIdx >= 0 ? venueFull.slice(0, commaIdx).trim() : venueFull);
+    const venueAddr = city.venueAddrOverride || (commaIdx >= 0 ? venueFull.slice(commaIdx + 1).trim() + ', ' + city.name : city.name);
 
     events.push({
       id: 'arenahall_' + city.path + '_' + slug,
