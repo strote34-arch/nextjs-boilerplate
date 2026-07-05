@@ -1296,6 +1296,12 @@ window.openEditConcertModal = function openEditConcertModal(concert) {
 }
 
 // ── Обработчик загрузки фото ─────────────────────────────────
+// ИСПРАВЛЕНО: раньше сохранялся сырой файл без сжатия (напрямую в JSON документ
+// на сервере через /api/store) — большие фото с телефона (несколько МБ, часто PNG)
+// либо превышали лимит размера тела запроса Vercel, либо просто раздували общий
+// документ site-data.json. Из-за этого некоторые загруженные фото отображались
+// как чёрный прямоугольник (испорченные/обрезанные данные). Теперь: сжимаем через
+// canvas до JPEG (макс. ширина 1000px, качество 0.82) — так же, как в admin-panel.html.
 window.handleEditPhoto = function handleEditPhoto(input) {
   var file = input.files && input.files[0];
   var preview = document.getElementById('ecm_photo_preview');
@@ -1303,11 +1309,23 @@ window.handleEditPhoto = function handleEditPhoto(input) {
   if (!file) return;
   var reader = new FileReader();
   reader.onload = function(e) {
-    if (preview) {
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-    }
-    if (urlInput) urlInput.value = e.target.result;
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 1000;
+      var scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      if (preview) {
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+      }
+      if (urlInput) urlInput.value = dataUrl;
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
