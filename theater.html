@@ -1694,7 +1694,10 @@ function renderTheaters(city) {
     else document.body.appendChild(grid);
   }
   grid.innerHTML = list.map(function(th){
-    var evs=(th.events||[]).map(function(ev, evIdx){
+    var _sortedEvents = (th.events||[]).slice().sort(function(a, b){
+      return (a.dateISO || '9999') < (b.dateISO || '9999') ? -1 : (a.dateISO || '9999') > (b.dateISO || '9999') ? 1 : 0;
+    });
+    var evs=_sortedEvents.map(function(ev, evIdx){
       var evRef = ev.id || _showRef(th.id, ev.title, ev.dateISO);
       return '<div onclick="event.stopPropagation();openShowModal(\''+evRef+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;cursor:pointer;" onmouseover="this.style.background=\'#faf8f5\'" onmouseout="this.style.background=\'\'">'
         +'<span>'+ev.title+(ev.pushkin?' <span style="background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-left:6px;white-space:nowrap;">🏛 Пушк. карта</span>':'')+'</span><div><span style="color:#c8102e;font-weight:700;">'+ev.date+'</span>'
@@ -1883,9 +1886,7 @@ document.addEventListener('DOMContentLoaded', function(){
       });
       if (dup) return;
       ckz.events = ckz.events || [];
-      var _yr = (fe.dateISO || '').slice(0, 4);
-      var _shortDate = fe.dateShort ? (fe.dateShort + (_yr ? ' ' + _yr : '')) : fe.date;
-      ckz.events.push({ title: fe.title, date: _shortDate, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO, photo: fe.photo, ticketUrl: fe.ticketUrl });
+      ckz.events.push({ title: fe.title, date: fe.date, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO, photo: fe.photo, ticketUrl: fe.ticketUrl });
       changed = true;
     });
     } // if (ckz)
