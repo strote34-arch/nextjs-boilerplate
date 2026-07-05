@@ -5,9 +5,31 @@
 // POST /api/upload-photo  { dataUrl: "data:image/jpeg;base64,..." }
 // -> { ok: true, url: "https://....public.blob.vercel-storage.com/photos/..." }
 
-import { put } from '@vercel/blob';
+import { put, get } from '@vercel/blob';
 
 const MAX_BYTES = 3 * 1024 * 1024; // 3MB исходный файл (~4MB в base64) — с запасом под лимит тела запроса Vercel
+
+// ── Объединено с бывшим /api/photo.js (освобождение слота под лимитом
+// Vercel Hobby — 12 serverless-функций на деплой) ──
+// GET /api/upload-photo?p=<pathname> — отдача файла из приватного Blob Store
+async function handleGetPhoto(req, res) {
+  const p = req.query && req.query.p;
+  if (!p) return res.status(400).json({ error: 'p (pathname) required' });
+  try {
+    const result = await get(p, { access: 'private' });
+    if (!result || result.statusCode !== 200 || !result.stream) {
+      return res.status(404).json({ error: 'not_found' });
+    }
+    res.setHeader('Content-Type', result.blob.contentType || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    const chunks = [];
+    for await (const chunk of result.stream) chunks.push(chunk);
+    res.status(200).end(Buffer.concat(chunks));
+  } catch (e) {
+    console.error('[api/upload-photo:get] error:', e && e.message || e);
+    return res.status(404).json({ error: 'not_found' });
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,6 +37,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method === 'GET') return handleGetPhoto(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   if (!process.env.BLOB_STORE_ID && !process.env.BLOB_READ_WRITE_TOKEN) {
@@ -53,7 +76,7 @@ export default async function handler(req, res) {
 
     // Хранилище приватное — отдаём ссылку на наш публичный прокси, а не сырой blob.url
     // (сырую ссылку браузер посетителя открыть не сможет, туда нужна авторизация).
-    const proxyUrl = `/api/photo?p=${encodeURIComponent(blob.pathname)}`;
+    const proxyUrl = `/api/upload-photo?p=${encodeURIComponent(blob.pathname)}`;
 
     return res.json({ ok: true, url: proxyUrl });
   } catch (e) {
