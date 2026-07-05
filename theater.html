@@ -1266,6 +1266,7 @@ document.addEventListener('click', function(e) {
         <div class="modal-title" id="mtitle"></div>
         <div class="modal-meta" id="mmeta"></div>
       </div>
+      <button class="modal-close" id="mEditBtn" onclick="openEditShowModal()" title="Редактировать">✏️</button>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="mtabs">
@@ -1403,6 +1404,66 @@ document.addEventListener('click', function(e) {
     
     <div class="mpane" id="mpane-trailer"></div>
 </div>
+  </div>
+</div>
+
+<!-- ═══ EDIT SHOW MODAL ═══ -->
+<div class="modal-overlay" id="editShowModal" style="display:none;z-index:10000;" onclick="if(event.target===this)closeEditShowModal()">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Редактировать спектакль</div>
+      <button class="modal-close" onclick="closeEditShowModal()">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Название</label>
+        <input id="esm_title" type="text" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Дата (текст)</label>
+          <input id="esm_date" type="text" placeholder="21 сен 2026" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Дата (ISO, для сортировки)</label>
+          <input id="esm_dateISO" type="date" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Время</label>
+          <input id="esm_time" type="text" placeholder="19:00" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Цена</label>
+          <input id="esm_price" type="text" placeholder="от 400 ₽" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Возраст</label>
+          <input id="esm_age" type="text" placeholder="12+" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Жанр</label>
+        <input id="esm_genre" type="text" placeholder="Драма" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Ссылка на билеты</label>
+        <input id="esm_ticketUrl" type="url" placeholder="https://..." style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Афиша (фото)</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <img id="esm_photo_preview" src="" style="width:60px;height:84px;object-fit:cover;border-radius:4px;background:#f0eeea;display:none;">
+          <input type="file" accept="image/*" onchange="handleEditShowPhoto(this)" style="font-size:12px;">
+        </div>
+        <input id="esm_photo" type="hidden">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:space-between;">
+        <button onclick="deleteShowEntry()" style="background:#dc3545;color:#fff;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;border:none;border-radius:4px;padding:10px 16px;cursor:pointer;">🗑 Удалить</button>
+        <button onclick="saveShowEdit()" class="btn-red" style="padding:10px 24px;">💾 Сохранить</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1615,6 +1676,11 @@ var THEATERS_DB = {
   ]
 };
 
+function _showRef(venueId, title, dateISO) {
+  var slug = (title||'').toLowerCase().replace(/[«»"'`]/g,'').replace(/[^a-zа-я0-9]+/gi,'-').replace(/^-+|-+$/g,'');
+  return venueId + '__' + slug + '__' + (dateISO || '');
+}
+
 function renderTheaters(city) {
   var list = THEATERS_DB[city] || THEATERS_DB['Волгоград'];
   var grid = document.getElementById('theatersGrid') || document.querySelector('.theaters-grid');
@@ -1628,7 +1694,7 @@ function renderTheaters(city) {
   }
   grid.innerHTML = list.map(function(th){
     var evs=(th.events||[]).map(function(ev, evIdx){
-      var evRef = th.id + '_' + evIdx;
+      var evRef = ev.id || _showRef(th.id, ev.title, ev.dateISO);
       return '<div onclick="event.stopPropagation();openShowModal(\''+evRef+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;cursor:pointer;" onmouseover="this.style.background=\'#faf8f5\'" onmouseout="this.style.background=\'\'">'
         +'<span>'+ev.title+(ev.pushkin?' <span style="background:linear-gradient(90deg,#c8102e,#8b0000);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-left:6px;white-space:nowrap;">🏛 Пушк. карта</span>':'')+'</span><div><span style="color:#c8102e;font-weight:700;">'+ev.date+'</span>'
         +(ev.time?' '+ev.time:'')+'</div></div>';
@@ -1641,7 +1707,10 @@ function renderTheaters(city) {
       +'<div style="padding:16px;">'
       +'<p style="font-size:14px;color:#555;line-height:1.5;margin:0 0 10px;">'+th.desc+'</p>'
       +(evs?'<div>'+evs+'</div>':'')
-      +'<a href="'+th.url+'" style="display:inline-block;margin-top:12px;padding:7px 16px;background:#c8102e;color:#fff;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;">Афиша →</a>'
+      +'<div style="display:flex;gap:8px;margin-top:12px;">'
+      +'<a href="'+th.url+'" style="flex:1;text-align:center;padding:7px 16px;background:#c8102e;color:#fff;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;">Афиша →</a>'
+      +'<button onclick="event.stopPropagation();openEditShowModal(\''+th.id+'\')" style="padding:7px 14px;background:#f0eeea;color:#555;border:none;border-radius:6px;cursor:pointer;font-size:13px;" title="Добавить спектакль">+ Спектакль</button>'
+      +'</div>'
       +'</div></div>';
   }).join('');
 }
@@ -1763,11 +1832,44 @@ document.addEventListener('DOMContentLoaded', function(){
   // ── Спектакли, найденные автопарсером филармонии (/api/sync-filarmonia, раз в неделю) ──
   fetch('/api/store').then(function(r){ return r.json(); }).then(function(r){
     if (!r || !r.ok || !r.data) return;
+    var changed = false;
+
+    // ── Правки, внесённые через кнопку ✏️ на самом сайте ──
+    var edits = r.data.theaterEdits || {};
+    var delShows = r.data.deletedTheaterEvents || {};
+    var additions = r.data.theaterAdditions || {};
+    Object.keys(THEATERS_DB).forEach(function(c) {
+      (THEATERS_DB[c]||[]).forEach(function(th) {
+        th.events = (th.events||[]).filter(function(ev) {
+          var ref = ev.id || _showRef(th.id, ev.title, ev.dateISO);
+          if (delShows[ref]) { changed = true; return false; }
+          if (edits[ref]) { Object.assign(ev, edits[ref]); changed = true; }
+          return true;
+        });
+      });
+    });
+    Object.keys(additions).forEach(function(addId) {
+      var add = additions[addId];
+      if (delShows[addId]) return;
+      var venueObj = null;
+      Object.keys(THEATERS_DB).forEach(function(c) {
+        (THEATERS_DB[c]||[]).forEach(function(th) { if (th.id === add.venueId) venueObj = th; });
+      });
+      if (!venueObj) return;
+      var dup = (venueObj.events||[]).some(function(e){ return (e.id||'') === addId; });
+      if (dup) return;
+      venueObj.events = venueObj.events || [];
+      var addCopy = Object.assign({}, add);
+      addCopy.id = addId;
+      delete addCopy.venueId;
+      venueObj.events.push(addCopy);
+      changed = true;
+    });
+
     var vfAuto = r.data.filarmoniaEvents || {};
     var deleted = r.data.deletedEvents || {};
     var ckz = (THEATERS_DB['Волгоград'] || []).find(function(v){ return v.id === 'ckz'; });
-    if (!ckz) return;
-    var changed = false;
+    if (ckz) {
     Object.keys(vfAuto).forEach(function(vfId) {
       var fe = vfAuto[vfId];
       if (!fe.isSpectacle) return; // концерты сюда не добавляем
@@ -1778,6 +1880,7 @@ document.addEventListener('DOMContentLoaded', function(){
       ckz.events.push({ title: fe.title, date: fe.date, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO, photo: fe.photo, ticketUrl: fe.ticketUrl });
       changed = true;
     });
+    } // if (ckz)
     if (changed && typeof renderTheaters === 'function') renderTheaters(city);
   }).catch(function(){ /* сервер недоступен — остаёмся на локальной копии */ });
 });
@@ -1833,6 +1936,7 @@ function switchMTab(tabName) {
 }
 
 function openShowModal(showId) {
+  window._lastOpenedShowId = showId;
   // Найти спектакль в THEATERS_DB
   var show = null;
   var theaterObj = null;
@@ -1840,7 +1944,8 @@ function openShowModal(showId) {
     Object.keys(THEATERS_DB).forEach(function(city) {
       (THEATERS_DB[city]||[]).forEach(function(th) {
         (th.events||[]).forEach(function(ev, i) {
-          if ((th.id + '_' + i) === showId || ev.id === showId) {
+          var ref = ev.id || _showRef(th.id, ev.title, ev.dateISO);
+          if (ref === showId) {
             show = ev; theaterObj = th;
           }
         });
@@ -1956,6 +2061,177 @@ function openShowModal(showId) {
 function closeShowModal() {
   var modal = document.getElementById('showModal');
   if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
+// ══ Редактирование спектакля ══════════════════════════════
+var _currentEditShowId = null;
+var _currentNewVenueId = null;
+
+window.openEditShowModal = function openEditShowModal(newVenueId) {
+  _currentNewVenueId = null;
+  if (newVenueId) {
+    // Режим создания нового спектакля для площадки newVenueId
+    _currentNewVenueId = newVenueId;
+    _currentEditShowId = null;
+    document.getElementById('esm_title').value = '';
+    document.getElementById('esm_date').value = '';
+    document.getElementById('esm_dateISO').value = '';
+    document.getElementById('esm_time').value = '19:00';
+    document.getElementById('esm_price').value = '';
+    document.getElementById('esm_age').value = '';
+    document.getElementById('esm_genre').value = '';
+    document.getElementById('esm_ticketUrl').value = '';
+    document.getElementById('esm_photo').value = '';
+    document.getElementById('esm_photo_preview').style.display = 'none';
+    document.querySelector('#editShowModal .modal-title').textContent = '➕ Новый спектакль';
+    document.querySelector('#editShowModal [onclick="deleteShowEntry()"]').style.display = 'none';
+    document.getElementById('editShowModal').style.display = 'flex';
+    return;
+  }
+
+  if (!window._lastOpenedShowId) return;
+  _currentEditShowId = window._lastOpenedShowId;
+  var found = _findShowById(_currentEditShowId);
+  if (!found) return;
+  var show = found.show;
+
+  document.querySelector('#editShowModal .modal-title').textContent = '✏️ Редактировать спектакль';
+  document.querySelector('#editShowModal [onclick="deleteShowEntry()"]').style.display = '';
+  document.getElementById('esm_title').value = show.title || '';
+  document.getElementById('esm_date').value = show.date || '';
+  document.getElementById('esm_dateISO').value = show.dateISO || '';
+  document.getElementById('esm_time').value = show.time || '';
+  document.getElementById('esm_price').value = show.price || '';
+  document.getElementById('esm_age').value = show.age || '';
+  document.getElementById('esm_genre').value = show.genre || '';
+  document.getElementById('esm_ticketUrl').value = show.ticketUrl || '';
+  document.getElementById('esm_photo').value = show.photo || '';
+  var prev = document.getElementById('esm_photo_preview');
+  if (show.photo) { prev.src = show.photo; prev.style.display = 'inline-block'; }
+  else { prev.style.display = 'none'; }
+
+  document.getElementById('editShowModal').style.display = 'flex';
+}
+
+window.closeEditShowModal = function closeEditShowModal() {
+  document.getElementById('editShowModal').style.display = 'none';
+}
+
+// Сжатие фото в JPEG перед сохранением (как в concerts.html / admin-panel.html)
+window.handleEditShowPhoto = function handleEditShowPhoto(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 800;
+      var scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('esm_photo').value = dataUrl;
+      var prev = document.getElementById('esm_photo_preview');
+      prev.src = dataUrl;
+      prev.style.display = 'inline-block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function _findShowById(showId) {
+  var result = null;
+  Object.keys(THEATERS_DB).forEach(function(city) {
+    (THEATERS_DB[city]||[]).forEach(function(th) {
+      (th.events||[]).forEach(function(ev, i) {
+        var ref = ev.id || _showRef(th.id, ev.title, ev.dateISO);
+        if (ref === showId) {
+          result = { show: ev, theaterObj: th, city: city, index: i };
+        }
+      });
+    });
+  });
+  return result;
+}
+
+window.saveShowEdit = function saveShowEdit() {
+  var patch = {
+    title: document.getElementById('esm_title').value.trim(),
+    date: document.getElementById('esm_date').value.trim(),
+    dateISO: document.getElementById('esm_dateISO').value.trim(),
+    time: document.getElementById('esm_time').value.trim(),
+    price: document.getElementById('esm_price').value.trim(),
+    age: document.getElementById('esm_age').value.trim(),
+    genre: document.getElementById('esm_genre').value.trim(),
+    ticketUrl: document.getElementById('esm_ticketUrl').value.trim(),
+    photo: document.getElementById('esm_photo').value.trim() || null,
+  };
+
+  if (_currentNewVenueId) {
+    // ── Создание нового спектакля ──
+    if (!patch.title) { alert('Укажите название спектакля'); return; }
+    var venueObj = null;
+    Object.keys(THEATERS_DB).forEach(function(c) {
+      (THEATERS_DB[c]||[]).forEach(function(th) { if (th.id === _currentNewVenueId) venueObj = th; });
+    });
+    if (!venueObj) return;
+    var newId = _showRef(_currentNewVenueId, patch.title, patch.dateISO) + '_' + Date.now();
+    patch.id = newId;
+    venueObj.events = venueObj.events || [];
+    venueObj.events.push(patch);
+
+    fetch('/api/store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'theaterAdditions', patch: { [newId]: Object.assign({venueId: _currentNewVenueId}, patch) } })
+    }).catch(function(){});
+
+    closeEditShowModal();
+    var city = window.currentCity || localStorage.getItem('afishi_city') || 'Волгоград';
+    renderTheaters(city);
+    return;
+  }
+
+  if (!_currentEditShowId) return;
+
+  // Применить сразу в памяти
+  var found = _findShowById(_currentEditShowId);
+  if (found) Object.assign(found.show, patch);
+
+  // Сохранить на сервере (правки живут отдельно от базовых данных — по образцу eventEdits в concerts.html)
+  fetch('/api/store', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'theaterEdits', patch: { [_currentEditShowId]: patch } })
+  }).catch(function(){});
+
+  closeEditShowModal();
+  var city = window.currentCity || localStorage.getItem('afishi_city') || 'Волгоград';
+  renderTheaters(city);
+  openShowModal(_currentEditShowId); // обновить открытую модалку с новыми данными
+}
+
+window.deleteShowEntry = function deleteShowEntry() {
+  if (!_currentEditShowId) return;
+  if (!confirm('Удалить этот спектакль из афиши?')) return;
+
+  fetch('/api/store', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'deletedTheaterEvents', patch: { [_currentEditShowId]: true } })
+  }).catch(function(){});
+
+  var found = _findShowById(_currentEditShowId);
+  if (found) found.theaterObj.events.splice(found.index, 1);
+
+  closeEditShowModal();
+  closeShowModal();
+  var city = window.currentCity || localStorage.getItem('afishi_city') || 'Волгоград';
+  renderTheaters(city);
 }
 
 // Перехватить закрытие show-modal через существующую функцию
