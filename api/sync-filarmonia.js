@@ -9,7 +9,7 @@
 import * as cheerio from 'cheerio';
 
 const SOURCE_BASE = 'https://volgogradfilarmonia.ru/afishi/concerts';
-const PAGES = [0, 20, 40];
+const PAGES = [0, 20, 40, 60, 80];
 
 const MONTHS = {
   'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
