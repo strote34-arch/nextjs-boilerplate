@@ -3307,57 +3307,8 @@ document.addEventListener('click', function(e) {
 });
 
 // ── ТЕАТР ─────────────────────────────────────────────────────────────────────
-const THEATER_DB = [
-  { title:'Мастер и Маргарита',      venue:'МХТ им. Чехова',           icon:'🎭', color:'#001a3a', date:'1 июля, 19:00', price:1200, rating:9.2, city:'Москва',          genre:'Драма' },
-  { title:'Лебединое озеро',         venue:'Большой театр',             icon:'🩰', color:'#0a0020', date:'1 июля, 19:00', price:2500, rating:9.8, city:'Москва',          genre:'Балет' },
-  { title:'Смешные деньги',          venue:'Театр им. Ермоловой',       icon:'🎪', color:'#1a0500', date:'1 июля, 18:30', price:600,  rating:8.3, city:'Москва',          genre:'Комедия' },
-  { title:'Чайка',                   venue:'МДТ — Театр Европы',        icon:'🎭', color:'#0a001a', date:'2 июля, 18:00', price:1100, rating:9.1, city:'Санкт-Петербург', genre:'Драма' },
-  { title:'Жизель',                  venue:'Мариинский театр',           icon:'🩰', color:'#1a0a00', date:'1 июля, 19:00', price:3000, rating:9.7, city:'Санкт-Петербург', genre:'Балет' },
-  { title:'Ревизор',                 venue:'Театр «Балтийский дом»',    icon:'🎭', color:'#001a1a', date:'3 июля, 19:00', price:800,  rating:8.7, city:'Санкт-Петербург', genre:'Комедия' },
-  { title:'Горе от ума',             venue:'Екатеринбургский ТЮЗ',      icon:'🎭', color:'#1a0a0a', date:'1 июля, 18:00', price:700,  rating:8.5, city:'Екатеринбург',    genre:'Классика' },
-  { title:'Золушка',                 venue:'Екатеринбургский театр оперы', icon:'🩰', color:'#0a1a0a', date:'2 июля, 18:30', price:1500, rating:9.0, city:'Екатеринбург', genre:'Балет' },
-  { title:'Свои люди — сочтёмся',   venue:'Казанский академический ТЮЗ', icon:'🎭', color:'#1a1000', date:'1 июля, 18:00', price:600, rating:8.4, city:'Казань',          genre:'Комедия' },
-  { title:'Спящая красавица',        venue:'Татарский театр оперы',     icon:'🩰', color:'#001a0a', date:'3 июля, 19:00', price:1200, rating:9.1, city:'Казань',          genre:'Балет' },
-  { title:'Три сестры',              venue:'Волгоградский молодёжный театр', icon:'🎭', color:'#1a001a', date:'1 июля, 18:30', price:500, rating:8.2, city:'Волгоград',    genre:'Драма' },
-  { title:'Щелкунчик',              venue:'Волгоградский театр оперы',  icon:'🩰', color:'#0a0a1a', date:'2 июля, 18:00', price:900,  rating:9.0, city:'Волгоград',       genre:'Балет' },
-  { title:'Дядя Ваня',              venue:'Краснодарский академический театр', icon:'🎭', color:'#1a0a00', date:'1 июля, 18:00', price:600, rating:8.6, city:'Краснодар', genre:'Драма' },
-  { title:'Ромео и Джульетта',      venue:'Краснодарский театр балета', icon:'🩰', color:'#1a001a', date:'3 июля, 19:00', price:1400, rating:9.3, city:'Краснодар',       genre:'Балет' },
-  { title:'Вишнёвый сад',           venue:'НГАТОБ им. Пушкина',         icon:'🎭', color:'#001a0a', date:'2 июля, 18:30', price:700,  rating:8.7, city:'Нижний Новгород', genre:'Драма' },
-  { title:'Дон Кихот',              venue:'Нижегородский театр балета',  icon:'🩰', color:'#0a001a', date:'4 июля, 19:00', price:1000, rating:8.9, city:'Нижний Новгород', genre:'Балет' },
-  { title:'Идиот',                  venue:'Ростовский академический театр', icon:'🎭', color:'#1a0a0a', date:'1 июля, 18:00', price:700, rating:8.5, city:'Ростов-на-Дону', genre:'Драма' },
-  { title:'Лебединое озеро',        venue:'Ростовский музыкальный театр', icon:'🩰', color:'#001a2a', date:'2 июля, 19:00', price:1200, rating:9.1, city:'Ростов-на-Дону', genre:'Балет' },
-  { title:'Ревизор',                venue:'Башкирский академический театр', icon:'🎭', color:'#1a1a00', date:'1 июля, 18:30', price:500, rating:8.3, city:'Уфа',            genre:'Комедия' },
-  { title:'Спартак',                venue:'Башкирский государственный театр оперы', icon:'🩰', color:'#0a0a0a', date:'3 июля, 19:00', price:1100, rating:9.2, city:'Уфа', genre:'Балет' },
-  { title:'Борис Годунов',          venue:'Пермский театр оперы',        icon:'🎭', color:'#1a0020', date:'2 июля, 18:00', price:900,  rating:9.0, city:'Пермь',           genre:'Опера' },
-  { title:'Орнитология',            venue:'Театр-театр (Пермь)',          icon:'🎭', color:'#0a1a00', date:'4 июля, 19:00', price:700,  rating:8.6, city:'Пермь',           genre:'Драма' },
-  { title:'Сибирская чаша',         venue:'Красноярский театр оперы',    icon:'🎭', color:'#001a1a', date:'1 июля, 18:00', price:800,  rating:8.8, city:'Красноярск',      genre:'Опера' },
-  { title:'Спектакль «Осенний роман»',     venue:'ЦКЗ Волгоградская Филармония', icon:'🎭', color:'#1a000a', date:'8 дек 2026, 19:00', price:2000, rating:8.5, city:'Волгоград', genre:'Драма', dateISO:'2026-12-08' },
-  { title:'Спектакль «Счастье по приговору»', venue:'Дом Офицеров',              icon:'🎭', color:'#0a1a1a', date:'27 ноя 2026, 19:00', price:1500, rating:8.2, city:'Волгоград', genre:'Комедия', dateISO:'2026-11-27' },
-  { title:'Спектакль «Операция Авокадо»',  venue:'Дом Офицеров',                icon:'🎭', color:'#001a0a', date:'6 ноя 2026, 19:00',  price:1500, rating:8.0, city:'Волгоград', genre:'Комедия', dateISO:'2026-11-06' },
-  { title:'Спектакль «Ирония любви»',      venue:'Дом Офицеров',                icon:'🎭', color:'#1a000a', date:'8 окт 2026, 19:00',  price:1500, rating:8.0, city:'Волгоград', genre:'Мелодрама', dateISO:'2026-10-08' },
-  { title:'Спектакль «Мой Онегин»',        venue:'Дом Офицеров',                icon:'🎭', color:'#0a001a', date:'2026, 19:00',          price:1500, rating:8.3, city:'Волгоград', genre:'Классика', dateISO:'2026-12-01' },
-];
 
 // ── ВЫСТАВКИ ─────────────────────────────────────────────────────────────────
-const EXHIBITS_DB = [
-  { title:'Врубель. Ретроспектива',            venue:'Третьяковка',               icon:'🖼️', color:'#1a0a1a', date:'до 1 авг', price:600,  rating:9.2, city:'Москва',          cat:'Живопись' },
-  { title:'Дали. Скандальный гений',           venue:'МВЦ «Рабочий и Колхозница»', icon:'🎨', color:'#1a0a00', date:'до 15 авг', price:1200, rating:9.0, city:'Москва',         cat:'Сюрреализм' },
-  { title:'teamLab: Иллюзии без границ',       venue:'Манеж',                      icon:'✨', color:'#00001a', date:'до 20 авг', price:1500, rating:9.5, city:'Москва',         cat:'Digital-art' },
-  { title:'Айвазовский и Куинджи',             venue:'Третьяковка',                icon:'🌊', color:'#001a2a', date:'до 20 авг', price:400,  rating:9.1, city:'Москва',         cat:'Живопись' },
-  { title:'Рембрандт. Свет и тень',            venue:'Государственный Эрмитаж',    icon:'🏛️', color:'#1a0a00', date:'до 1 сен', price:0,    rating:9.4, city:'Санкт-Петербург', cat:'Голландия XVII', free:true },
-  { title:'Женщины в советском искусстве',     venue:'Русский музей',              icon:'🌸', color:'#1a001a', date:'до 1 сен', price:550,  rating:8.9, city:'Санкт-Петербург', cat:'Живопись' },
-  { title:'Сибирь в русской живописи',         venue:'Новосибирский художественный музей', icon:'🌲', color:'#001a0a', date:'до 15 мая', price:250, rating:8.7, city:'Новосибирск', cat:'Живопись' },
-  { title:'Сурикова. Детство и Сибирь',        venue:'Красноярский художественный музей', icon:'❄️', color:'#001a1a', date:'до 20 июня', price:250, rating:8.8, city:'Красноярск', cat:'Живопись' },
-  { title:'Волгоград: до и после. 80 лет победы', venue:'Волгоградский музей ИЗО', icon:'⭐', color:'#1a0000', date:'до 31 авг', price:0,   rating:9.0, city:'Волгоград',      cat:'История', free:true },
-  { title:'Казанский Кремль: тайны и легенды', venue:'Казанский Кремль',           icon:'🏰', color:'#2a1000', date:'постоянная', price:0,  rating:8.8, city:'Казань',         cat:'История', free:true },
-  { title:'Татарские узоры. 1000 лет',         venue:'ГМИИ РТ',                    icon:'🌺', color:'#1a1000', date:'до 1 апр', price:200,  rating:8.5, city:'Казань',         cat:'Этнография' },
-  { title:'Нестеров. Русский характер',        venue:'Башкирский госхудмузей',     icon:'🕌', color:'#001a10', date:'до 1 июля', price:200, rating:8.6, city:'Уфа',            cat:'Живопись' },
-  { title:'Казачество: традиции',              venue:'РОМИИ',                      icon:'🐴', color:'#1a0800', date:'до 1 июня', price:250, rating:8.4, city:'Ростов-на-Дону', cat:'Этнография' },
-  { title:'Кино как искусство',                venue:'КОХМ',                       icon:'🎞️', color:'#0a0000', date:'до 30 апр', price:300, rating:8.7, city:'Краснодар',      cat:'Кино и медиа' },
-  { title:'Дизайн: от Баухауса до сегодня',   venue:'НГХМ',                       icon:'🔲', color:'#0a0a0a', date:'до 20 мая', price:350, rating:8.8, city:'Нижний Новгород', cat:'Дизайн' },
-  { title:'Воронеж в гравюрах XVII–XIX вв.',  venue:'ВОХМ',                       icon:'🗺️', color:'#1a0a00', date:'до 1 мая', price:0,   rating:8.3, city:'Воронеж',        cat:'История', free:true },
-  { title:'Пермь-36. История политзаключённых', venue:'ПГХГ',                     icon:'🔒', color:'#1a001a', date:'до 31 мая', price:300, rating:8.9, city:'Пермь',          cat:'История' },
-];
 
 // ── КИНОТЕАТРЫ ────────────────────────────────────────────────────────────────
 const CINEMAS_DB_SHARED = {
@@ -4059,20 +4010,22 @@ function renderPage(city) {
     cinemaGrid.innerHTML = films.map(renderFilmCard).join('');
   }
 
-  // ТЕАТР
+  // ТЕАТР — ссылка на реальную страницу (раньше тут были демо-данные с фиктивными
+  // датами без года, из-за чего в разделе показывались "прошедшие" события)
   var theaterList = document.getElementById('theaterList');
   if (theaterList) {
-    var shows = (THEATER_DB||[]).filter(function(t){ return t.city === city; }).slice(0,5);
-    if (!shows.length) shows = (THEATER_DB||[]).slice(0,5);
-    theaterList.innerHTML = '<div class="events-list">'+shows.map(renderTheaterItem).join('')+'</div>';
+    theaterList.innerHTML = '<a href="theater.html" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#f9f7f4;border:1px solid #e8e4de;border-radius:8px;padding:24px;text-decoration:none;color:var(--dark,#1a1a1a);font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;">'
+      + '🎭 Смотреть актуальные спектакли и театры →'
+      + '</a>';
   }
 
-  // ВЫСТАВКИ
+  // ВЫСТАВКИ — ссылка на реальную страницу (та же причина, что и с театром —
+  // тут были демо-данные с датами вида "до 15 мая" без года, уже прошедшими)
   var exhibitsGrid = document.getElementById('exhibitsGrid');
   if (exhibitsGrid) {
-    var exs = (EXHIBITS_DB||[]).filter(function(e){ return e.city === city; }).slice(0,3);
-    if (!exs.length) exs = (EXHIBITS_DB||[]).slice(0,3);
-    exhibitsGrid.innerHTML = exs.map(renderExhibitCard).join('');
+    exhibitsGrid.innerHTML = '<a href="exhibits.html" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#f9f7f4;border:1px solid #e8e4de;border-radius:8px;padding:24px;text-decoration:none;color:var(--dark,#1a1a1a);font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;grid-column:1/-1;">'
+      + '🖼️ Смотреть актуальные выставки →'
+      + '</a>';
   }
 
   // ДЕТЯМ

@@ -1583,11 +1583,11 @@ var THEATERS_DB = {
      desc:'Центральный концертный зал на 1040 мест. Симфоническая и камерная музыка, органные вечера, антрепризные спектакли гастролирующих театров России.',
      pushkin:true,
      events:[
-      {title:'Спектакль «Хулиган. Исповедь»',date:'21 сен',time:'19:00',price:'от 400 ₽',age:'12+',dateISO:'2026-09-21',genre:'Музыкально-поэтический'},
-      {title:'Спектакль «Мой Онегин»',date:'22 сен',time:'19:00',price:'от 400 ₽',age:'12+',dateISO:'2026-09-22',genre:'Драма'},
-      {title:'Спектакль «Мужчина с доставкой на дом»',date:'23 сен',time:'19:00',price:'от 400 ₽',age:'16+',dateISO:'2026-09-23',genre:'Комедия'},
-      {title:'Спектакль «Розыгрыш»',date:'24 сен',time:'19:00',price:'от 400 ₽',age:'16+',dateISO:'2026-09-24',genre:'Комедия'},
-      {title:'Спектакль «Конёк-горбунок и Иван-дурак»',date:'27 сен',time:'12:00',price:'от 400 ₽',age:'3+',dateISO:'2026-09-27',genre:'Детский музыкальный'},
+      {title:'Спектакль «Хулиган. Исповедь»',date:'21 сен',time:'19:00',price:'от 400 ₽',age:'12+',dateISO:'2026-09-21',genre:'Музыкально-поэтический',photo:'https://volgogradfilarmonia.ru/cache/introtumbs/images_stories_2026-2027_09_21-09-26_280x392.jpg',ticketUrl:'https://volgogradfilarmonia.ru/afishi/concerts/khuligan-ispoved-4'},
+      {title:'Спектакль «Мой Онегин»',date:'22 сен',time:'19:00',price:'от 400 ₽',age:'12+',dateISO:'2026-09-22',genre:'Драма',photo:'https://volgogradfilarmonia.ru/cache/introtumbs/images_stories_2026-2027_09_22-09-26_280x392.jpg',ticketUrl:'https://volgogradfilarmonia.ru/afishi/concerts/moj-onegin'},
+      {title:'Спектакль «Мужчина с доставкой на дом»',date:'23 сен',time:'19:00',price:'от 400 ₽',age:'16+',dateISO:'2026-09-23',genre:'Комедия',photo:'https://volgogradfilarmonia.ru/cache/introtumbs/images_stories_2025-2026_09_23-09-26_280x392.jpg',ticketUrl:'https://volgogradfilarmonia.ru/afishi/concerts/muzhchina-s-dostavkoj-na-dom-2'},
+      {title:'Спектакль «Розыгрыш»',date:'24 сен',time:'19:00',price:'от 400 ₽',age:'16+',dateISO:'2026-09-24',genre:'Комедия',photo:'https://volgogradfilarmonia.ru/cache/introtumbs/images_stories_2026-2027_09_24-09-26_280x392.jpg',ticketUrl:'https://volgogradfilarmonia.ru/afishi/concerts/rozygrysh'},
+      {title:'Спектакль «Конёк-горбунок и Иван-дурак»',date:'27 сен',time:'12:00',price:'от 400 ₽',age:'3+',dateISO:'2026-09-27',genre:'Детский музыкальный',photo:'https://volgogradfilarmonia.ru/cache/introtumbs/images_stories_2026-2027_09_27-09-26_280x392.jpg',ticketUrl:'https://volgogradfilarmonia.ru/afishi/concerts/konjok-gorbunok-i-ivan-durak-po-motivam-skazki-p-p-ershova-konjok-gorbunok'},
       {title:'Спектакль «Взрослые игры»',date:'5 авг',time:'19:00',price:'от 1500 ₽',age:'18+',dateISO:'2026-08-05'},
       {title:'Спектакль «Палата бизнес-класса»',date:'7 авг',time:'18:00',price:'от 1800 ₽',age:'16+',dateISO:'2026-08-07'},
       {title:'Спектакль «Мастер и Маргарита»',date:'15 дек',time:'19:00',price:'от 1000 ₽',age:'12+',genre:'Антреприза'},
@@ -1606,8 +1606,8 @@ var THEATERS_DB = {
    pushkin:false,ticketUrl:'http://vlg.kassamix.ru/',
    events:[
      {title:'Спектакль «Ирония любви»',dateISO:'2026-10-08',date:'8 окт',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль'},
-     {title:'Спектакль «Операция Авокадо»',dateISO:'2026-11-06',date:'6 ноя',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль'},
-     {title:'Спектакль «Счастье по приговору»',dateISO:'2026-11-27',date:'27 ноя',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль'}
+     {title:'Спектакль «Операция Авокадо»',dateISO:'2026-11-06',date:'6 ноя',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль',photo:'http://vgdo34.ru/vgdo34_ru/i/db/hijhk78incxohsv2_540x540.jpg'},
+     {title:'Спектакль «Счастье по приговору»',dateISO:'2026-11-27',date:'27 ноя',time:'19:00',price:'от 500 руб.',age:'12+',genre:'Спектакль',photo:'http://vgdo34.ru/vgdo34_ru/i/db/hhzvsnr2whst7f6p_549x768.jpg'}
    ]}
 ],
   'Москва': [
@@ -1833,7 +1833,8 @@ function switchMTab(tabName) {
     var revPane = document.getElementById('mpane-reviews');
     if (revPane && !revPane.dataset.filled) {
       revPane.dataset.filled = '1';
-      revPane.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">Отзывов пока нет. Будьте первым, кто поделится впечатлением!</div>';
+      revPane.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">Отзывов пока нет. Будьте первым, кто поделится впечатлением!</div>'
+        + '<div style="text-align:center;padding:0 20px 20px;font-size:12px;color:#aaa;">Оставлять отзывы могут только зарегистрированные пользователи сайта.</div>';
     }
   }
 }
@@ -1932,21 +1933,25 @@ function openShowModal(showId) {
     }).catch(function(){});
   }
 
-  // Билеты — добавить если нет
+  // Билеты — приоритет: ссылка конкретного события → ссылка площадки →
+  // осмысленный поиск (вместо бесполезной общей заглушки qtickets.ru)
+  var ticketHref = show.ticketUrl || (theaterObj && theaterObj.ticketUrl)
+    || ('https://yandex.ru/search/?text=' + encodeURIComponent('купить билет ' + show.title + (theaterName ? ' ' + theaterName : '')));
+
   var ticketEl = document.getElementById('mtickets');
   if (!ticketEl) {
     var tickWrap = modal.querySelector('.modal-actions') || modal.querySelector('.ck-section');
     if (tickWrap) {
       var btn = document.createElement('a');
       btn.id = 'mtickets';
-      btn.href = (theaterObj && theaterObj.ticketUrl) || 'https://qtickets.ru';
+      btn.href = ticketHref;
       btn.target = '_blank';
       btn.style.cssText = 'display:inline-block;background:#c8102e;color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;padding:12px 24px;border-radius:4px;text-decoration:none;margin-top:12px;';
       btn.textContent = '🎟️ Купить билет';
       tickWrap.appendChild(btn);
     }
   } else {
-    ticketEl.href = (theaterObj && theaterObj.ticketUrl) || 'https://qtickets.ru';
+    ticketEl.href = ticketHref;
     ticketEl.style.display = '';
   }
 
