@@ -3777,6 +3777,23 @@ document.addEventListener('DOMContentLoaded', function() {
         changed3 = true;
       });
 
+      var rvbAuto = r.data.rvbarEvents || {};
+      Object.keys(rvbAuto).forEach(function(rvbId) {
+        var rb = rvbAuto[rvbId];
+        if (delIds.indexOf(rvbId) >= 0) return;
+        var dup = CONCERTS_DB.some(function(x){ return normTitle(x.title) === normTitle(rb.title) && x.dateISO === rb.dateISO; });
+        if (dup) return;
+        CONCERTS_DB.push({
+          id: rvbId, title: rb.title, artist: rb.title, genre: 'Вечеринка',
+          icon: '🎤', color: '#3a1a2a', date: rb.date, dateShort: rb.dateShort, dateISO: rb.dateISO,
+          dayLabel: '', age: '18+', duration: '2 ч', rating: 0, votes: 0,
+          price: 0, priceMax: 0, hot: false, newShow: true, city: 'Волгоград',
+          desc: '', photo: rb.photo, ticketUrl: rb.ticketUrl,
+          venues: [{ name: rb.venue || 'Руки Вверх Бар', addr: rb.venueAddr || 'Волгоград', cap: '', times: [rb.time || '20:00'], city: 'Волгоград' }],
+        });
+        changed3 = true;
+      });
+
       if (changed3 && typeof renderPage === 'function') renderPage(city);
     })
     .catch(function(){ /* сервер недоступен — остаёмся на локальной копии */ });

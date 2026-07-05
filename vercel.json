@@ -39,6 +39,10 @@
       "schedule": "0 7 * * 4"
     },
     {
+      "path": "/api/sync-rvbar",
+      "schedule": "0 7 * * 5"
+    },
+    {
       "path": "/api/trailer-sync-events",
       "schedule": "0 11 * * 6"
     },

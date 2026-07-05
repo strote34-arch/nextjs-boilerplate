@@ -54,7 +54,9 @@ function parseEventsFromHtml(html) {
 
     // Площадка — строго из <p class="pre-mesto">, не из всего текста карточки
     const venue = $el.find('p.pre-mesto').first().text().trim();
-    if (venue !== MAIN_HALL) return; // выездная площадка — не наш город, пропускаем
+    if (!venue.startsWith(MAIN_HALL)) return; // выездная площадка — не наш город, пропускаем
+    // (используем startsWith, а не точное совпадение — на сайте встречаются варианты
+    // вида "Концертный зал Волгоградской филармонии, фойе" для отдельных залов/зон)
 
     // Дата и время — из <p class="pre-date">DD месяц ДеньНедели  HH:MM</p>
     const dateText = $el.find('p.pre-date').first().text();
