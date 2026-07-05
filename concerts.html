@@ -2313,14 +2313,6 @@ const CONCERTS = [
     desc:'Чайф в Волгограде.',
     venues:[{name:'Амфитеатр на набережной',addr:'Центральная набережная, Волгоград',cap:'',times:['19:00'],city:'Волгоград'}],
     photo:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
-  {id:'expo_001', title:'Кипелов',
-    artist:'Кипелов', genre:'Рок', icon:'🎸', color:'#1a0000',
-    date:'1 августа 2026', dateShort:'1 авг', dateISO:'2026-08-01', dayLabel:'Вт',
-    age:'6+', duration:'2 ч', rating:0, votes:0,
-    price:5500, priceMax:5500, hot:false, newShow:false, city:'Волгоград',
-    desc:'Кипелов в Волгограде. Выставочный комплекс ВолгоградЭКСПО.',
-    venues:[{name:'Выставочный комплекс «ВолгоградЭКСПО»',addr:'пр. Ленина, 46А, Волгоград',cap:'2000',times:['19:00'],city:'Волгоград'}],
-    photo:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=600&fit=crop', pushkin:false, cat:'concert'},
   {id:'expo_002', title:'Jony — концерт',
     artist:'Jony', genre:'Поп', icon:'🎤', color:'#001a1a',
     date:'6 августа 2026', dateShort:'6 авг', dateISO:'2026-08-06', dayLabel:'Вс',
@@ -2397,14 +2389,6 @@ const CONCERTS = [
     photo:'https://images.unsplash.com/photo-1501612780327-45045538702b?w=400&h=600&fit=crop',
     venues:[{name:'Кроп Арена',addr:'Университетский просп., 107, Волгоград',cap:'2 000 мест',times:['19:00'],city:'Волгоград'}],
     ytId:'', zones:[{name:'Партер',price:4000},{name:'Балкон',price:1800}]},
-  {id:'vlg_dof05', title:'Александр Дроздов — концерт',
-    artist:'Александр Дроздов', genre:'Эстрада', icon:'🎤', color:'#1a1a00',
-    date:'28 июля 2026', dateShort:'28 июл', dateISO:'2026-07-28', dayLabel:'Пт',
-    age:'6+', duration:'2 ч', rating:0, votes:0,
-    price:1200, priceMax:3000, hot:false, newShow:true, city:'Волгоград',
-    desc:'Легенда ВИА Александр Дроздов с любимыми хитами.',
-    photo:'images/concerts/drozdov.jpg',
-    venueUrl:'venue-dom-oficerov.html'},
   {id:'zhs_tomsk_1', title:'Женский стендап', artist:'Женский стендап ТНТ',
     genre:'Стендап', icon:'🎙️', color:'#6a0572',
     date:'2 ноября 2026', dateShort:'2 ноя', dateISO:'2026-11-02', dayLabel:'',
@@ -3208,7 +3192,7 @@ function init() {
     var vfAuto = r.data.filarmoniaEvents || {};
     Object.keys(vfAuto).forEach(function(vfId) {
       var fe = vfAuto[vfId];
-      var SPECTACLE_OVERRIDE = ['vfauto_drugaya-zhizn']; // автопарсер не распознал как спектакль — ручное исключение
+      var SPECTACLE_OVERRIDE = ['vfauto_drugaya-zhizn', 'vfauto_muzhchina-s-dostavkoj-na-dom-2', 'vfauto_rozygrysh', 'vfauto_konjok-gorbunok-i-ivan-durak-po-motivam-skazki-p-p-ershova-konjok-gorbunok', 'vfauto_krymskaya-osen-2']; // автопарсер не распознал как спектакль — ручное исключение
       if (fe.isSpectacle || SPECTACLE_OVERRIDE.indexOf(vfId) >= 0) return; // спектакли идут в раздел «Театр», не сюда
       if (delIds.indexOf(vfId) >= 0) return; // вручную удалено — не добавлять обратно
       // Не дублировать, если такое же название+дата уже есть (добавлено вручную раньше)
