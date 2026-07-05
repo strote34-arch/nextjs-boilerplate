@@ -1,7 +1,7 @@
-// afishi.ru Service Worker v2.1
-const CACHE_NAME   = 'afishiru-v2.1';
-const STATIC_CACHE = 'afishiru-static-v2.1';
-const API_CACHE    = 'afishiru-api-v2.1';
+// afishi.ru Service Worker v2.2
+const CACHE_NAME   = 'afishiru-v2.2';
+const STATIC_CACHE = 'afishiru-static-v2.2';
+const API_CACHE    = 'afishiru-api-v2.2';
 
 // Статические файлы — кэшировать навсегда
 const STATIC_URLS = [
