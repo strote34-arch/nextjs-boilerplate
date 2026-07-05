@@ -1876,8 +1876,11 @@ document.addEventListener('DOMContentLoaded', function(){
       var THEATER_FORCE_SPECTACLE = ['vfauto_drugaya-zhizn', 'vfauto_muzhchina-s-dostavkoj-na-dom-2', 'vfauto_rozygrysh', 'vfauto_konjok-gorbunok-i-ivan-durak-po-motivam-skazki-p-p-ershova-konjok-gorbunok', 'vfauto_krymskaya-osen-2'];
       if (!fe.isSpectacle && THEATER_FORCE_SPECTACLE.indexOf(vfId) < 0) return; // концерты сюда не добавляем
       if (deleted[vfId]) return;
-      function _normT(t) { return (t || '').toLowerCase().replace(/[«»"'`]/g, '').replace(/\s+/g, ' ').trim(); }
-      var dup = (ckz.events || []).some(function(e){ return _normT(e.title) === _normT(fe.title) && e.dateISO === fe.dateISO; });
+      function _normT(t) { return (t || '').toLowerCase().replace(/^спектакль\s*/i, '').replace(/[«»"'`]/g, '').replace(/\s+/g, ' ').trim(); }
+      var dup = (ckz.events || []).some(function(e){
+        var a = _normT(e.title), b = _normT(fe.title);
+        return e.dateISO === fe.dateISO && (a === b || a.indexOf(b) >= 0 || b.indexOf(a) >= 0);
+      });
       if (dup) return;
       ckz.events = ckz.events || [];
       ckz.events.push({ title: fe.title, date: fe.date, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO, photo: fe.photo, ticketUrl: fe.ticketUrl });
