@@ -1,0 +1,8 @@
+{
+  "name": "afisha-trailer-digest-env",
+  "config": {
+    "type": "cloud",
+    "networking": {"type": "unrestricted"},
+    "packages": {}
+  }
+}
