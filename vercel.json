@@ -35,6 +35,10 @@
       "schedule": "0 7 * * 3"
     },
     {
+      "path": "/api/sync-restvlg",
+      "schedule": "0 7 * * 4"
+    },
+    {
       "path": "/api/trailer-sync-events",
       "schedule": "0 11 * * 6"
     },
