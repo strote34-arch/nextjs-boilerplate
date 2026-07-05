@@ -1883,7 +1883,9 @@ document.addEventListener('DOMContentLoaded', function(){
       });
       if (dup) return;
       ckz.events = ckz.events || [];
-      ckz.events.push({ title: fe.title, date: fe.date, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO, photo: fe.photo, ticketUrl: fe.ticketUrl });
+      var _yr = (fe.dateISO || '').slice(0, 4);
+      var _shortDate = fe.dateShort ? (fe.dateShort + (_yr ? ' ' + _yr : '')) : fe.date;
+      ckz.events.push({ title: fe.title, date: _shortDate, time: fe.time, price: 'от 400 ₽', age: fe.age, pushkin: !!fe.pushkin, dateISO: fe.dateISO, photo: fe.photo, ticketUrl: fe.ticketUrl });
       changed = true;
     });
     } // if (ckz)
