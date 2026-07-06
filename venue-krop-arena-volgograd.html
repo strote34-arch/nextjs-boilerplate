@@ -402,6 +402,7 @@ window.switchCity = function(city, btn) {
       <div id="vp-shows-list">
         <div style="text-align:center;padding:24px;color:#999;font-size:13px;">Загрузка афиши…</div>
       </div>
+      <button onclick="openVenueEditModal(true)" style="margin-top:14px;width:100%;padding:10px;background:#f0eeea;color:#555;border:none;border-radius:6px;cursor:pointer;font-size:13px;">+ Добавить событие</button>
     </div>
     <div class="vpane" style="margin-top:16px;">
       <div class="sec-head">ℹ️ О площадке</div>
@@ -691,7 +692,16 @@ fetch('/api/store?key=arenaHallEvents').then(function(r){ return r.json(); }).th
       var final = all.filter(function(e){ return !deleted[e.id]; }).map(function(e){
         return edits[e.id] ? Object.assign({}, e, edits[e.id]) : e;
       });
-      renderVenueEvents(final);
+      fetch('/api/store?key=venueAdditions').then(function(r4){ return r4.json(); }).then(function(r4){
+        var additions = (r4 && r4.ok && r4.value) ? r4.value : {};
+        Object.keys(additions).forEach(function(aid){
+          if (deleted[aid]) return;
+          var add = additions[aid];
+          if (add.venueKey !== 'krop-arena-volgograd') return;
+          final.push(Object.assign({ id: aid }, add));
+        });
+        renderVenueEvents(final);
+      }).catch(function(){ renderVenueEvents(final); });
     }).catch(function(){ renderVenueEvents(all); });
   }).catch(function(){ renderVenueEvents(all); });
 }).catch(function(){
@@ -700,7 +710,21 @@ fetch('/api/store?key=arenaHallEvents').then(function(r){ return r.json(); }).th
 
 var _currentVenueEditId = null;
 
-function openVenueEditModal() {
+var _isNewVenueEvent = false;
+function openVenueEditModal(isNew) {
+  _isNewVenueEvent = !!isNew;
+  if (isNew) {
+    _currentVenueEditId = null;
+    document.getElementById('vem_edit_title').value = '';
+    document.getElementById('vem_edit_dateISO').value = '';
+    document.getElementById('vem_edit_time').value = '19:00';
+    document.getElementById('vem_edit_price').value = '';
+    document.getElementById('vem_edit_ticket').value = '';
+    document.getElementById('vem_edit_photo').value = '';
+    document.getElementById('vem_edit_photo_preview').style.display = 'none';
+    document.getElementById('editVenueEventModal').style.display = 'flex';
+    return;
+  }
   if (!_currentOpenVenueEventId) return;
   _currentVenueEditId = _currentOpenVenueEventId;
   var e = VENUE_EVENTS[_currentVenueEditId];
@@ -743,7 +767,6 @@ function handleVenueEditPhoto(input) {
   reader.readAsDataURL(file);
 }
 function saveVenueEventEdit() {
-  if (!_currentVenueEditId) return;
   var patch = {
     title: document.getElementById('vem_edit_title').value.trim(),
     dateISO: document.getElementById('vem_edit_dateISO').value.trim(),
@@ -752,6 +775,21 @@ function saveVenueEventEdit() {
     ticketUrl: document.getElementById('vem_edit_ticket').value.trim(),
     photo: document.getElementById('vem_edit_photo').value.trim() || null,
   };
+  if (_isNewVenueEvent) {
+    if (!patch.title) { alert('Укажите название'); return; }
+    var newId = 'venuecustom_' + Date.now();
+    patch.venueKey = 'krop-arena-volgograd';
+    VENUE_EVENTS[newId] = Object.assign({ id: newId }, patch);
+    fetch('/api/store', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ key: 'venueAdditions', patch: { [newId]: patch } })
+    }).catch(function(){});
+    closeVenueEditModal();
+    renderVenueEvents(Object.values(VENUE_EVENTS).filter(function(e){ return !_venueDeleted[e.id]; }));
+    return;
+  }
+  if (!_currentVenueEditId) return;
   Object.assign(VENUE_EVENTS[_currentVenueEditId], patch);
   fetch('/api/store', {
     method: 'POST',
