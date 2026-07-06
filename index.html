@@ -4470,8 +4470,19 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
       var el = document.getElementById(paneId);
       if (!el) return;
       var KEY = 'afishi_reviews_' + type + '_' + itemId;
+      var SRV_KEY = type + '_' + itemId;
       var reviews = [];
       try { reviews = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) {}
+
+      function _rvId(r) { return r._id || (r.date || '') + '_' + (r.text || '').slice(0, 24); }
+      function _mergeServer(serverRevs) {
+        var merged = {};
+        reviews.forEach(function(rv){ merged[_rvId(rv)] = rv; });
+        serverRevs.forEach(function(rv){ merged[_rvId(rv)] = rv; });
+        reviews = Object.keys(merged).map(function(k){ return merged[k]; });
+        reviews.sort(function(a,b){ return (b._ts||0) - (a._ts||0); });
+        try { localStorage.setItem(KEY, JSON.stringify(reviews)); } catch(e) {}
+      }
 
       function renderList() {
         var listEl = document.getElementById('rv_list_' + itemId);
@@ -4503,6 +4514,15 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
 
       renderList();
 
+      // ── Подтягиваем отзывы с сервера — их видят ВСЕ посетители, а не только этот браузер ──
+      fetch('/api/store?key=reviews').then(function(r){ return r.json(); }).then(function(r){
+        if (!r || !r.ok || !r.value || !r.value[SRV_KEY]) return;
+        _mergeServer(r.value[SRV_KEY]);
+        renderList();
+        var badge = document.getElementById('rvBadge_concerts_' + itemId);
+        if (badge && reviews.length) { badge.textContent = reviews.length; badge.style.background='#c8102e'; badge.style.color='#fff'; }
+      }).catch(function(){});
+
       // Звёзды
       window._rvStars = window._rvStars || {};
       window._rvStars[itemId] = 0;
@@ -4526,11 +4546,14 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
           if (!text) { alert('Напишите текст отзыва'); return; }
           var rating = (window._rvStars && window._rvStars[itemId]) || 0;
           var user = (window.Afishi && Afishi.getUser && Afishi.getUser()) || null;
-          reviews.unshift({
+          var newReview = {
+            _id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+            _ts: Date.now(),
             text: text, rating: rating,
             author: (user && (user.name || user.email)) || 'Гость',
             date: new Date().toLocaleDateString('ru')
-          });
+          };
+          reviews.unshift(newReview);
           try {
             localStorage.setItem(KEY, JSON.stringify(reviews));
             if (textEl) textEl.value = '';
@@ -4543,6 +4566,12 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(showBurger,
             t.textContent = '✅ Отзыв опубликован!';
             document.body.appendChild(t);
             setTimeout(function(){t.remove();}, 2500);
+            // ── Отправляем на сервер, чтобы отзыв увидели все посетители сайта ──
+            fetch('/api/store', {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ key: 'reviews', patch: { [SRV_KEY]: reviews } })
+            }).catch(function(){});
           } catch(ex) {}
         });
       }
