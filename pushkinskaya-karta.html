@@ -388,6 +388,64 @@ window.switchCity = function(city, btn) {
   </div>
   <p style="font-size:13px;color:var(--mid);">Билет именной — на входе понадобится документ, удостоверяющий личность (или профиль в приложении «Госуслуги.Культура»). Одновременно можно купить только один билет на одно мероприятие, стоимостью не более 5000 ₽.</p>
 
+  <h2>📅 Ближайшие мероприятия по «Пушкинской карте» — <span id="pk-city-label">Волгоград</span></h2>
+  <div id="pk-events-list" style="margin-bottom:32px;">
+    <div style="text-align:center;padding:24px;color:#999;font-size:13px;">Загрузка афиши…</div>
+  </div>
+  <script>
+  (function(){
+    var city = 'Волгоград';
+    try { city = localStorage.getItem('afishi_city') || 'Волгоград'; } catch(e) {}
+    document.getElementById('pk-city-label').textContent = city;
+
+    // На сегодня флаг Пушкинской карты собирает только автопарсер филармонии
+    // (ЦКЗ Волгоградская Филармония) — по мере добавления флага в другие
+    // источники (Kultura Hall, Дом офицеров и т.д.) они подключатся сюда же.
+    var SOURCES = [
+      { key: 'filarmoniaEvents', cityMatch: 'Волгоград' },
+    ];
+
+    var todayISO = new Date().toISOString().slice(0,10);
+    var results = [];
+    var pending = SOURCES.length;
+
+    function renderResults() {
+      var el = document.getElementById('pk-events-list');
+      var filtered = results.filter(function(e){ return e.dateISO >= todayISO; });
+      filtered.sort(function(a,b){ return a.dateISO < b.dateISO ? -1 : 1; });
+      if (!filtered.length) {
+        el.innerHTML = '<div style="text-align:center;padding:24px;color:#999;font-size:13px;">Для города «'+city+'» пока нет отмеченных мероприятий по Пушкинской карте в нашей базе — актуальную афишу смотрите по ссылкам ниже или на Культура.РФ.</div>';
+        return;
+      }
+      el.innerHTML = filtered.map(function(e){
+        var photoHtml = e.photo ? '<img src="'+e.photo+'" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f4f2ee;">🎫</div>';
+        return '<a href="'+(e.ticketUrl||'#')+'" target="_blank" style="text-decoration:none;color:inherit;display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;align-items:center;">'
+          + '<div style="width:52px;height:52px;border-radius:6px;overflow:hidden;flex-shrink:0;">'+photoHtml+'</div>'
+          + '<div style="flex:1;min-width:0;">'
+          +   '<div style="font-weight:700;font-size:14px;">'+e.title+'</div>'
+          +   '<div style="font-size:12px;color:#888;">'+(e.date||e.dateISO)+' · '+(e.time||'')+' · 🏛 Пушкинская карта</div>'
+          + '</div>'
+          + '</a>';
+      }).join('');
+    }
+
+    SOURCES.forEach(function(src){
+      if (src.cityMatch !== city) { pending--; if (pending<=0) renderResults(); return; }
+      fetch('/api/store?key='+src.key).then(function(r){ return r.json(); }).then(function(r){
+        if (r && r.ok && r.value) {
+          Object.values(r.value).forEach(function(e){
+            if (e.pushkin) results.push(e);
+          });
+        }
+      }).catch(function(){}).finally(function(){
+        pending--;
+        if (pending <= 0) renderResults();
+      });
+    });
+    if (!SOURCES.some(function(s){return s.cityMatch===city;})) renderResults();
+  })();
+  </script>
+
   <h2>Где принимают «Пушкинскую карту» в Волгограде</h2>
   <p style="font-size:13px;color:var(--mid);margin-bottom:16px;">Актуальную афишу и билеты смотрите напрямую на сайте каждого учреждения — там же есть кнопка «Оплатить Пушкинской картой».</p>
   <div class="info-grid">
