@@ -585,11 +585,14 @@ footer{background:var(--dark);color:#aaa;margin-top:40px;padding:32px 0 20px;}
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
+    flex-direction: column !important;
   }
   .modal-poster, #mposter {
-    height: 180px !important;
+    width: 100% !important;
+    height: 160px !important;
     font-size: 52px !important;
   }
+  .modal-info { width: 100% !important; }
   .modal-title, #mtitle { font-size: 18px !important; }
   .modal-tabs { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
   .modal-tabs::-webkit-scrollbar { display: none; }
