@@ -1,0 +1,5 @@
+.env
+IDS.env
+transcript*.txt
+*.transcript.txt
+outputs/
