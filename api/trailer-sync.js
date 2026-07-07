@@ -63,23 +63,42 @@ async function getMoviesInCinemas() {
 }
 
 // ── 2. YouTube: получить все видео канала @afishiru ───────────
+// ВАЖНО: раньше здесь использовался /search (100 единиц квоты за вызов —
+// это МГНОВЕННО съедало весь дневной лимит в 10 000 единиц за один прогон,
+// из-за чего проверка канала всегда падала с ошибкой 429 и трейлеры никогда
+// не бралась именно с @afishiru). Теперь используется связка
+// channels.list (1 единица) + playlistItems.list (1 единица за страницу) —
+// тот же результат (список всех видео канала), но в ~100 раз дешевле.
 async function getChannelVideos(channelId) {
-  // Берём ВСЕ видео канала через pagination (до 500 видео)
+  // Шаг 1: получить id плейлиста "все загруженные видео" этого канала
+  const chUrl = `https://www.googleapis.com/youtube/v3/channels?key=${YT_KEY}&id=${channelId}&part=contentDetails`;
+  let uploadsPlaylistId = null;
+  try {
+    const chRes = await fetch(chUrl);
+    const chData = await chRes.json();
+    if (chData.error) { console.error('[YT] API error (channels):', JSON.stringify(chData.error)); return []; }
+    uploadsPlaylistId = chData.items && chData.items[0] && chData.items[0].contentDetails.relatedPlaylists.uploads;
+  } catch(e) { console.error('[YT] channels.list failed:', e.message); return []; }
+  if (!uploadsPlaylistId) return [];
+
+  // Шаг 2: постранично получить видео из этого плейлиста
   const allVideos = [];
   let pageToken = '';
   let pages = 0;
   while (pages < 10) {
-    const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&channelId=${channelId}&part=snippet&type=video&maxResults=50&order=date${pageToken ? '&pageToken='+pageToken : ''}`;
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${YT_KEY}&playlistId=${uploadsPlaylistId}&part=snippet&maxResults=50${pageToken ? '&pageToken='+pageToken : ''}`;
     try {
       const res = await fetch(url);
       const data = await res.json();
-      if (data.error) { console.error('[YT] API error:', JSON.stringify(data.error)); break; }
+      if (data.error) { console.error('[YT] API error (playlistItems):', JSON.stringify(data.error)); break; }
       const items = data.items || [];
       for (const item of items) {
+        const videoId = item.snippet.resourceId && item.snippet.resourceId.videoId;
+        if (!videoId) continue;
         allVideos.push({
-          video_id: item.id.videoId,
+          video_id: videoId,
           title: item.snippet.title,
-          url: `https://www.youtube.com/watch?v=${item.id.videoId}`
+          url: `https://www.youtube.com/watch?v=${videoId}`
         });
       }
       pageToken = data.nextPageToken || '';
@@ -87,7 +106,7 @@ async function getChannelVideos(channelId) {
       if (!pageToken || items.length < 50) break;
     } catch(e) { break; }
   }
-  console.log(`[TrailerSync] @afishiru видео найдено: ${allVideos.length}`);
+  console.log(`[TrailerSync] @afishiru видео найдено: ${allVideos.length} (потрачено ~${1+pages} ед. квоты вместо ~${(1+pages)*100})`);
   return allVideos;
 }
 
@@ -192,14 +211,7 @@ async function syncFilmDatabaseTrailers() {
   let channelVideos = [];
   
   try {
-    const chUrl = `https://www.googleapis.com/youtube/v3/search?key=${YT_KEY}&channelId=${channelId}&part=snippet&type=video&maxResults=50&order=date`;
-    const chRes = await fetch(chUrl);
-    const chData = await chRes.json();
-    channelVideos = (chData.items || []).map(item => ({
-      video_id: item.id.videoId,
-      title: item.snippet.title,
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`
-    }));
+    channelVideos = await getChannelVideos(channelId);
     console.log(`[FilmDB] Видео на @afishiru: ${channelVideos.length}`);
   } catch(e) {}
   
@@ -292,20 +304,15 @@ export default async function handler(req, res) {
         });
         console.log(`[TrailerSync] ✅ @afishiru: ${movie.title_ru}`);
       } else {
-        // Ищем на YouTube
-        const youtubeTrailer = await findRussianTrailer(movie);
+        // ВАЖНО: раньше здесь искался трейлер в ОБЩЕМ YouTube (не на канале
+        // @afishiru), если не нашли на своём канале — это и приводило к тому,
+        // что подставлялись чужие/неправильные видео. Теперь — если трейлера
+        // нет на @afishiru, оставляем без трейлера, честно.
         results.push({
           ...movie,
-          trailer: youtubeTrailer || null
+          trailer: null
         });
-        if (youtubeTrailer) {
-          console.log(`[TrailerSync] 🔍 YouTube: ${movie.title_ru} → ${youtubeTrailer.source}`);
-        } else {
-          console.log(`[TrailerSync] ❌ Не найден: ${movie.title_ru}`);
-        }
-        
-        // Задержка чтобы не превысить квоту YouTube API
-        await new Promise(r => setTimeout(r, 500));
+        console.log(`[TrailerSync] ❌ Не найден на @afishiru (не подставляем чужое видео): ${movie.title_ru}`);
       }
     }
     

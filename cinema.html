@@ -1260,6 +1260,7 @@ document.addEventListener('click', function(e) {
         <div class="modal-title" id="mtitle"></div>
         <div class="modal-meta"  id="mmeta"></div>
       </div>
+      <button class="modal-close" id="filmEditBtn" onclick="openFilmEditModal()" title="Редактировать" style="margin-right:6px;font-size:16px;">✏️</button>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
@@ -3697,6 +3698,117 @@ function closeMobileMenu() {
     setTimeout(tryOpen, 200);
   }
 })();
+</script>
+<!-- ═══ EDIT FILM MODAL ═══ -->
+<div id="editFilmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeFilmEditModal()">
+  <div style="background:#fff;border-radius:10px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">
+      <div style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;">✏️ Редактировать фильм</div>
+      <button onclick="closeFilmEditModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Афиша (постер)</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <img id="film_edit_photo_preview" src="" style="width:60px;height:84px;object-fit:cover;border-radius:4px;background:#f0eeea;display:none;">
+          <input type="file" accept="image/*" onchange="handleFilmEditPhoto(this)" style="font-size:12px;">
+        </div>
+        <input id="film_edit_photo" type="hidden">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Трейлер — ссылка YouTube (ваш канал) или ID видео</label>
+        <input id="film_edit_trailer" type="text" placeholder="youtube.com/watch?v=... или xxxxxxxxxxx" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+      </div>
+      <button onclick="saveFilmEdit()" style="width:100%;background:var(--red);color:#fff;font-family:Oswald,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;border:none;border-radius:5px;padding:11px;cursor:pointer;">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+<script>
+function openFilmEditModal() {
+  if (!currentFilm) return;
+  document.getElementById('film_edit_photo').value = currentFilm.img || currentFilm.poster || '';
+  document.getElementById('film_edit_trailer').value = currentFilm.trailerYT || '';
+  var prev = document.getElementById('film_edit_photo_preview');
+  if (currentFilm.img || currentFilm.poster) { prev.src = currentFilm.img || currentFilm.poster; prev.style.display = 'inline-block'; }
+  else { prev.style.display = 'none'; }
+  document.getElementById('editFilmModal').style.display = 'flex';
+}
+function closeFilmEditModal() {
+  document.getElementById('editFilmModal').style.display = 'none';
+}
+function handleFilmEditPhoto(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 600;
+      var scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('film_edit_photo').value = dataUrl;
+      var prev = document.getElementById('film_edit_photo_preview');
+      prev.src = dataUrl;
+      prev.style.display = 'inline-block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function _extractYtIdEdit(raw) {
+  if (!raw) return '';
+  var m = raw.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+  return '';
+}
+function saveFilmEdit() {
+  if (!currentFilm) return;
+  var photo = document.getElementById('film_edit_photo').value.trim();
+  var trailerRaw = document.getElementById('film_edit_trailer').value.trim();
+  var trailerYT = trailerRaw ? _extractYtIdEdit(trailerRaw) : '';
+  if (trailerRaw && !trailerYT) { alert('Неверная ссылка на YouTube. Вставьте полный URL или 11-значный ID видео.'); return; }
+
+  currentFilm.img = photo || currentFilm.img;
+  currentFilm.trailerYT = trailerYT;
+
+  fetch('/api/store', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ key: 'filmEdits', patch: { [currentFilm.id]: { img: currentFilm.img, trailerYT: trailerYT } } })
+  }).catch(function(){});
+
+  closeFilmEditModal();
+  openModal(currentFilm.id);
+}
+
+// ── Применить сохранённые ручные правки к FILMS при загрузке страницы ──
+fetch('/api/store?key=filmEdits').then(function(r){ return r.json(); }).then(function(r){
+  if (!r || !r.ok || !r.value) return;
+  var edits = r.value;
+  if (typeof FILMS === 'undefined') return;
+  FILMS.forEach(function(f) {
+    if (edits[f.id]) Object.assign(f, edits[f.id]);
+  });
+}).catch(function(){});
+
+// ── Подтягиваем трейлеры, автоматически найденные на канале @afishiru ──
+// (см. api/trailer-sync.js — проверяет ТОЛЬКО собственный канал, никогда
+// не подставляет случайное видео с YouTube). Ручные правки (filmEdits, выше)
+// имеют приоритет над автоматически найденным.
+fetch('/api/trailer-sync?action=get').then(function(r){ return r.json(); }).then(function(r){
+  if (!r || !r.trailers || typeof FILMS === 'undefined') return;
+  r.trailers.forEach(function(t) {
+    if (!t.trailer || !t.trailer.video_id) return;
+    var f = FILMS.find(function(x){ return x.tmdbId === t.tmdb_id || (x.title||'').toLowerCase().trim() === (t.title_ru||'').toLowerCase().trim(); });
+    if (f && !f.trailerYT) f.trailerYT = t.trailer.video_id;
+  });
+}).catch(function(){});
 </script>
 </body>
 </html>
